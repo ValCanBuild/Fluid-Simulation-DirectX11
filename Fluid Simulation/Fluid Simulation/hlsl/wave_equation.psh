@@ -1,0 +1,45 @@
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTextures[2];	// at time N and N-1
+SamplerState SampleType;
+
+///////////////
+// CONSTANTS //
+///////////////
+const float fWaveSpeed = 3.0f;
+const float fTimeStep = 0.2f;
+//const float fDampFactor = 0.1f;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+	float2 texCoord1 : TEXCOORD1; //i+1, 0
+	float2 texCoord2 : TEXCOORD2; //i-1, 0
+	float2 texCoord3 : TEXCOORD3; //0, j+1
+	float2 texCoord4 : TEXCOORD4; //0, j-1
+};
+
+// Pixel Shader
+float4 WavePixelShader(PixelInputType input) : SV_TARGET {
+	// calculate new wave height(color) using the R component
+    float u = shaderTextures[0].Sample(SampleType, input.tex).r;
+	float uPrev = shaderTextures[1].Sample(SampleType, input.tex).r;
+
+	float col1 = shaderTextures[0].Sample(SampleType, input.texCoord1).r;
+	float col2 = shaderTextures[0].Sample(SampleType, input.texCoord2).r;
+	float col3 = shaderTextures[0].Sample(SampleType, input.texCoord3).r;
+	float col4 = shaderTextures[0].Sample(SampleType, input.texCoord4).r;
+
+	float ctx2 = pow(fWaveSpeed*fTimeStep,2);
+
+	//float final = uPrev;
+	float final = (2.0f*u) - uPrev + ( col1+col2+col3+col4 - (4.0f*u) )*ctx2;
+	if (final < 0.0f)
+		return float4(0.0f,0.0f,-final,1.0f);
+	
+	return float4(final,0.0f,0.0f,1.0f);
+}

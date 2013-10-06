@@ -1,0 +1,69 @@
+/*************************************************************
+BaseD3DShader.h: Semi-Abstract class that describes a Direct3D
+shader object. This parent class is in charge of the main 
+initialization and rendering as well as some utility functions.
+
+Author: Valentin Hinov
+Date: 03/09/2013
+Version: 1.0
+**************************************************************/
+
+#ifndef _BASED3DSHADER_H
+#define _BASED3DSHADER_H
+
+#include <memory>
+
+#include "../../utilities/D3dIncludes.h"
+
+/**
+ShaderDescription is a struct every shader must provide in order to be
+properly initialized.
+**/
+struct ShaderDescription {
+
+	struct ShaderFileDescription {
+		WCHAR* shaderFilename;
+		char* shaderFunctionName;
+
+		ShaderFileDescription() {
+			shaderFilename = nullptr;
+			shaderFunctionName = nullptr;
+		}
+	};
+
+	ShaderFileDescription vertexShaderDesc;
+	ShaderFileDescription pixelShaderDesc;
+
+	D3D11_INPUT_ELEMENT_DESC *polygonLayout;
+	int numLayoutElements;
+
+	ShaderDescription() {
+		polygonLayout = nullptr;
+		numLayoutElements = 0;
+	}
+};
+
+class BaseD3DShader {
+public:
+	BaseD3DShader(){}
+	~BaseD3DShader(){}
+
+	bool Initialize (ID3D11Device* device, HWND hwnd);	
+
+private:
+	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename);
+
+protected:
+	void RenderShader(ID3D11DeviceContext* context, int indexCount);
+
+	// every child of this class has to provide an implementation of these functions in order to get the correct shader name
+	virtual ShaderDescription GetShaderDescription() = 0;
+	// at the end of the Initialize function this function will be called in order to do any child-specific initialization
+	virtual bool SpecificInitialization(ID3D11Device* device) = 0;
+private:
+	std::unique_ptr<ID3D11VertexShader, COMDeleter>		mVertexShader;
+	std::unique_ptr<ID3D11PixelShader, COMDeleter>		mPixelShader;
+	std::unique_ptr<ID3D11InputLayout, COMDeleter>		mLayout;
+};
+
+#endif

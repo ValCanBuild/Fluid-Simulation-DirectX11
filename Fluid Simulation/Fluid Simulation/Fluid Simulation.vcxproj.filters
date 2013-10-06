@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="HLSL">
+      <UniqueIdentifier>{f9373bf5-1087-48a6-bd6a-a7d6442760b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System">
+      <UniqueIdentifier>{a9b59125-bc80-42df-86af-1b995d310e38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\System">
+      <UniqueIdentifier>{0714e81d-9ade-46df-bc4d-9fc24164d639}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities">
+      <UniqueIdentifier>{73d17bf6-6995-46aa-9d96-869eeb50f0e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities\Math">
+      <UniqueIdentifier>{d7588045-f4a0-4f9b-81b0-a41239cee674}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Display">
+      <UniqueIdentifier>{ee3271de-7f4c-4258-bfbf-536e5ea25e14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display">
+      <UniqueIdentifier>{35096c27-bdb2-4d3a-b395-0979af5b2074}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Display\D3DShaders">
+      <UniqueIdentifier>{62837f62-26ac-4acd-9c0e-77f064164010}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\D3DShaders">
+      <UniqueIdentifier>{209bf7e9-d7d3-402f-a58c-fb3c4de7b9a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities">
+      <UniqueIdentifier>{78fca017-76e2-4ceb-aca2-a980b39afb45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System\Interfaces">
+      <UniqueIdentifier>{317ba6a2-b8a8-42d8-88ad-5bac4a97b41f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Objects">
+      <UniqueIdentifier>{80aa6b84-7012-4870-a6e8-628c899b5954}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Objects">
+      <UniqueIdentifier>{69febbde-21c4-485e-bcd3-75647eb9fff2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Objects\Components">
+      <UniqueIdentifier>{e3b1f41d-7d66-4b4e-aa3f-0ba2ee6bf0c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Objects\Components">
+      <UniqueIdentifier>{c928a0fd-59ea-483f-ba14-14d9e73cd47d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\system\MainSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="source\system\InputSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="source\system\GraphicsSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DGraphicsObject.cpp">
+      <Filter>Source Files\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DFrameBuffer.cpp">
+      <Filter>Source Files\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DRenderer.cpp">
+      <Filter>Source Files\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\Camera.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\system\ServiceProvider.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\D3DTexture.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\D2DTexQuad.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\D2DColorQuad.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\WaveShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\system\InputSystem.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\GraphicsSystem.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\D3dIncludes.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\MainSystem.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\math\MathUtils.h">
+      <Filter>Header Files\Utilities\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\IGraphicsObject.h">
+      <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DGraphicsObject.h">
+      <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\IFrameBuffer.h">
+      <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DFrameBuffer.h">
+      <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DRenderer.h">
+      <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\Camera.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\I_InputSystem.h">
+      <Filter>Header Files\System\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\ServiceProvider.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\D3DTexture.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\IRenderable.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\D2DTexQuad.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\D2DColorQuad.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\Transform.h">
+      <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\WaveShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="hlsl\orthotexture.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\orthotexture.vsh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\orthocolor.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\orthocolor.vsh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\wave_equation.vsh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\wave_equation.psh">
+      <Filter>HLSL</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3103A246-D195-4784-A770-BBBD2ADF7010}</ProjectGuid>
+    <RootNamespace>FluidSimulation</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <PreprocessorDefinitions>D3D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>D3D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="source\display\D3DFrameBuffer.cpp" />
+    <ClCompile Include="source\display\D3DGraphicsObject.cpp" />
+    <ClCompile Include="source\display\D3DRenderer.cpp" />
+    <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\objects\D2DColorQuad.cpp" />
+    <ClCompile Include="source\objects\D2DTexQuad.cpp" />
+    <ClCompile Include="source\system\GraphicsSystem.cpp" />
+    <ClCompile Include="source\system\InputSystem.cpp" />
+    <ClCompile Include="source\system\MainSystem.cpp" />
+    <ClCompile Include="source\system\ServiceProvider.cpp" />
+    <ClCompile Include="source\utilities\Camera.cpp" />
+    <ClCompile Include="source\utilities\D3DTexture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\display\D3DFrameBuffer.h" />
+    <ClInclude Include="source\display\D3DGraphicsObject.h" />
+    <ClInclude Include="source\display\D3DRenderer.h" />
+    <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
+    <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
+    <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
+    <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
+    <ClInclude Include="source\display\IFrameBuffer.h" />
+    <ClInclude Include="source\display\IGraphicsObject.h" />
+    <ClInclude Include="source\objects\D2DColorQuad.h" />
+    <ClInclude Include="source\objects\D2DTexQuad.h" />
+    <ClInclude Include="source\objects\IRenderable.h" />
+    <ClInclude Include="source\objects\Transform.h" />
+    <ClInclude Include="source\system\GraphicsSystem.h" />
+    <ClInclude Include="source\system\InputSystem.h" />
+    <ClInclude Include="source\system\I_InputSystem.h" />
+    <ClInclude Include="source\system\MainSystem.h" />
+    <ClInclude Include="source\system\ServiceProvider.h" />
+    <ClInclude Include="source\utilities\Camera.h" />
+    <ClInclude Include="source\utilities\D3dIncludes.h" />
+    <ClInclude Include="source\utilities\math\MathUtils.h" />
+    <ClInclude Include="source\utilities\D3DTexture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="hlsl\orthocolor.vsh" />
+    <None Include="hlsl\orthocolor.psh" />
+    <None Include="hlsl\orthotexture.psh" />
+    <None Include="hlsl\orthotexture.vsh" />
+    <None Include="hlsl\wave_equation.psh" />
+    <None Include="hlsl\wave_equation.vsh" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
