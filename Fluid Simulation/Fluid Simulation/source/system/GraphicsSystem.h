@@ -65,7 +65,7 @@ private:
 	unique_ptr<D2DColorQuad> mColorQuad;
 	unique_ptr<WaveShader> mWaveShader;
 
-
+	IFrameBuffer** mFrameArray;
 };
 
 #endif

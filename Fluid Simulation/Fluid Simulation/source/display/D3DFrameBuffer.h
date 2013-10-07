@@ -27,7 +27,7 @@ public:
 	void BeginRender(float clearRed, float clearGreen, float clearBlue, float clearAlpha) const;
 	void EndRender() const;
 	
-	// Return a void pointer to the underlying texture resource - child class
+	// Return a void pointer to the underlying texture resource. This will be of type ID3D11ShaderResourceView
 	const void* GetTextureResource() const;
 
 private:

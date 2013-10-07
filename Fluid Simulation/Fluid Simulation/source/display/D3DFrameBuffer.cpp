@@ -47,7 +47,6 @@ bool D3DFrameBuffer::Initialize(IGraphicsObject* graphicsObject, int textureWidt
 	renderTargetViewDesc.Format = textureDesc.Format;
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
-
 	result = pD3dGraphicsObject->GetDevice()->CreateRenderTargetView(mRenderTargetTexture.get(), &renderTargetViewDesc, &(mRenderTargetView._Myptr));
 	if (FAILED(result)) {
 		return false;
@@ -61,7 +60,7 @@ bool D3DFrameBuffer::Initialize(IGraphicsObject* graphicsObject, int textureWidt
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
 	// Create the shader resource view.
-	result = pD3dGraphicsObject->GetDevice()->CreateShaderResourceView(mRenderTargetTexture.get(), &shaderResourceViewDesc, &mShaderResourceView._Myptr);
+	result = pD3dGraphicsObject->GetDevice()->CreateShaderResourceView(mRenderTargetTexture.get(), &shaderResourceViewDesc, &(mShaderResourceView._Myptr));
 	if(FAILED(result)) {
 		return false;
 	}

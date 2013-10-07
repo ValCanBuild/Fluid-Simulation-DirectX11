@@ -22,8 +22,9 @@ Version: 1.0
 	#include "../objects/D2DColorQuad.h"
 #endif
 
-ID3D11ShaderResourceView *pCurrent;
-ID3D11ShaderResourceView *pPrev;
+//ID3D11ShaderResourceView *pWaveTex[3];
+int simStep = 1;
+int prevStep = 0;
 
 GraphicsSystem::GraphicsSystem() {
 }
@@ -34,6 +35,12 @@ GraphicsSystem::GraphicsSystem(const GraphicsSystem& other) {
 
 
 GraphicsSystem::~GraphicsSystem() {
+	for (int i = 0; i < 3; i++) {
+		delete mFrameArray[i];
+		mFrameArray[i] = nullptr;
+	}
+	delete [] mFrameArray;
+	mFrameArray = nullptr;
 }
 
 
@@ -101,6 +108,14 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 		return false;
 	}
 
+	mFrameArray = new IFrameBuffer*[3];
+	for (int i = 0; i < 3; i++) {
+		mFrameArray[i] = new D3DFrameBuffer();
+		mFrameArray[i]->Initialize(mGraphicsObj.get(),screenWidth,screenHeight);
+		mFrameArray[i]->BeginRender(0.0f,0.0f,0.0f,1.0f);
+		mFrameArray[i]->EndRender();
+	}
+
 	/*mFrameBuffer4 = unique_ptr<IFrameBuffer>(new D3DFrameBuffer());
 	result = mFrameBuffer4->Initialize(mGraphicsObj.get(),screenWidth,screenHeight);
 	if (!result) {
@@ -123,9 +138,11 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
 	mColorQuad->mTransform.scale = Vector3f(0.05f,0.05f,0.0f);
 
+	mFrameBuffer3->BeginRender(0.0f,0.0f,0.0f,1.0f);
+	mFrameBuffer3->EndRender();
 
-	pCurrent = nullptr;
-	pPrev = nullptr;
+	//for (int i = 0; i < 3; i++)
+	//	pWaveTex[i] = (ID3D11ShaderResourceView*)mFrameBuffer3->GetTextureResource();
 
 	return true;
 }
@@ -149,23 +166,9 @@ bool GraphicsSystem::Render() {
 	// Start rendering
 	mGraphicsObj->BeginRender(0.0f,0.0f,0.0f,1.0f);
 	{
-		// need 2 textures - one at time N and one at time N-1
-
-		mFrameBuffer3->BeginRender(0.0f,0.0f,0.0f,1.0f);
-		{
-			mGraphicsObj->SetZBufferState(false);
-			mQuad->SetTexture(pPrev);
-			result = mQuad->Render(&viewMatrix,&orthoMatrix);
-			if (!result)
-				return false;
-			mGraphicsObj->SetZBufferState(true);
-		}
-		mFrameBuffer3->EndRender();
-
-		pPrev = (ID3D11ShaderResourceView*)mFrameBuffer3->GetTextureResource();
-
+		
 		// render texture N to frame Buffer 1 and texture N-1 to frame Buffer 2
-		mFrameBuffer->BeginRender(0.0f,0.0f,0.0f,1.0f);
+		/*mFrameBuffer->BeginRender(0.0f,0.0f,0.0f,1.0f);
 		{
 			mGraphicsObj->SetZBufferState(false);
 
@@ -189,33 +192,60 @@ bool GraphicsSystem::Render() {
 			}
 			mGraphicsObj->SetZBufferState(true);
 		}
-		mFrameBuffer->EndRender();
-
-		//pPrev = pCurrent;
-		pCurrent = (ID3D11ShaderResourceView*)mFrameBuffer->GetTextureResource();
+		mFrameBuffer->EndRender();*/
 
 		// perform wave equation		
-		mFrameBuffer2->BeginRender(0.0f,0.0f,0.0f,1.0f);
+		/*mFrameBuffer2->BeginRender(0.0f,0.0f,0.0f,1.0f);
 		{
 			mGraphicsObj->SetZBufferState(false);
 			mQuad->GetRenderer()->RenderBuffers(d3dGraphicsObj->GetDeviceContext());
-			ID3D11ShaderResourceView* texArray[2] = {pCurrent, pPrev};
+			ID3D11ShaderResourceView* texArray[2] = {pWaveTex[prevStep], pWaveTex[simStep]};
 			result = mWaveShader->Render(d3dGraphicsObj, mQuad->GetRenderer()->GetIndexCount(), texArray);
 			if (!result)
 				return false;
 			mGraphicsObj->SetZBufferState(true);
 		}
-		mFrameBuffer2->EndRender();
+		mFrameBuffer2->EndRender();*/
 
-		pPrev = pCurrent;
-		pCurrent = (ID3D11ShaderResourceView*)mFrameBuffer2->GetTextureResource();		
+		int nextStep = simStep+1;
+		if (nextStep > 2)
+			nextStep = 0;
 
-		//pPrev = pCurrent;
-		//pCurrent = (ID3D11ShaderResourceView*)mFrameBuffer4->GetTextureResource();
-		
+		mFrameArray[nextStep]->BeginRender(0.0f,0.0f,0.0f,1.0f);
+		{
+			mGraphicsObj->SetZBufferState(false);
+			mQuad->GetRenderer()->RenderBuffers(d3dGraphicsObj->GetDeviceContext());
+			ID3D11ShaderResourceView* texArray[2] = { (ID3D11ShaderResourceView*)mFrameArray[simStep]->GetTextureResource(),
+													  (ID3D11ShaderResourceView*)mFrameArray[prevStep]->GetTextureResource() };
+			result = mWaveShader->Render(d3dGraphicsObj, mQuad->GetRenderer()->GetIndexCount(), texArray);
+			if (!result)
+				return false;
+			// perform any extra input
+			I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+			if (inputSystem->IsMouseLeftDown()) {
+				int x,y;
+				inputSystem->GetMousePos(x,y);
+				int width,height;
+				mGraphicsObj->GetScreenDimensions(width,height);
+				float xPos = MapValue((float)x,0.0f,(float)width,-1.0f,1.0f);
+				float yPos = MapValue((float)y,0.0f,(float)height,-1.0f,1.0f);
+				mColorQuad->mTransform.position = Vector3f(xPos,-yPos,0);
+				result = mColorQuad->Render(&viewMatrix,&orthoMatrix);
+				if (!result)
+					return false;
+			}
+			mGraphicsObj->SetZBufferState(true);
+		}
+		mFrameArray[nextStep]->EndRender();
+
+		prevStep = simStep;
+		simStep = nextStep;
+
+		ID3D11ShaderResourceView* currTexture = (ID3D11ShaderResourceView*)mFrameArray[nextStep]->GetTextureResource();
+
 		// Render texture to screen
 		mGraphicsObj->SetZBufferState(false);
-		mQuad->SetTexture(pCurrent);
+		mQuad->SetTexture(currTexture);
 		result = mQuad->Render(&viewMatrix,&orthoMatrix);
 		if (!result)
 			return false;
