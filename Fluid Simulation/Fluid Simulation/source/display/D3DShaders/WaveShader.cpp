@@ -8,7 +8,7 @@ WaveShader::WaveShader(void) {
 WaveShader::~WaveShader(void) {
 }
 
-bool WaveShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D11ShaderResourceView** texArr) {
+bool WaveShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D11ShaderResourceView* texNow, ID3D11ShaderResourceView* texPrev) {
 	// set the parameters inside the vertex shader
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	ScreenSizeBuffer* dataPtr;
@@ -16,7 +16,7 @@ bool WaveShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D1
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
 	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mScreenSizeBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	HRESULT result = context->Map(mScreenSizeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -26,18 +26,19 @@ bool WaveShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D1
 	graphicsObject->GetScreenDimensions(width,height);
 	dataPtr->screenWidth = (float)width;
 	dataPtr->screenHeight = (float)height;
-	dataPtr->padding = Vector2f(0,0);
+	dataPtr->padding = Vector2(0,0);
 
-	context->Unmap(mScreenSizeBuffer.get(),0);
+	context->Unmap(mScreenSizeBuffer,0);
 
 	// Now set the constant buffer in the vertex shader with the updated values.
-	context->VSSetConstantBuffers(0, 1, &(mScreenSizeBuffer._Myptr));
-	
+	context->VSSetConstantBuffers(0, 1, &(mScreenSizeBuffer.p));
+
 	// Set the parameters inside the pixel shader
-	context->PSSetShaderResources(0,2,texArr);
+	context->PSSetShaderResources(0,1,&texNow);
+	context->PSSetShaderResources(1,1,&texPrev);
 
-	context->PSSetSamplers(0,1,&mSampleState._Myptr);
-
+	context->PSSetSamplers(0,1,&(mSampleState.p));
+	
 	// Render
 	RenderShader(context,indexCount);
 
@@ -47,10 +48,10 @@ bool WaveShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D1
 ShaderDescription WaveShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/wave_equation.vsh";
+	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vWave_equation.vsh";
 	shaderDescription.vertexShaderDesc.shaderFunctionName = "WaveVertexShader";
 
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/wave_equation.psh";
+	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pWave_equation.psh";
 	shaderDescription.pixelShaderDesc.shaderFunctionName = "WavePixelShader";
 
 	shaderDescription.polygonLayout = new D3D11_INPUT_ELEMENT_DESC[2];
@@ -87,7 +88,7 @@ bool WaveShader::SpecificInitialization(ID3D11Device* device) {
 	screenSizeBufferDesc.StructureByteStride = 0;
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&screenSizeBufferDesc, NULL, &mScreenSizeBuffer._Myptr);
+	HRESULT result = device->CreateBuffer(&screenSizeBufferDesc, NULL, &mScreenSizeBuffer);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -109,7 +110,7 @@ bool WaveShader::SpecificInitialization(ID3D11Device* device) {
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleState._Myptr);
+	result = device->CreateSamplerState(&samplerDesc, &mSampleState);
 	if(FAILED(result)) {
 		return false;
 	}

@@ -8,13 +8,13 @@ OrthoColorShader::OrthoColorShader(void) {
 OrthoColorShader::~OrthoColorShader(void) {
 }
 
-bool OrthoColorShader::Render(ID3D11DeviceContext* context, int indexCount, D3DXMATRIX *worldMatrix) {
+bool OrthoColorShader::Render(ID3D11DeviceContext* context, int indexCount, Matrix *worldMatrix) {
 	// setup matrix buffer
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	unsigned int bufferNumber = 0;
 
 	// Lock the constant buffer so it can be written to.
-	HRESULT result = context->Map(mMatrixBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	HRESULT result = context->Map(mMatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -23,13 +23,14 @@ bool OrthoColorShader::Render(ID3D11DeviceContext* context, int indexCount, D3DX
 	MatrixBufferType* dataPtr = (MatrixBufferType*)mappedResource.pData;
 
 	// Transpose the matrix to prepare them for the shader.
-	D3DXMatrixTranspose(&dataPtr->world, worldMatrix);
+	worldMatrix->Transpose(dataPtr->world);
+	//D3DXMatrixTranspose(&dataPtr->world, worldMatrix);
 
 	// Unlock the constant buffer.
-	context->Unmap(mMatrixBuffer.get(), 0);
+	context->Unmap(mMatrixBuffer, 0);
 
 	// Finally set the constant buffer in the vertex shader with the updated values.
-	context->VSSetConstantBuffers(bufferNumber, 1, &mMatrixBuffer._Myptr);
+	context->VSSetConstantBuffers(bufferNumber, 1, &(mMatrixBuffer.p));
 
 	// Render
 	RenderShader(context,indexCount);
@@ -40,10 +41,10 @@ bool OrthoColorShader::Render(ID3D11DeviceContext* context, int indexCount, D3DX
 ShaderDescription OrthoColorShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/orthocolor.vsh";
+	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthocolor.vsh";
 	shaderDescription.vertexShaderDesc.shaderFunctionName = "ColorVertexShader";
 
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/orthocolor.psh";
+	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pOrthocolor.psh";
 	shaderDescription.pixelShaderDesc.shaderFunctionName = "ColorPixelShader";
 
 	shaderDescription.polygonLayout = new D3D11_INPUT_ELEMENT_DESC[2];
@@ -81,7 +82,7 @@ bool OrthoColorShader::SpecificInitialization(ID3D11Device* device) {
 	matrixBufferDesc.StructureByteStride = 0;
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	bool result = device->CreateBuffer(&matrixBufferDesc, NULL, &mMatrixBuffer._Myptr);
+	HRESULT result = device->CreateBuffer(&matrixBufferDesc, NULL, &mMatrixBuffer);
 	if(FAILED(result)) {
 		return false;
 	}

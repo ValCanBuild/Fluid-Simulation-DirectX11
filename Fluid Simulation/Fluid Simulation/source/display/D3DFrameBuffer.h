@@ -10,7 +10,7 @@ Version: 1.0
 #ifndef _D3DFRAMEBUFFER_H
 #define _D3DFRAMEBUFFER_H
 
-#include <memory>
+#include <atlbase.h>
 
 #include "IFrameBuffer.h"
 #include "../utilities/D3dIncludes.h"
@@ -19,9 +19,10 @@ class D3DGraphicsObject;
 
 class D3DFrameBuffer : public IFrameBuffer {
 public:
-	D3DFrameBuffer();
+	D3DFrameBuffer(DXGI_FORMAT bufferFormat = DXGI_FORMAT_R32G32B32A32_FLOAT);
 	~D3DFrameBuffer();
 
+	// Initialize a D3DFrameBuffer with the given width, height and buffer format. Default buffer format is R32G32B32A32_FLOAT
 	bool Initialize(IGraphicsObject* graphicsObject, int width, int height);
 
 	void BeginRender(float clearRed, float clearGreen, float clearBlue, float clearAlpha) const;
@@ -31,11 +32,13 @@ public:
 	const void* GetTextureResource() const;
 
 private:
-	std::unique_ptr<ID3D11Texture2D,COMDeleter>				mRenderTargetTexture;
-	std::unique_ptr<ID3D11RenderTargetView,COMDeleter>		mRenderTargetView;
-	std::unique_ptr<ID3D11ShaderResourceView,COMDeleter>	mShaderResourceView;
+	CComPtr<ID3D11Texture2D>			mRenderTargetTexture;
+	CComPtr<ID3D11RenderTargetView>		mRenderTargetView;
+	CComPtr<ID3D11ShaderResourceView>	mShaderResourceView;
 
 	D3DGraphicsObject *pD3dGraphicsObject;
+
+	DXGI_FORMAT	mBufferFormat;
 };
 
 #endif

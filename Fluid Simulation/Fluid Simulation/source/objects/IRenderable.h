@@ -18,7 +18,7 @@ public:
 	virtual ~IRenderable(){}
 
 	virtual bool Initialize(IGraphicsObject* graphicsObject, HWND hwnd) = 0;
-	virtual bool Render(const D3DXMATRIX* viewMatrix, const D3DXMATRIX* projMatrix) = 0;
+	virtual bool Render(const Matrix* viewMatrix, const Matrix* projMatrix) = 0;
 };
 
 #endif

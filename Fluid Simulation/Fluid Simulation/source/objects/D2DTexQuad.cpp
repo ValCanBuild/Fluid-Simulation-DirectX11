@@ -13,12 +13,11 @@ Version: 1.0
 #include "../display/D3DShaders/OrthoTextureShader.h"
 
 struct VertexTypeTex {
-	Vector3f position;
-	Vector2f texC;
+	Vector3 position;
+	Vector2 texC;
 };
 
 D2DTexQuad::D2DTexQuad() {
-	D3DXMatrixIdentity(&mTransformMatrix);
 	pD3dGraphicsObj = nullptr;
 	pTextureResource = nullptr;
 }
@@ -44,24 +43,24 @@ bool D2DTexQuad::Initialize(IGraphicsObject* graphicsObject, HWND hwnd) {
 
 	// Load the vertex array with data.
 	// First triangle.
-	vertices[0].position = D3DXVECTOR3(left, top, 0.0f);  // Top left.
-	vertices[0].texC = D3DXVECTOR2(0.0f, 0.0f);
+	vertices[0].position = Vector3(left, top, 0.0f);  // Top left.
+	vertices[0].texC = Vector2(0.0f, 0.0f);
 
-	vertices[1].position = D3DXVECTOR3(right, bottom, 0.0f);  // Bottom right.
-	vertices[1].texC = D3DXVECTOR2(1.0f, 1.0f);
+	vertices[1].position = Vector3(right, bottom, 0.0f);  // Bottom right.
+	vertices[1].texC = Vector2(1.0f, 1.0f);
 
-	vertices[2].position = D3DXVECTOR3(left, bottom, 0.0f);  // Bottom left.
-	vertices[2].texC = D3DXVECTOR2(0.0f, 1.0f);
+	vertices[2].position = Vector3(left, bottom, 0.0f);  // Bottom left.
+	vertices[2].texC = Vector2(0.0f, 1.0f);
 
 	// Second triangle.
-	vertices[3].position = D3DXVECTOR3(left, top, 0.0f);  // Top left.
-	vertices[3].texC = D3DXVECTOR2(0.0f, 0.0f);
+	vertices[3].position = Vector3(left, top, 0.0f);  // Top left.
+	vertices[3].texC = Vector2(0.0f, 0.0f);
 
-	vertices[4].position = D3DXVECTOR3(right, top, 0.0f);  // Top right.
-	vertices[4].texC = D3DXVECTOR2(1.0f, 0.0f);
+	vertices[4].position = Vector3(right, top, 0.0f);  // Top right.
+	vertices[4].texC = Vector2(1.0f, 0.0f);
 
-	vertices[5].position = D3DXVECTOR3(right, bottom, 0.0f);  // Bottom right.
-	vertices[5].texC = D3DXVECTOR2(1.0f, 1.0f);
+	vertices[5].position = Vector3(right, bottom, 0.0f);  // Bottom right.
+	vertices[5].texC = Vector2(1.0f, 1.0f);
 
 	DWORD* indices = new DWORD[6];
 
@@ -83,7 +82,7 @@ bool D2DTexQuad::Initialize(IGraphicsObject* graphicsObject, HWND hwnd) {
 	return true;
 }
 
-bool D2DTexQuad::Render(const D3DXMATRIX* viewMatrix, const D3DXMATRIX* projMatrix) {
+bool D2DTexQuad::Render(const Matrix* viewMatrix, const Matrix* projMatrix) {
 	mRenderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
 	return mShader->Render(pD3dGraphicsObj->GetDeviceContext(),mRenderer->GetIndexCount(),pTextureResource);
 }
@@ -93,7 +92,7 @@ D3DRenderer* D2DTexQuad::GetRenderer() {
 }
 
 void D2DTexQuad::SetScale(float scaleX, float scaleY) {
-	D3DXMatrixScaling(&mTransformMatrix,scaleX,scaleY,1.0f);
+	mTransformMatrix = Matrix::CreateScale(scaleX,scaleY,1.0f);
 }
 
 void D2DTexQuad::SetTexture(ID3D11ShaderResourceView* textureResource) {

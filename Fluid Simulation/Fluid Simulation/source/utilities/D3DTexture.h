@@ -9,7 +9,7 @@ Version: 1.0
 #ifndef _D3DTEXTURE_H
 #define _D3DTEXTURE_H
 
-#include <memory>
+#include <atlbase.h>
 
 #include "D3dIncludes.h"
 
@@ -18,12 +18,12 @@ public:
 	D3DTexture();
 	~D3DTexture();
 
-	bool Initialize(ID3D11Device* device, WCHAR* filename);
+	bool Initialize(ID3D11Device* device, ID3D11DeviceContext* context, WCHAR* filename);
 
 	ID3D11ShaderResourceView* GetTexture();
 
 private:
-	std::unique_ptr<ID3D11ShaderResourceView,COMDeleter> mTexture;
+	CComPtr<ID3D11ShaderResourceView> mTexture;
 };
 
 #endif

@@ -1,0 +1,39 @@
+//The Jacobi Iteration Pixel Shader Used to Solve Poisson Equations
+
+/////////////
+// BUFFERS //
+/////////////
+cbuffer InputBuffer {
+	float fTextureWidth;
+	float fTextureHeight;
+	float fAlpha;
+	float fInverseBeta;
+};
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTextures[2];	// 0 is the x vector; 1 is the b Vector  (Ax = b)
+SamplerState SampleType;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+};
+
+float4 JacobiPixelShader(PixelInputType input) : SV_TARGET {
+	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
+
+	float xL = shaderTextures[0].Sample(SampleType,input.tex - float2(rdFactors.x,0.0f)).x;
+	float xR = shaderTextures[0].Sample(SampleType,input.tex + float2(rdFactors.x,0.0f)).x;
+	float xB = shaderTextures[0].Sample(SampleType,input.tex - float2(0.0f,rdFactors.y)).x;
+	float xT = shaderTextures[0].Sample(SampleType,input.tex + float2(0.0f,rdFactors.y)).x;
+
+	float bC = shaderTextures[1].Sample(SampleType,input.tex).x;
+
+	float final = (xL + xR + xB + xT + (fAlpha * bC) ) * fInverseBeta;
+	return float4(final,0.0f,0.0f,1.0f);
+}

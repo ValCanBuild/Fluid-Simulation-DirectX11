@@ -6,8 +6,12 @@ Author: Valentin Hinov
 Date: 02/09/2013
 Version: 1.0
 **************************************************************/
+#include <wincodec.h>
 
 #include "D3DGraphicsObject.h"
+#include "ScreenGrab.h"
+
+using namespace DirectX;
 
 D3DGraphicsObject::D3DGraphicsObject(){
 
@@ -171,8 +175,12 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 
 	// Create the swap chain, Direct3D device, and Direct3D device context.
-	result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1, 
-		D3D11_SDK_VERSION, &swapChainDesc, &(mSwapChain._Myptr), &(mDevice._Myptr), NULL, &(mDeviceContext._Myptr));
+	UINT creationFlags = 0;
+	#if defined (_DEBUG)
+	creationFlags = D3D11_CREATE_DEVICE_DEBUG;
+	#endif
+	result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creationFlags, &featureLevel, 1, 
+		D3D11_SDK_VERSION, &swapChainDesc, &mSwapChain, &mDevice, NULL, &mDeviceContext);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -185,7 +193,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	}
 
 	// Create the render target view with the back buffer pointer.
-	result = mDevice->CreateRenderTargetView(backBufferPtr, NULL, &(mRenderTargetView._Myptr));
+	result = mDevice->CreateRenderTargetView(backBufferPtr, NULL, &mRenderTargetView);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -212,7 +220,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	depthBufferDesc.MiscFlags = 0;
 
 	// Create the texture for the depth buffer using the filled out description.
-	result = mDevice->CreateTexture2D(&depthBufferDesc, NULL, &(mDepthStencilBuffer._Myptr));
+	result = mDevice->CreateTexture2D(&depthBufferDesc, NULL, &mDepthStencilBuffer);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -223,7 +231,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	}
 
 	// Set the depth stencil state.
-	mDeviceContext->OMSetDepthStencilState(mDepthStencilState.get(), 1);
+	mDeviceContext->OMSetDepthStencilState(mDepthStencilState, 1);
 
 	// Initailze the depth stencil view.
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
@@ -235,7 +243,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 	// Create the depth stencil view.
-	result = mDevice->CreateDepthStencilView(mDepthStencilBuffer.get(), &depthStencilViewDesc, &(mDepthStencilView._Myptr));
+	result = mDevice->CreateDepthStencilView(mDepthStencilBuffer, &depthStencilViewDesc, &mDepthStencilView);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -246,7 +254,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	}
 
 	// Bind the render target view and depth stencil buffer to the output render pipeline.
-	mDeviceContext->OMSetRenderTargets(1, &(mRenderTargetView._Myptr), mDepthStencilView.get());
+	mDeviceContext->OMSetRenderTargets(1, &(mRenderTargetView.p), mDepthStencilView);
 
 	// Setup the raster description which will determine how and what polygons will be drawn.
 	D3D11_RASTERIZER_DESC rasterDesc;
@@ -263,13 +271,13 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 
 	// Create the rasterizer state from the description we just filled out.
 	//ID3D11RasterizerState *rasterizerState = ;
-	result = mDevice->CreateRasterizerState(&rasterDesc, &(mRasterState._Myptr));
+	result = mDevice->CreateRasterizerState(&rasterDesc, &mRasterState);
 	if(FAILED(result)) {
 		return false;
 	}
 
 	// Now set the rasterizer state.
-	mDeviceContext->RSSetState(mRasterState.get());
+	mDeviceContext->RSSetState(mRasterState);
 
 	D3D11_VIEWPORT viewport;
 	// Setup the viewport for rendering.
@@ -284,17 +292,19 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	mDeviceContext->RSSetViewports(1, &viewport);
 
 	// Setup the projection matrix.
-	float fieldOfView = (float)D3DX_PI / 4.0f;
+	float fieldOfView = (float)PI / 4.0f;
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
 	// Create the projection matrix for 3D rendering.
-	D3DXMatrixPerspectiveFovLH(&mProjectionMatrix, fieldOfView, screenAspect, screenNear, screenDepth);
+	mProjectionMatrix = Matrix::CreatePerspectiveFieldOfView(fieldOfView, screenAspect, screenNear, screenDepth);
+	//D3DXMatrixPerspectiveFovLH(&mProjectionMatrix, fieldOfView, screenAspect, screenNear, screenDepth);
 
 	// Initialize the world matrix to the identity matrix.
-	D3DXMatrixIdentity(&mWorldMatrix);
+	//D3DXMatrixIdentity(&mWorldMatrix);
 
 	// Create an orthographic projection matrix for 2D rendering.
-	D3DXMatrixOrthoLH(&mOrthoMatrix, (float)screenWidth, (float)screenHeight, screenNear, screenDepth);
+	mOrthoMatrix = Matrix::CreateOrthographic((float)screenWidth, (float)screenHeight, screenNear, screenDepth);
+	//D3DXMatrixOrthoLH(&mOrthoMatrix, (float)screenWidth, (float)screenHeight, screenNear, screenDepth);
 
 	return true;
 }
@@ -312,7 +322,7 @@ bool D3DGraphicsObject::BuildBlendStates() {
 	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-	HRESULT result = mDevice->CreateBlendState(&blendDesc, &(mTransparentBS._Myptr));
+	HRESULT result = mDevice->CreateBlendState(&blendDesc, &mTransparentBS);
 
 	if (FAILED(result)){
 		return false;
@@ -332,7 +342,7 @@ bool D3DGraphicsObject::BuildBlendStates() {
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
 
 	// Create the blend state using the description.
-	result = mDevice->CreateBlendState(&blendDesc, &(mAlphaEnabledBS._Myptr));
+	result = mDevice->CreateBlendState(&blendDesc, &mAlphaEnabledBS);
 
 	if(FAILED(result)){
 		return false;
@@ -342,7 +352,7 @@ bool D3DGraphicsObject::BuildBlendStates() {
 	blendDesc.RenderTarget[0].BlendEnable = FALSE;
 
 	// Create the second blend state using the description.
-	result = mDevice->CreateBlendState(&blendDesc, &(mAlphaDisabledBS._Myptr));
+	result = mDevice->CreateBlendState(&blendDesc, &mAlphaDisabledBS);
 
 	if(FAILED(result)){
 		return false;
@@ -378,14 +388,14 @@ bool D3DGraphicsObject::BuildDepthStencilStates() {
 	depthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 
 	// Create the default depth stencil state.
-	HRESULT result = mDevice->CreateDepthStencilState(&depthStencilDesc, &(mDepthStencilState._Myptr));
+	HRESULT result = mDevice->CreateDepthStencilState(&depthStencilDesc, &mDepthStencilState);
 	if(FAILED(result)) {
 		return false;
 	}
 
 	// Create the depth disabled stencil state
 	depthStencilDesc.DepthEnable = false;
-	result = mDevice->CreateDepthStencilState(&depthStencilDesc, &(mDepthDisabledStencilState._Myptr));
+	result = mDevice->CreateDepthStencilState(&depthStencilDesc, &mDepthDisabledStencilState);
 	if(FAILED(result)) {
 		return false;
 	}
@@ -403,10 +413,10 @@ void D3DGraphicsObject::BeginRender(float red, float green, float blue, float al
 	color[3] = alpha;
 
 	// Clear the back buffer.
-	mDeviceContext->ClearRenderTargetView(mRenderTargetView.get(), color);
+	mDeviceContext->ClearRenderTargetView(mRenderTargetView, color);
     
 	// Clear the depth buffer.
-	mDeviceContext->ClearDepthStencilView(mDepthStencilView.get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	mDeviceContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 void D3DGraphicsObject::EndRender() {
@@ -425,15 +435,14 @@ void D3DGraphicsObject::EndRender() {
 
 void D3DGraphicsObject::SetBackBufferRenderTarget() const {
 	// Bind the render target view and depth stencil buffer to the output render pipeline.
-	mDeviceContext->OMSetRenderTargets(1, &(mRenderTargetView._Myptr), mDepthStencilView.get());
+	mDeviceContext->OMSetRenderTargets(1, &mRenderTargetView.p, mDepthStencilView);
 }
 
 bool D3DGraphicsObject::Screenshot(LPCWSTR name) const {
 	HRESULT hr;
 	ID3D11Resource *backbufferRes;
 	mRenderTargetView->GetResource(&backbufferRes);
-
-	hr = D3DX11SaveTextureToFile(mDeviceContext.get(), backbufferRes, D3DX11_IFF_JPG, name);
+	hr = SaveWICTextureToFile(mDeviceContext, backbufferRes, GUID_ContainerFormatJpeg, name);
 	if (FAILED(hr)){
 		return false;
 	}
@@ -452,40 +461,40 @@ void D3DGraphicsObject::SetAlphaBlendState(bool state) const {
 	
 	// Turn on the alpha blending.
 	if (state)
-		mDeviceContext->OMSetBlendState(mAlphaEnabledBS.get(), blendFactors, 0xffffffff);
+		mDeviceContext->OMSetBlendState(mAlphaEnabledBS, blendFactors, 0xffffffff);
 	else
-		mDeviceContext->OMSetBlendState(mAlphaDisabledBS.get(), blendFactors, 0xffffffff);
+		mDeviceContext->OMSetBlendState(mAlphaDisabledBS, blendFactors, 0xffffffff);
 }
 
 void D3DGraphicsObject::SetZBufferState(bool state) const {
 	if (state)
-		mDeviceContext->OMSetDepthStencilState(mDepthStencilState.get(), 1);
+		mDeviceContext->OMSetDepthStencilState(mDepthStencilState, 1);
 	else
-		mDeviceContext->OMSetDepthStencilState(mDepthDisabledStencilState.get(), 1);
+		mDeviceContext->OMSetDepthStencilState(mDepthDisabledStencilState, 1);
 }
 
 ///GETTERS///
 ID3D11Device* D3DGraphicsObject::GetDevice()const {
-	return mDevice.get();
+	return mDevice;
 }
 
 ID3D11DeviceContext* D3DGraphicsObject::GetDeviceContext()const {
-	return mDeviceContext.get();
+	return mDeviceContext;
 }
 
 ID3D11DepthStencilView* D3DGraphicsObject::GetDepthStencilView() const {
-	return mDepthStencilView.get();
+	return mDepthStencilView;
 }
 
-void D3DGraphicsObject::GetProjectionMatrix(D3DXMATRIX& projectionMatrix)const {
+void D3DGraphicsObject::GetProjectionMatrix(Matrix& projectionMatrix)const {
 	projectionMatrix = mProjectionMatrix;
 }
 
-void D3DGraphicsObject::GetWorldMatrix(D3DXMATRIX& worldMatrix)const {
+void D3DGraphicsObject::GetWorldMatrix(Matrix& worldMatrix)const {
 	worldMatrix = mWorldMatrix;
 }
 
-void D3DGraphicsObject::GetOrthoMatrix(D3DXMATRIX& orthoMatrix)const {
+void D3DGraphicsObject::GetOrthoMatrix(Matrix& orthoMatrix)const {
 	orthoMatrix = mOrthoMatrix;
 }
 

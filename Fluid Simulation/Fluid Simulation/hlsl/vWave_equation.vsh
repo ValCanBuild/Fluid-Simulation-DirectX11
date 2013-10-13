@@ -41,10 +41,10 @@ PixelInputType WaveVertexShader(VertexInputType input) {
 	float texelSizeV = 1.0f / screenHeight;
 
     // Create UV coordinates for the pixel and its four horizontal neighbors on either side.
-    output.texCoord1 = input.tex + float2(texelSizeU, 0.0f);	//i+1, 0
-    output.texCoord2 = input.tex - float2(texelSizeU, 0.0f);	//i-1, 0
-	output.texCoord3 = input.tex + float2(0.0f, texelSizeV);	//0, j+1
-    output.texCoord4 = input.tex - float2(0.0f, texelSizeV);	//0, j-1
+    output.texCoord1 = input.tex + float2(texelSizeU, 0.0);	//i+1, 0
+    output.texCoord2 = input.tex - float2(texelSizeU, 0.0);	//i-1, 0
+	output.texCoord3 = input.tex + float2(0.0, texelSizeV);	//0, j+1
+    output.texCoord4 = input.tex - float2(0.0, texelSizeV);	//0, j-1
 
 
     return output;

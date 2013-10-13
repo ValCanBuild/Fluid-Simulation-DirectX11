@@ -7,17 +7,16 @@ struct PixelInputType {
 };
 
 Texture2D shaderTexture;
-
-SamplerState SampleType
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Clamp;
-    AddressV = Clamp;
-};
+SamplerState SampleType;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Pixel Shader
 ////////////////////////////////////////////////////////////////////////////////
 float4 TexturePixelShader(PixelInputType input) : SV_TARGET {
     return shaderTexture.Sample(SampleType, input.texC);
+	/*float col = shaderTexture.Sample(SampleType, input.texC).r;
+	if (col < 0.0f)
+		return float4(0.0f,0.0f,-col,1.0f);
+	else
+		return float4(col,0.0f,0.0f,1.0f);*/
 }

@@ -1,0 +1,34 @@
+/////////////
+// BUFFERS //
+/////////////
+cbuffer InputBuffer {
+	float fTextureWidth;
+	float fTextureHeight;
+	float fTimeStep;
+	float fDissipation;	
+};
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTextures[2];	// 0 is the velocity field texture and 1 is the field that is to be advected
+SamplerState SampleType;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+};
+
+// Pixel Shader
+float4 AdvectionPixelShader(PixelInputType input) : SV_TARGET {
+	float2 u = shaderTextures[0].Sample(SampleType, input.tex).xy;	// velocity
+
+	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
+
+	float2 prevPos = input.tex - (u*rdFactors*fTimeStep);
+	float4 final = shaderTextures[1].Sample(SampleType,prevPos);
+	return final*fDissipation;
+}

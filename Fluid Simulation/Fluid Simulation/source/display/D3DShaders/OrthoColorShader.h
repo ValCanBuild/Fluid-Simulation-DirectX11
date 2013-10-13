@@ -16,18 +16,18 @@ public:
 	OrthoColorShader();
 	~OrthoColorShader();
 
-	bool Render(ID3D11DeviceContext* context, int indexCount, D3DXMATRIX *worldMatrix);
+	bool Render(ID3D11DeviceContext* context, int indexCount, Matrix *worldMatrix);
 
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
 
 private:
-	std::unique_ptr<ID3D11Buffer,COMDeleter> mMatrixBuffer;
+	CComPtr<ID3D11Buffer> mMatrixBuffer;
 
 private:
 	struct MatrixBufferType {
-		D3DXMATRIX world;
+		Matrix world;
 	};
 };
 

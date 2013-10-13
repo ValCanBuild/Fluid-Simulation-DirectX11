@@ -4,7 +4,6 @@ screen.
 
 Author: Valentin Hinov
 Date: 02/09/2013
-Version: 1.0
 **************************************************************/
 #ifndef _GRAPHICSYSTEM_H_
 #define _GRAPHICSYSTEM_H_
@@ -14,15 +13,7 @@ Version: 1.0
 
 #include "../display/IGraphicsObject.h"
 
-class Camera;
-class D3DRenderer;
-class OrthoTextureShader;
-class OrthoColorShader;
-class D3DTexture;
-class IFrameBuffer;
-class D2DTexQuad;
-class D2DColorQuad;
-class WaveShader;
+class IScene;
 
 using namespace std;
 
@@ -42,7 +33,7 @@ public:
 	~GraphicsSystem();
 
 	bool Initialize(int, int, HWND);
-	bool Frame();
+	bool Frame(float delta);	// delta time in seconds
 
 	bool TakeScreenshot(LPCWSTR name) const;
 
@@ -51,21 +42,7 @@ private:
 
 private:
 	unique_ptr<IGraphicsObject> mGraphicsObj;
-	unique_ptr<Camera> mCamera;
-	unique_ptr<D3DRenderer> mWindowRenderer;
-	unique_ptr<D3DRenderer> mInteractionRenderer;
-	unique_ptr<OrthoTextureShader> mTextureShader;
-	unique_ptr<OrthoColorShader> mColorShader;
-	unique_ptr<D3DTexture> mTexture;
-	unique_ptr<IFrameBuffer> mFrameBuffer;
-	unique_ptr<IFrameBuffer> mFrameBuffer2;
-	unique_ptr<IFrameBuffer> mFrameBuffer3;
-	//unique_ptr<IFrameBuffer> mFrameBuffer4;
-	unique_ptr<D2DTexQuad> mQuad;
-	unique_ptr<D2DColorQuad> mColorQuad;
-	unique_ptr<WaveShader> mWaveShader;
-
-	IFrameBuffer** mFrameArray;
+	unique_ptr<IScene> mCurrentScene;
 };
 
 #endif

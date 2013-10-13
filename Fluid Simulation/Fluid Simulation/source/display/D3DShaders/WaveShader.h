@@ -18,7 +18,7 @@ public:
 	WaveShader();
 	~WaveShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D11ShaderResourceView** texArr);
+	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D11ShaderResourceView* texNow, ID3D11ShaderResourceView* texPrev);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -28,11 +28,11 @@ private:
 	struct ScreenSizeBuffer {
 		float screenWidth;
 		float screenHeight;
-		Vector2f padding;
+		Vector2 padding;
 	};
 
-	std::unique_ptr<ID3D11Buffer,COMDeleter> mScreenSizeBuffer;
-	std::unique_ptr<ID3D11SamplerState,COMDeleter> mSampleState;
+	CComPtr<ID3D11Buffer>		mScreenSizeBuffer;
+	CComPtr<ID3D11SamplerState> mSampleState;
 };
 
 #endif

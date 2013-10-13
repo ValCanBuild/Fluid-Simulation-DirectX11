@@ -1,0 +1,42 @@
+/////////////
+// BUFFERS //
+/////////////
+cbuffer InputBuffer {
+	float fTextureWidth;
+	float fTextureHeight;
+	float fGradientScale;	//usually is 0.5f/gridScale
+	float padding0;	//padding to align to 16 bytes
+};
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTexture[2];	// 0 contains the velocity field, 1 contains the pressure field
+SamplerState SampleType[2]; // 0 contains the velocity sampler, 1 contains the pressure sampler
+
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+};
+
+// Pixel Shader
+float4 SubtractGradientPixelShader(PixelInputType input) : SV_TARGET {
+	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
+
+	// Find neighbouring pressure
+	float pN = shaderTexture[1].Sample(SampleType[1], input.tex + float2(0.0f, rdFactors.y)).r;
+	float pS = shaderTexture[1].Sample(SampleType[1], input.tex - float2(0.0f, rdFactors.y)).r;
+	float pE = shaderTexture[1].Sample(SampleType[1], input.tex + float2(rdFactors.x, 0.0f)).r;
+	float pW = shaderTexture[1].Sample(SampleType[1], input.tex - float2(rdFactors.x, 0.0f)).r;
+
+	// Enforce the free-slip boundary condition:
+	float2 oldV = shaderTexture[0].Sample(SampleType[0], input.tex).xy;
+	float2 grad = float2(pE - pW, pN - pS) * fGradientScale;
+	float2 newV = oldV - grad;
+
+	return float4(newV,0.0f,1.0f);
+}

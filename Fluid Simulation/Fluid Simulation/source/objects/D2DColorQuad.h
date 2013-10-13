@@ -28,9 +28,9 @@ public:
 	~D2DColorQuad();
 
 	bool Initialize(IGraphicsObject* graphicsObject, HWND hwnd);
-	bool Render(const D3DXMATRIX* viewMatrix, const D3DXMATRIX* projMatrix);
+	bool Render(const Matrix* viewMatrix, const Matrix* projMatrix);
 
-	void SetColor(Vector4f colorV);
+	void SetColor(Color colorV);
 
 public:
 	Transform mTransform;

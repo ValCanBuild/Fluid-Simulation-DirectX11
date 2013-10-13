@@ -12,7 +12,7 @@ Version: 1.0
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <memory>
+#include <atlbase.h>
 
 #include "IGraphicsObject.h"
 #include "../utilities/D3dIncludes.h"
@@ -36,9 +36,9 @@ public:
 
 	void GetVideoCardInfo(char *cardName, int& memory) const;
 
-	void GetProjectionMatrix(D3DXMATRIX&) const;
-	void GetWorldMatrix(D3DXMATRIX&) const;
-	void GetOrthoMatrix(D3DXMATRIX&) const;
+	void GetProjectionMatrix(Matrix&) const;
+	void GetWorldMatrix(Matrix&) const;
+	void GetOrthoMatrix(Matrix&) const;
 
 	void GetScreenDimensions(int &width, int &height) const;
 	void GetScreenDepthInfo(float &nearVal, float &farVal) const;
@@ -67,28 +67,28 @@ private:
 	float	mScreenNear;
 	float	mScreenDepth;
 
-	D3DXMATRIX mProjectionMatrix;
-	D3DXMATRIX mWorldMatrix;
-	D3DXMATRIX mOrthoMatrix;
+	Matrix mProjectionMatrix;
+	Matrix mWorldMatrix;
+	Matrix mOrthoMatrix;
 
 	bool	mVsyncEnabled;
 	int		mVideoCardMemoryMB;
 	char	mVideoCardDescription[128];
 
-	unique_ptr<ID3D11BlendState,COMDeleter>			mTransparentBS;
-	unique_ptr<ID3D11BlendState,COMDeleter>			mAlphaEnabledBS;
-	unique_ptr<ID3D11BlendState,COMDeleter>			mAlphaDisabledBS;
-
-	unique_ptr<ID3D11DepthStencilState,COMDeleter>  mDepthStencilState;
-	unique_ptr<ID3D11DepthStencilState,COMDeleter>  mDepthDisabledStencilState;
+	CComPtr<ID3D11BlendState>			mTransparentBS;
+	CComPtr<ID3D11BlendState>			mAlphaEnabledBS;
+	CComPtr<ID3D11BlendState>			mAlphaDisabledBS;
 	
-	unique_ptr<IDXGISwapChain,COMDeleter>			mSwapChain;
-	unique_ptr<ID3D11Device,COMDeleter> 			mDevice;
-	unique_ptr<ID3D11DeviceContext,COMDeleter> 		mDeviceContext;
-	unique_ptr<ID3D11RenderTargetView,COMDeleter> 	mRenderTargetView;
-	unique_ptr<ID3D11Texture2D,COMDeleter> 			mDepthStencilBuffer;
-	unique_ptr<ID3D11DepthStencilView,COMDeleter>	mDepthStencilView;
-	unique_ptr<ID3D11RasterizerState,COMDeleter>	mRasterState;
+	CComPtr<ID3D11DepthStencilState>  mDepthStencilState;
+	CComPtr<ID3D11DepthStencilState>  mDepthDisabledStencilState;
+	
+	CComPtr<IDXGISwapChain>			mSwapChain;
+	CComPtr<ID3D11Device> 			mDevice;
+	CComPtr<ID3D11DeviceContext> 	mDeviceContext;
+	CComPtr<ID3D11RenderTargetView> mRenderTargetView;
+	CComPtr<ID3D11Texture2D> 		mDepthStencilBuffer;
+	CComPtr<ID3D11DepthStencilView>	mDepthStencilView;
+	CComPtr<ID3D11RasterizerState>	mRasterState;
 
 };
 #endif

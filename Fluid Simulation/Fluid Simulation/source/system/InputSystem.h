@@ -18,6 +18,7 @@ public:
 	~InputSystem();
 
 	void Initialize();
+	void Update(float delta);
 
 	void KeyDown(unsigned int);
 	void KeyUp(unsigned int);
@@ -28,10 +29,12 @@ public:
 	// change in mouse key status
 	// 0 - Left
 	// 1 - Right
+	// 2 - Mid
 	void OnMouseButtonAction(int key, bool status);
 
 	bool IsMouseLeftDown() const;
 	bool IsMouseRightDown() const;
+	bool IsMouseMidDown() const;
 
 	void GetMousePos(int& xPos, int& yPos) const;
 	void GetMouseDelta(int& xDelta, int& yDelta) const;
@@ -39,7 +42,8 @@ public:
 
 private:
 	bool mKeys[256];
-	bool mMouseLeft,mMouseRight;
+	int mLastKeyDown;
+	bool mMouseLeft,mMouseRight, mMouseMid;
 
 	int mMouseX,mMouseY;
 	int mMouseDeltaX,mMouseDeltaY;

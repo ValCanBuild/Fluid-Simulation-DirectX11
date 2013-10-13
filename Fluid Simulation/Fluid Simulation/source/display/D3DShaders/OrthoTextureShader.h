@@ -21,6 +21,8 @@ public:
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
+
+	CComPtr<ID3D11SamplerState> mSampleState;
 };
 
 #endif

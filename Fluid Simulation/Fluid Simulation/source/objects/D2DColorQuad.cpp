@@ -13,8 +13,8 @@ Version: 1.0
 #include "../display/D3DShaders/OrthoColorShader.h"
 
 struct VertexType {
-	Vector3f position;
-	Vector4f color;
+	Vector3 position;
+	Color color;
 };
 
 D2DColorQuad::D2DColorQuad() {
@@ -41,24 +41,24 @@ bool D2DColorQuad::Initialize(IGraphicsObject* graphicsObject, HWND hwnd) {
 
 	// Load the vertex array with data.
 	// First triangle.
-	vertices[0].position = D3DXVECTOR3(left, top, 0.0f);  // Top left.
-	vertices[0].color = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+	vertices[0].position = Vector3(left, top, 0.0f);  // Top left.
+	vertices[0].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-	vertices[1].position = D3DXVECTOR3(right, bottom, 0.0f);  // Bottom right.
-	vertices[1].color = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+	vertices[1].position = Vector3(right, bottom, 0.0f);  // Bottom right.
+	vertices[1].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-	vertices[2].position = D3DXVECTOR3(left, bottom, 0.0f);  // Bottom left.
-	vertices[2].color = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+	vertices[2].position = Vector3(left, bottom, 0.0f);  // Bottom left.
+	vertices[2].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Second triangle.
-	vertices[3].position = D3DXVECTOR3(left, top, 0.0f);  // Top left.
-	vertices[3].color = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+	vertices[3].position = Vector3(left, top, 0.0f);  // Top left.
+	vertices[3].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-	vertices[4].position = D3DXVECTOR3(right, top, 0.0f);  // Top right.
-	vertices[4].color = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+	vertices[4].position = Vector3(right, top, 0.0f);  // Top right.
+	vertices[4].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-	vertices[5].position = D3DXVECTOR3(right, bottom, 0.0f);  // Bottom right.
-	vertices[5].color = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+	vertices[5].position = Vector3(right, bottom, 0.0f);  // Bottom right.
+	vertices[5].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
 	DWORD* indices = new DWORD[6];
 
@@ -80,13 +80,13 @@ bool D2DColorQuad::Initialize(IGraphicsObject* graphicsObject, HWND hwnd) {
 	return true;
 }
 
-bool D2DColorQuad::Render(const D3DXMATRIX* viewMatrix, const D3DXMATRIX* projMatrix) {
+bool D2DColorQuad::Render(const Matrix* viewMatrix, const Matrix* projMatrix) {
 	mRenderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-	D3DXMATRIX transformMatrix;
+	Matrix transformMatrix;
 	mTransform.GetTransformMatrix(transformMatrix);
 	return mShader->Render(pD3dGraphicsObj->GetDeviceContext(),mRenderer->GetIndexCount(), &transformMatrix);
 }
 
-void D2DColorQuad::SetColor(Vector4f colorV) {
+void D2DColorQuad::SetColor(Color colorV) {
 	
 }

@@ -7,10 +7,11 @@ Author: Valentin Hinov
 Date: 03/09/2013
 Version: 1.0
 **************************************************************/
-#include <d3dx11async.h>
 #include <fstream>
-
+#include <d3dcompiler.h>
 #include "BaseD3DShader.h"
+
+#pragma comment(lib, "D3DCompiler.lib")
 
 using namespace std;
 
@@ -20,9 +21,16 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	ID3D10Blob* vertexShaderBuffer = 0;
 	ID3D10Blob* errorMessage = 0;
 
+	int flags = 0;
+#if defined (_DEBUG)
+	flags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+	flags = D3D10_SHADER_ENABLE_STRICTNESS;
+#endif
+
 	// Create vertex shader
-	HRESULT result = D3DX11CompileFromFile(shaderDesc.vertexShaderDesc.shaderFilename, NULL, NULL, shaderDesc.vertexShaderDesc.shaderFunctionName, "vs_5_0", 
-								D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &vertexShaderBuffer, &errorMessage, NULL);
+	HRESULT result = D3DCompileFromFile(shaderDesc.vertexShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.vertexShaderDesc.shaderFunctionName, "vs_5_0",
+										flags, 0, &vertexShaderBuffer, &errorMessage);
 
 	if(FAILED(result)) {
 		// If the shader failed to compile it should have writen something to the error message.
@@ -40,8 +48,8 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	ID3D10Blob* pixelShaderBuffer = 0;
 
 	// Create pixel shader
-	result = D3DX11CompileFromFile(shaderDesc.pixelShaderDesc.shaderFilename, NULL, NULL, shaderDesc.pixelShaderDesc.shaderFunctionName, "ps_5_0", 
-								D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &pixelShaderBuffer, &errorMessage, NULL);
+	result = D3DCompileFromFile(shaderDesc.pixelShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.pixelShaderDesc.shaderFunctionName, "ps_5_0",
+										flags, 0, &pixelShaderBuffer, &errorMessage);
 
 	if(FAILED(result)) {
 		// If the shader failed to compile it should have writen something to the error message.
@@ -57,20 +65,31 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	}
 
 	// Create the vertex shader from the buffer.
-	result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &(mVertexShader._Myptr));
+	result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &mVertexShader);
 	if(FAILED(result)) {
 		return false;
 	}
 
 	// Create the pixel shader from the buffer.
-	result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &(mPixelShader._Myptr));
+	result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &mPixelShader);
 	if(FAILED(result)) {
 		return false;
 	}
 
+	/*ID3D11ShaderReflection* reflector = nullptr;
+	D3DReflect(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**) &reflector);
+
+	ID3D11ShaderReflectionConstantBuffer* pBuffer = reflector->GetConstantBufferByIndex(0);
+
+	D3D11_SHADER_BUFFER_DESC desc;
+	pBuffer->GetDesc(&desc);
+
+	reflector->Release();
+	reflector = nullptr;*/
+	
 	// Create polygon layout
 	result = device->CreateInputLayout(shaderDesc.polygonLayout,shaderDesc.numLayoutElements, 
-		vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &(mLayout._Myptr));
+		vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &mLayout);
 
 	if (FAILED(result)) {
 		return false;
@@ -91,11 +110,11 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 
 void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) {
 	// Set the vertex input layout.
-	context->IASetInputLayout(mLayout.get());
+	context->IASetInputLayout(mLayout);
 
 	// Set the vertex and pixel shaders that will be used to render this triangle.
-	context->VSSetShader(mVertexShader.get(), NULL, 0);
-	context->PSSetShader(mPixelShader.get(), NULL, 0);
+	context->VSSetShader(mVertexShader, NULL, 0);
+	context->PSSetShader(mPixelShader, NULL, 0);
 
 	// Render the triangle.
 	context->DrawIndexed(indexCount, 0, 0);

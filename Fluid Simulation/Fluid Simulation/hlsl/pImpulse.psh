@@ -1,0 +1,36 @@
+/////////////
+// BUFFERS //
+/////////////
+cbuffer InputBuffer {
+	float2 vPoint;	// the point of user interaction, must be in normalized window coordinates [0,1]
+	float2 vFillColor;	// the color which will represent the impulse magnitudes in the X and Y directions
+	float  fRadius;	// the extent to which the point of interaction affects neighbouring pixels
+	float3 padding;	//padding to align to 32 bytes
+};
+
+Texture2D originalTexture;
+SamplerState SampleType;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+};
+
+// Pixel Shader
+float4 ImpulsePixelShader(PixelInputType input) : SV_TARGET {
+	float d = distance(vPoint,input.tex);
+
+	float4 result = originalTexture.Sample(SampleType,input.tex);
+
+	if (d < fRadius) {
+		float a = (fRadius - d) * 0.5f;
+		a = min(a,1.0f);
+		return float4(vFillColor,0.0f,a);
+	}
+	return result;
+	//return originalTexture.Sample(SampleType,input.tex);
+	//return float4(originalCol,0.0f,originalCol.a);
+}

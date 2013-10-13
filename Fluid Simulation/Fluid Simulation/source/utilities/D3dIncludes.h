@@ -36,18 +36,21 @@ Version: 1.0
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment( lib, "d3d11.lib" )
-#pragma comment(lib, "d3dx10.lib")
 
-#if defined(DEBUG) || defined(_DEBUG)
+//#pragma comment(lib, "d3dx10.lib")
+
+/*#if defined(DEBUG) || defined(_DEBUG)
 	#pragma comment( lib, "d3dx11d.lib" )
 #else
 	#pragma comment( lib, "d3dx11.lib" )
-#endif
+#endif*/
 
 #include <dxgi.h>
 #include <d3d11.h>
-#include <D3DX11tex.h>
-#include <dxerr.h>
+#include <d3d11_1.h>
+//#include <D3DX11tex.h>
+//#include <dxerr.h>
+
 #include "../utilities/math/MathUtils.h"
 
 struct COMDeleter {

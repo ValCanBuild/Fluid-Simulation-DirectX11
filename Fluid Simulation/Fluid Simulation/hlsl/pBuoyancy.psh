@@ -1,0 +1,38 @@
+/////////////
+// BUFFERS //
+/////////////
+cbuffer InputBuffer {
+	float fAmbientTemperature;
+	float fTimeStep;
+	float fSigma;
+	float fKappa;	
+};
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTextures[3];	// 0 is the velocity field texture; 1 is the temperature field and 2 is the density
+SamplerState SampleType;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+};
+
+// Pixel Shader
+float4 BuoyancyPixelShader(PixelInputType input) : SV_TARGET {
+	float2 velocity = shaderTextures[0].Sample(SampleType, input.tex).xy;	// velocity
+	float temperature = shaderTextures[1].Sample(SampleType, input.tex).x;
+	float density = shaderTextures[2].Sample(SampleType, input.tex).x;
+
+	float2 result = velocity;
+
+	if (temperature > fAmbientTemperature) {
+		result += (fTimeStep * (temperature - fAmbientTemperature) * fSigma - (density * fKappa) ) * float2(0.0f,-1.0f);
+	}
+
+	return float4(result,0.0f,1.0f);
+}

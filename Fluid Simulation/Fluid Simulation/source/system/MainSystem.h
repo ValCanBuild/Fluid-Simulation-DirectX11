@@ -16,6 +16,7 @@ Version: 1.0
 #include "GraphicsSystem.h"
 #include "InputSystem.h"
 #include "ServiceProvider.h"
+#include "../utilities/AppTimer.h"
 
 using namespace std;
 
@@ -40,6 +41,8 @@ private:
 	LPCWSTR m_applicationName;
 	HINSTANCE m_hinstance;
 	HWND m_hwnd;
+
+	AppTimer mAppTimer;
 	
 	unique_ptr<InputSystem> mInput;
 	unique_ptr<GraphicsSystem> mGraphics;

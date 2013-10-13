@@ -26,7 +26,7 @@ public:
 	~D2DTexQuad();
 
 	bool Initialize(IGraphicsObject* graphicsObject, HWND hwnd);
-	bool Render(const D3DXMATRIX* viewMatrix, const D3DXMATRIX* projMatrix);
+	bool Render(const Matrix* viewMatrix, const Matrix* projMatrix);
 
 	void SetScale(float scaleX, float scaleY);
 	void SetTexture(ID3D11ShaderResourceView* textureResource);
@@ -40,7 +40,7 @@ private:
 	unique_ptr<D3DRenderer> mRenderer;
 	unique_ptr<OrthoTextureShader> mShader;	
 
-	D3DXMATRIX mTransformMatrix;
+	Matrix mTransformMatrix;
 	
 };
 

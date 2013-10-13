@@ -7,11 +7,14 @@ Version: 1.0
 **************************************************************/
 
 #include "system\MainSystem.h"
+#include "utilities\Console.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow) {
 
 	std::unique_ptr<MainSystem> mainSystem(new MainSystem());
 	
+	ShowWin32Console();
+
 	if (!mainSystem)
 		return 0;
 

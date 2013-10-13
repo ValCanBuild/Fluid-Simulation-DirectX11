@@ -13,7 +13,10 @@ Version: 1.0
 
 #include <windows.h>
 
-struct D3DXMATRIX;
+#if defined (D3D)
+	#include "SimpleMath.h"
+	using namespace DirectX::SimpleMath;
+#endif
 
 class IGraphicsObject {
 public:
@@ -27,9 +30,9 @@ public:
 
 	virtual void GetVideoCardInfo(char *cardName, int& memory) const = 0;
 
-	virtual void GetProjectionMatrix(D3DXMATRIX&) const = 0;
-	virtual void GetWorldMatrix(D3DXMATRIX&) const = 0;
-	virtual void GetOrthoMatrix(D3DXMATRIX&) const = 0;
+	virtual void GetProjectionMatrix(Matrix&) const = 0;
+	virtual void GetWorldMatrix(Matrix&) const = 0;
+	virtual void GetOrthoMatrix(Matrix&) const = 0;
 
 	virtual void GetScreenDimensions(int &width, int &height) const = 0;
 	virtual void GetScreenDepthInfo(float &nearVal, float &farVal) const = 0;

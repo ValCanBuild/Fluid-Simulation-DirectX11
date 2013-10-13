@@ -21,10 +21,10 @@ D3DRenderer::~D3DRenderer() {
 
 void D3DRenderer::RenderBuffers(ID3D11DeviceContext* context) const {
 	// Set the vertex buffer to active in the input assembler so it can be rendered.
-	context->IASetVertexBuffers(0, 1, &(mVB._Myptr), &mStride, &mOffset);
+	context->IASetVertexBuffers(0, 1, &mVB.p, &mStride, &mOffset);
 	
 	// Set the index buffer to active in the input assembler so it can be rendered.
-	context->IASetIndexBuffer(mIB.get(), DXGI_FORMAT_R32_UINT, 0);
+	context->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
 
 	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 	context->IASetPrimitiveTopology(mTopologyChoice);
@@ -48,7 +48,7 @@ bool D3DRenderer::InitializeBuffers(ID3D11Device *device, DWORD* indices, void *
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
 
-	HRESULT result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &(mVB._Myptr));
+	HRESULT result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &mVB);
 	if (FAILED(result)) {
 		return false;
 	}
@@ -67,7 +67,7 @@ bool D3DRenderer::InitializeBuffers(ID3D11Device *device, DWORD* indices, void *
 	indexData.SysMemSlicePitch = 0;
 
 	// Create the index buffer.
-	result = device->CreateBuffer(&indexBufferDesc, &indexData, &(mIB._Myptr));
+	result = device->CreateBuffer(&indexBufferDesc, &indexData, &mIB);
 
 	if(FAILED(result)){
 		return false;

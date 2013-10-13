@@ -17,22 +17,20 @@ public:
 		
 	}
 
-	Vector3f position;
-	Vector3f rotation;
-	Vector3f scale;
+	Vector3 position;
+	Vector3 rotation;
+	Vector3 scale;
 
-	void GetTransformMatrix(D3DXMATRIX &matrix) {
-		D3DXMATRIX m;
-		D3DXMatrixIdentity(&matrix);
-		D3DXMatrixScaling(&m, scale.x, scale.y, scale.z);
+	void GetTransformMatrix(Matrix &matrix) {
+		Matrix m = Matrix::CreateScale(scale);
 		matrix*=m;
-		D3DXMatrixRotationX(&m, rotation.x);
+		m = Matrix::CreateRotationX(rotation.x);
 		matrix*=m;
-		D3DXMatrixRotationY(&m, rotation.y);
+		m = Matrix::CreateRotationY(rotation.y);
 		matrix*=m;
-		D3DXMatrixRotationZ(&m, rotation.z);	
+		m = Matrix::CreateRotationZ(rotation.z);	
 		matrix*=m;
-		D3DXMatrixTranslation(&m, position.x, position.y, position.z);
+		m = Matrix::CreateTranslation(position);
 		matrix*=m;
 	}
 

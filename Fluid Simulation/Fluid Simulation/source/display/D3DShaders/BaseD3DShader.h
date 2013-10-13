@@ -11,7 +11,7 @@ Version: 1.0
 #ifndef _BASED3DSHADER_H
 #define _BASED3DSHADER_H
 
-#include <memory>
+#include <atlbase.h>
 
 #include "../../utilities/D3dIncludes.h"
 
@@ -61,9 +61,9 @@ protected:
 	// at the end of the Initialize function this function will be called in order to do any child-specific initialization
 	virtual bool SpecificInitialization(ID3D11Device* device) = 0;
 private:
-	std::unique_ptr<ID3D11VertexShader, COMDeleter>		mVertexShader;
-	std::unique_ptr<ID3D11PixelShader, COMDeleter>		mPixelShader;
-	std::unique_ptr<ID3D11InputLayout, COMDeleter>		mLayout;
+	CComPtr<ID3D11VertexShader>		mVertexShader;
+	CComPtr<ID3D11PixelShader>		mPixelShader;
+	CComPtr<ID3D11InputLayout>		mLayout;
 };
 
 #endif

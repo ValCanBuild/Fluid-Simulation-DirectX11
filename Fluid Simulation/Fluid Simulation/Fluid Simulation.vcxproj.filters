@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="HLSL">
-      <UniqueIdentifier>{f9373bf5-1087-48a6-bd6a-a7d6442760b3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\System">
       <UniqueIdentifier>{a9b59125-bc80-42df-86af-1b995d310e38}</UniqueIdentifier>
     </Filter>
@@ -57,6 +54,15 @@
     </Filter>
     <Filter Include="Source Files\Objects\Components">
       <UniqueIdentifier>{c928a0fd-59ea-483f-ba14-14d9e73cd47d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL">
+      <UniqueIdentifier>{f9373bf5-1087-48a6-bd6a-a7d6442760b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Display\Scenes">
+      <UniqueIdentifier>{de2de645-8dad-44e3-ba1c-50a139502104}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\Scenes">
+      <UniqueIdentifier>{551c5a9e-6413-48ca-8f09-6bc15cb6a9f5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +112,21 @@
       <Filter>Source Files\Objects</Filter>
     </ClCompile>
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\Console.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\AppTimer.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\Scenes\Wave2DScene.cpp">
+      <Filter>Source Files\Display\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp">
+      <Filter>Source Files\Display\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -176,25 +197,67 @@
     <ClInclude Include="source\display\D3DShaders\WaveShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
+    <ClInclude Include="source\utilities\Console.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AppTimer.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\Scenes\Wave2DScene.h">
+      <Filter>Header Files\Display\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\Scenes\IScene.h">
+      <Filter>Header Files\Display\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\Scenes\Fluid2DScene.h">
+      <Filter>Header Files\Display\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="hlsl\orthotexture.psh">
+    <FxCompile Include="hlsl\CommonMath.fxh">
       <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\orthotexture.vsh">
+    </FxCompile>
+    <FxCompile Include="hlsl\pAdvection.psh">
       <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\orthocolor.psh">
+    </FxCompile>
+    <FxCompile Include="hlsl\pDivergence.psh">
       <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\orthocolor.vsh">
+    </FxCompile>
+    <FxCompile Include="hlsl\pImpulse.psh">
       <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\wave_equation.vsh">
+    </FxCompile>
+    <FxCompile Include="hlsl\pJacobisolver.psh">
       <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\wave_equation.psh">
+    </FxCompile>
+    <FxCompile Include="hlsl\pOrthocolor.psh">
       <Filter>HLSL</Filter>
-    </None>
+    </FxCompile>
+    <FxCompile Include="hlsl\vOrthocolor.vsh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pOrthotexture.psh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\vOrthotexture.vsh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pSubtractgradient.psh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pWave_equation.psh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\vWave_equation.vsh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pBuoyancy.psh">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

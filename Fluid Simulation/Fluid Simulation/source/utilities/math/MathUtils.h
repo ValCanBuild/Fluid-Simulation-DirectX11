@@ -11,12 +11,10 @@ Version: 1.0
 
 #include <time.h>
 #include <WinDef.h>
+#include "SimpleMath.h"
 
-#include <D3DX10math.h>
+using namespace DirectX::SimpleMath;
 
-typedef D3DXVECTOR4 Vector4f;
-typedef D3DXVECTOR3 Vector3f;
-typedef D3DXVECTOR2 Vector2f;
 
 //*****************************************************************************
 // Constants
@@ -44,29 +42,7 @@ inline float RandF() {
 // Returns random float in [a, b).
 inline float RandF(float a, float b) {
 	return a + RandF()*(b-a);
-}
-
-// Returns random vector on the unit sphere.
-inline Vector3f RandUnitVec3() {
-	Vector3f v(RandF(), RandF(), RandF());
-	D3DXVec3Normalize(&v, &v);
-	return v;
-}
-
-// Returns random vector in the unit sphere.
-inline Vector3f RandUnitVecInside3()
-{
-	Vector3f v(RandF(), RandF(), RandF());
-	return v;
-}
-
-// Returns random vector in the unit sphere scaled by the given factors.
-inline Vector3f RandUnitVecInsideScaled3(Vector3f *scaleVec)
-{
-	Vector3f v(RandF()*scaleVec->x, RandF()*scaleVec->y, RandF()*scaleVec->z);
-	return v;
-}
- 
+} 
  
 template<typename T>
 inline T Min(const T& a, const T& b) {

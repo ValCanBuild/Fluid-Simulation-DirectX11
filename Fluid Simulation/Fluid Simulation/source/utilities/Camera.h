@@ -26,17 +26,17 @@ public:
 
 	void MoveFacing(float forwardAmount, float rightAmount);
 
-	void GetPosition(Vector3f& pos) const;
-	void GetTarget(Vector3f& target) const;
+	void GetPosition(Vector3& pos) const;
+	void GetTarget(Vector3& target) const;
 
-	void GetViewMatrix(D3DXMATRIX& viewMatrix) const;
+	void GetViewMatrix(Matrix& viewMatrix) const;
 
 private:
-	D3DXMATRIX mViewMatrix;
+	Matrix mViewMatrix;
 	float mYaw,mPitch,mRoll;
-	Vector3f mPosition, mLookAt, mUp, mRight;
-	const Vector3f mDefaultUp, mDefaultLookAt, mDefaultRight;
-	Vector3f mTarget;
+	Vector3 mPosition, mLookAt, mUp, mRight;
+	const Vector3 mDefaultUp, mDefaultLookAt, mDefaultRight;
+	Vector3 mTarget;
 
 	bool mHasChanged;	//dirty flag to set when there has been a camera change
 };

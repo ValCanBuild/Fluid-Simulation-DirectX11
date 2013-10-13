@@ -6,7 +6,7 @@ Date: 02/09/2013
 Version: 1.0
 **************************************************************/
 #include <windowsx.h>
-
+#include <iostream>
 #include "MainSystem.h"
 
 
@@ -46,6 +46,9 @@ bool MainSystem::Initialize() {
 	
 	if (!mGraphics || !mInput)
 		return false;
+
+	// Initialize AppTimer
+	mAppTimer.Reset();
 
 	// Init input
 	mInput->Initialize();
@@ -94,13 +97,17 @@ void MainSystem::Run() {
 bool MainSystem::Frame() {
 	bool result;
 
+	mAppTimer.Tick();
+
+	float deltaTime = mAppTimer.GetDeltaTime();
+
 	// Check if the user pressed escape and wants to exit the application.
 	if(mInput->IsKeyDown(VK_ESCAPE)) {
 		return false;
 	}
 
 	// Do the frame processing for the graphics object.
-	result = mGraphics->Frame();
+	result = mGraphics->Frame(deltaTime);
 	if(!result) {
 		return false;
 	}
@@ -110,6 +117,9 @@ bool MainSystem::Frame() {
 		mInput->KeyUp(VK_SHIFT);
 		mInput->KeyUp('P');
 	}
+	std::cout << "FPS: " << mAppTimer.GetFps() << std::endl;
+
+	mInput->Update(deltaTime);
 
 	return true;
 }
@@ -131,7 +141,6 @@ LRESULT CALLBACK MainSystem::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
 			mInput->KeyUp((unsigned int)wparam);
 			return 0;
 		}
-
 		case WM_LBUTTONDOWN:
 		{
 			mInput->OnMouseButtonAction(0,true);
@@ -155,12 +164,25 @@ LRESULT CALLBACK MainSystem::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
 			mInput->OnMouseButtonAction(1,false);
 			return 0;
 		}
+
+		case WM_MBUTTONDOWN:
+		{
+			mInput->OnMouseButtonAction(2,true);
+			return 0;
+		}
+
+		case WM_MBUTTONUP:
+		{
+			mInput->OnMouseButtonAction(2,false);
+			return 0;
+		}
 		
 		case WM_MOUSEMOVE:
 		{
 			int xPos = GET_X_LPARAM(lparam);
 			int yPos = GET_Y_LPARAM(lparam);
 			mInput->SetMousePos(xPos,yPos);
+			return 0;
 		}
 
 		// Any other messages send to the default message handler as our application won't make use of them.
@@ -233,12 +255,12 @@ void MainSystem::InitializeWindows(int& screenWidth, int& screenHeight) {
 
 		// Place the window in the middle of the screen.
 		posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth)  / 2;
-		posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
+		posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;		
 	}
 
 	// Create the window with the screen settings and get the handle to it.
 	m_hwnd = CreateWindowEx(WS_EX_APPWINDOW, m_applicationName, m_applicationName, 
-						    WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+							WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
 						    posX, posY, screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);
 
 	// Bring the window up on the screen and set it as main focus.

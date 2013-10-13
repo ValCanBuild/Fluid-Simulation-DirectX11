@@ -1,0 +1,38 @@
+/////////////
+// BUFFERS //
+/////////////
+cbuffer InputBuffer {
+	float fTextureWidth;
+	float fTextureHeight;
+	float fHalfInverseCellSize;
+	float padding;	//padding to align to 16 bytes
+};
+
+/////////////
+// GLOBALS //
+/////////////
+Texture2D shaderTexture;	// contains the vector field to diverge
+SamplerState SampleType;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+};
+
+// Pixel Shader
+float4 DivergencePixelShader(PixelInputType input) : SV_TARGET {
+	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
+
+	// Find neighboring velocities
+	float2 vN = shaderTexture.Sample(SampleType, input.tex + float2(0.0f, rdFactors.y)).xy;
+	float2 vS = shaderTexture.Sample(SampleType, input.tex - float2(0.0f, rdFactors.y)).xy;
+	float2 vE = shaderTexture.Sample(SampleType, input.tex + float2(rdFactors.x, 0.0f)).xy;
+	float2 vW = shaderTexture.Sample(SampleType, input.tex - float2(rdFactors.x, 0.0f)).xy;
+
+	float result = fHalfInverseCellSize * (vE.x - vW.x + vN.y - vS.y);
+
+	return float4(result,0.0f,0.0f,1.0f);
+}

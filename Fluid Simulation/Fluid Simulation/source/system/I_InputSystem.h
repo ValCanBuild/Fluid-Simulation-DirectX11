@@ -18,6 +18,7 @@ public:
 
 	virtual bool IsMouseLeftDown() const = 0;
 	virtual bool IsMouseRightDown() const = 0;
+	virtual bool IsMouseMidDown() const = 0;
 
 	virtual void GetMousePos(int& xPos, int& yPos) const = 0;
 	virtual void GetMouseDelta(int& xDelta, int& yDelta) const = 0;

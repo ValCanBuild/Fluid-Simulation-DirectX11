@@ -10,10 +10,8 @@ Version: 1.0
 
 Camera::Camera() :
 mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0) {
-
-	D3DXMatrixIdentity(&mViewMatrix);
 	mYaw = mPitch = mRoll = 0.0f;
-	mPosition = Vector3f(0,0,0);
+	mPosition = Vector3(0,0,0);
 
 	mHasChanged = true;// set to true so the camera gets updated the first time update loop is called
 }
@@ -31,23 +29,27 @@ void Camera::Update() {
 		return;
 	}
 
-	D3DXMATRIX rotationMatrix;
-	D3DXMatrixRotationYawPitchRoll(&rotationMatrix, mYaw, mPitch, 0);
+	Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(mYaw, mPitch, 0.0f);
 
 	// Transform the lookAt and up vector by the rotation matrix so the view is correctly rotated at the origin.
-	D3DXVec3TransformNormal(&mLookAt, &mDefaultLookAt, &rotationMatrix);
-	D3DXVec3TransformNormal(&mUp, &mDefaultUp, &rotationMatrix);
+	Vector3::TransformNormal(mDefaultLookAt,rotationMatrix,mLookAt);
+	Vector3::TransformNormal(mDefaultUp,rotationMatrix,mUp);
+	//D3DXVec3TransformNormal(&mLookAt, &mDefaultLookAt, &rotationMatrix);
+	//D3DXVec3TransformNormal(&mUp, &mDefaultUp, &rotationMatrix);
 
 	// Transform the right vector by the yaw matrix
-	D3DXMATRIX yawMatrix;
-	D3DXMatrixRotationY(&yawMatrix, mYaw);
-	D3DXVec3TransformNormal(&mRight, &mDefaultRight, &yawMatrix);	
+	Matrix yawMatrix = Matrix::CreateRotationY(mYaw);
+	Vector3::TransformNormal(mDefaultRight,yawMatrix,mRight);
+	//D3DXMATRIX yawMatrix;
+	//D3DXMatrixRotationY(&yawMatrix, mYaw);
+	//D3DXVec3TransformNormal(&mRight, &mDefaultRight, &yawMatrix);	
 
 	// update the target
 	mTarget = mPosition + mLookAt;
 
 	// Finally create the view matrix from the three updated vectors.
-	D3DXMatrixLookAtLH(&mViewMatrix, &mPosition, &mLookAt, &mUp);
+	mViewMatrix = Matrix::CreateLookAt(mPosition, mLookAt, mUp);
+	//D3DXMatrixLookAtLH(&mViewMatrix, &mPosition, &mLookAt, &mUp);
 }
 
 void Camera::MoveFacing(float forwardAmount, float rightAmount) {
@@ -71,23 +73,23 @@ void Camera::SetYawPitchRoll(float yaw, float pitch, float roll) {
 }
 
 void Camera::AddPosition(float x, float y, float z) {
-	mPosition += Vector3f(x,y,z);
+	mPosition += Vector3(x,y,z);
 	mHasChanged = true;
 }
 
 void Camera::SetPosition(float x, float y, float z) {
-	mPosition = Vector3f(x,y,z);
+	mPosition = Vector3(x,y,z);
 	mHasChanged = true;
 }
 
-void Camera::GetPosition(Vector3f& pos) const {
+void Camera::GetPosition(Vector3& pos) const {
 	pos = mPosition;
 }
 
-void Camera::GetTarget(Vector3f& target) const {
+void Camera::GetTarget(Vector3& target) const {
 	target = mTarget;
 }
 
-void Camera::GetViewMatrix(D3DXMATRIX& viewMatrix) const {
+void Camera::GetViewMatrix(Matrix& viewMatrix) const {
 	viewMatrix = mViewMatrix;
 }

@@ -10,7 +10,7 @@ Version: 1.0
 #ifndef _D3DRENDERER_H
 #define _D3DRENDERER_H
 
-#include <memory>
+#include <atlbase.h>
 
 #include "../utilities/D3dIncludes.h"
 
@@ -30,8 +30,8 @@ public:
 	DWORD GetVertexCount() const;
 
 private:
-	std::unique_ptr<ID3D11Buffer,COMDeleter>	mVB;
-	std::unique_ptr<ID3D11Buffer,COMDeleter>	mIB;
+	CComPtr<ID3D11Buffer>	mVB;
+	CComPtr<ID3D11Buffer>	mIB;
 	unsigned int	mStride;
 	unsigned int	mOffset;
 	DWORD			mVertexCount;
