@@ -217,47 +217,45 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="hlsl\CommonMath.fxh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pAdvection.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pDivergence.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pImpulse.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pJacobisolver.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pOrthocolor.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\vOrthocolor.vsh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pOrthotexture.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\vOrthotexture.vsh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pSubtractgradient.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pWave_equation.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\vWave_equation.vsh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pBuoyancy.psh">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ClassDiagram.cd" />
+    <None Include="hlsl\CommonMath.fxh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pAdvection.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pBuoyancy.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pDivergence.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pImpulse.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pJacobisolver.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pOrthocolor.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pOrthotexture.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pSubtractgradient.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\pWave_equation.psh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\vOrthocolor.vsh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\vOrthotexture.vsh">
+      <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\vWave_equation.vsh">
+      <Filter>HLSL</Filter>
+    </None>
   </ItemGroup>
 </Project>
