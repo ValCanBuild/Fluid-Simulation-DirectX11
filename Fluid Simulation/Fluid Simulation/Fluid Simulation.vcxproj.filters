@@ -64,6 +64,9 @@
     <Filter Include="Source Files\Display\Scenes">
       <UniqueIdentifier>{551c5a9e-6413-48ca-8f09-6bc15cb6a9f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities\NVPerfKit">
+      <UniqueIdentifier>{163927b3-4bb5-46ab-aee2-8ce23a7c1823}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -128,6 +131,9 @@
     </ClCompile>
     <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\PerformanceMonitor.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -215,6 +221,18 @@
     <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
+    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.h">
+      <Filter>Header Files\Utilities\NVPerfKit</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.InterfaceManager.Win.h">
+      <Filter>Header Files\Utilities\NVPerfKit</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.Manager.h">
+      <Filter>Header Files\Utilities\NVPerfKit</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\PerformanceMonitor.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
@@ -257,5 +275,10 @@
     <None Include="hlsl\vWave_equation.vsh">
       <Filter>HLSL</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="hlsl\cWaveEquation.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

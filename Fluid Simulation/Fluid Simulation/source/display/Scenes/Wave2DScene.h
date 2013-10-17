@@ -19,6 +19,8 @@ class D3DRenderer;
 class WaveShader;
 class IFrameBuffer;
 class D3DGraphicsObject;
+struct ID3D11ShaderResourceView;
+struct ID3D11UnorderedAccessView;
 
 using namespace std;
 
@@ -38,6 +40,9 @@ private:
 	unique_ptr<WaveShader> mWaveShader;
 	IFrameBuffer** mFrameArray;
 	D3DGraphicsObject* pD3dGraphicsObj;
+
+	ID3D11ShaderResourceView** mWaveTextures;
+	ID3D11UnorderedAccessView** mWaveUAVs;
 
 	int simStep,prevStep;
 };

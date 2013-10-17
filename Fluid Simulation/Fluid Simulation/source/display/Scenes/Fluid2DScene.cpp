@@ -49,6 +49,8 @@ Fluid2DScene::~Fluid2DScene() {
 
 	delete mDivergenceFrameBuffer;
 	mDivergenceFrameBuffer = nullptr;
+
+	pD3dGraphicsObj = nullptr;
 }
 
 bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
@@ -129,7 +131,7 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	mDivergenceFrameBuffer->BeginRender(0.0f,0.0f,0.0f,1.0f);
 	mDivergenceFrameBuffer->EndRender();
 
-	// Create the quads
+	// Create the quad
 	mTexQuad = unique_ptr<D2DTexQuad>(new D2DTexQuad());
 	result = mTexQuad->Initialize(graphicsObject,hwnd);
 	if (!result) {

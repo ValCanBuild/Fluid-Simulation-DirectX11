@@ -27,10 +27,25 @@ struct PixelInputType {
 float4 JacobiPixelShader(PixelInputType input) : SV_TARGET {
 	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
 
-	float xL = shaderTextures[0].Sample(SampleType,input.tex - float2(rdFactors.x,0.0f)).x;
-	float xR = shaderTextures[0].Sample(SampleType,input.tex + float2(rdFactors.x,0.0f)).x;
-	float xB = shaderTextures[0].Sample(SampleType,input.tex - float2(0.0f,rdFactors.y)).x;
-	float xT = shaderTextures[0].Sample(SampleType,input.tex + float2(0.0f,rdFactors.y)).x;
+	float2 coordT = input.tex + float2(0.0f, rdFactors.y);
+	float2 coordB = input.tex - float2(0.0f, rdFactors.y);
+	float2 coordR = input.tex + float2(rdFactors.x, 0.0f);
+	float2 coordL = input.tex - float2(rdFactors.x, 0.0f);
+
+	float xL = shaderTextures[0].Sample(SampleType,coordL).x;
+	float xR = shaderTextures[0].Sample(SampleType,coordR).x;
+	float xB = shaderTextures[0].Sample(SampleType,coordB).x;
+	float xT = shaderTextures[0].Sample(SampleType,coordT).x;
+	float xC = shaderTextures[0].Sample(SampleType,input.tex).x;
+
+	if (coordT.y > 1.0f)
+		xT = xC;
+	if (coordB.y < 0.0f)
+		xB = xC;
+	if (coordR.x > 1.0f)
+		xR = xC;
+	if (coordL.x < 0.0f)
+		xL = xC;
 
 	float bC = shaderTextures[1].Sample(SampleType,input.tex).x;
 

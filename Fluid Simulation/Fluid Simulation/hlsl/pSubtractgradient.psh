@@ -27,16 +27,54 @@ struct PixelInputType {
 float4 SubtractGradientPixelShader(PixelInputType input) : SV_TARGET {
 	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
 
-	// Find neighbouring pressure
-	float pN = shaderTexture[1].Sample(SampleType[1], input.tex + float2(0.0f, rdFactors.y)).r;
-	float pS = shaderTexture[1].Sample(SampleType[1], input.tex - float2(0.0f, rdFactors.y)).r;
-	float pE = shaderTexture[1].Sample(SampleType[1], input.tex + float2(rdFactors.x, 0.0f)).r;
-	float pW = shaderTexture[1].Sample(SampleType[1], input.tex - float2(rdFactors.x, 0.0f)).r;
+	float2 coordN = input.tex + float2(0.0f, rdFactors.y);
+	float2 coordS = input.tex - float2(0.0f, rdFactors.y);
+	float2 coordE = input.tex + float2(rdFactors.x, 0.0f);
+	float2 coordW = input.tex - float2(rdFactors.x, 0.0f);
 
-	// Enforce the free-slip boundary condition:
-	float2 oldV = shaderTexture[0].Sample(SampleType[0], input.tex).xy;
+	// Find neighbouring pressure
+	float pN = shaderTexture[1].Sample(SampleType[1], coordN).r;
+	float pS = shaderTexture[1].Sample(SampleType[1], coordS).r;
+	float pE = shaderTexture[1].Sample(SampleType[1], coordE).r;
+	float pW = shaderTexture[1].Sample(SampleType[1], coordW).r;
+	float pC = shaderTexture[1].Sample(SampleType[1], input.tex).r;
+
+	float2 obstV = float2(0,0);
+	float2 vMask = float2(1,1);
+	// If an adjacent cell is solid, ignore its pressure and use its velocity. 
+	if (coordN.y > 1.0f) {
+		pN = pC;
+		obstV.y = shaderTexture[0].Sample(SampleType[0], coordN).y;
+		vMask.y = 0;
+	}
+
+	if (coordS.y < 0.0f) {
+		pS = pC;
+		obstV.y = shaderTexture[0].Sample(SampleType[0], coordS).y;
+		vMask.y = 0;
+	}
+
+	if (coordE.x > 1.0f) {
+		pE = pC;
+		obstV.x = shaderTexture[0].Sample(SampleType[0], coordE).y;
+		vMask.x = 0;
+	}
+
+	if (coordW.x < 0.0f) {
+		pW = pC;
+		obstV.x = shaderTexture[0].Sample(SampleType[0], coordW).y;
+		vMask.x = 0;
+	}
+
+	// Compute the gradient of pressure at the current cell by taking central differences of neighboring pressure values. 
 	float2 grad = float2(pE - pW, pN - pS) * fGradientScale;
+	// Project the velocity onto its divergence-free component by subtracting the gradient of pressure.  
+	float2 oldV = shaderTexture[0].Sample(SampleType[0], input.tex).xy;
 	float2 newV = oldV - grad;
+	// Explicitly enforce the free-slip boundary condition by  
+    // replacing the appropriate components of the new velocity with  
+    // obstacle velocities. 
+	newV = (vMask * newV) + obstV;
 
 	return float4(newV,0.0f,1.0f);
 }

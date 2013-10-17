@@ -21,6 +21,11 @@ D3DGraphicsObject::~D3DGraphicsObject(){
 	if(mSwapChain){
 		mSwapChain->SetFullscreenState(false, NULL);
 	}
+#if defined (_DEBUG)
+	CComPtr<ID3D11Debug> d3dDebug;
+	mDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&d3dDebug));
+	d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
+#endif
 }
 
 bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hwnd, bool fullscreen, 
@@ -270,7 +275,6 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
 	// Create the rasterizer state from the description we just filled out.
-	//ID3D11RasterizerState *rasterizerState = ;
 	result = mDevice->CreateRasterizerState(&rasterDesc, &mRasterState);
 	if(FAILED(result)) {
 		return false;
@@ -297,14 +301,9 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 
 	// Create the projection matrix for 3D rendering.
 	mProjectionMatrix = Matrix::CreatePerspectiveFieldOfView(fieldOfView, screenAspect, screenNear, screenDepth);
-	//D3DXMatrixPerspectiveFovLH(&mProjectionMatrix, fieldOfView, screenAspect, screenNear, screenDepth);
-
-	// Initialize the world matrix to the identity matrix.
-	//D3DXMatrixIdentity(&mWorldMatrix);
 
 	// Create an orthographic projection matrix for 2D rendering.
 	mOrthoMatrix = Matrix::CreateOrthographic((float)screenWidth, (float)screenHeight, screenNear, screenDepth);
-	//D3DXMatrixOrthoLH(&mOrthoMatrix, (float)screenWidth, (float)screenHeight, screenNear, screenDepth);
 
 	return true;
 }

@@ -21,6 +21,7 @@ MainSystem::MainSystem(const MainSystem& other) {
 MainSystem::~MainSystem() {
 	// Shutdown the window.
 	ShutdownWindows();
+
 }
 
 
@@ -52,6 +53,12 @@ bool MainSystem::Initialize() {
 
 	// Init input
 	mInput->Initialize();
+
+	// Initialize performance monitor
+	result = mPerfMonitor.Initialize();
+	if (!result) {
+		return false;
+	}
 
 	// Initialize the graphics object.
 	result = mGraphics->Initialize(screenWidth, screenHeight, m_hwnd);
@@ -98,6 +105,7 @@ bool MainSystem::Frame() {
 	bool result;
 
 	mAppTimer.Tick();
+	mPerfMonitor.Tick();
 
 	float deltaTime = mAppTimer.GetDeltaTime();
 
@@ -112,14 +120,18 @@ bool MainSystem::Frame() {
 		return false;
 	}
 
+	// set the FPS counter in the graphics
+	mGraphics->SetMonitorData(mAppTimer.GetFps(), mPerfMonitor.GetCpuPercentage());
+
 	if (mInput->IsKeyDown(VK_SHIFT) && mInput->IsKeyDown('P')) {
 		mGraphics->TakeScreenshot(L"Screenshot.jpg");
 		mInput->KeyUp(VK_SHIFT);
 		mInput->KeyUp('P');
 	}
-	std::cout << "FPS: " << mAppTimer.GetFps() << std::endl;
 
 	mInput->Update(deltaTime);
+
+
 
 	return true;
 }
@@ -143,36 +155,42 @@ LRESULT CALLBACK MainSystem::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
 		}
 		case WM_LBUTTONDOWN:
 		{
+			SetCapture(hwnd);
 			mInput->OnMouseButtonAction(0,true);
 			return 0;
 		}
 
 		case WM_LBUTTONUP:
 		{
+			ReleaseCapture();
 			mInput->OnMouseButtonAction(0,false);
 			return 0;
 		}
 
 		case WM_RBUTTONDOWN:
 		{
+			SetCapture(hwnd);
 			mInput->OnMouseButtonAction(1,true);
 			return 0;
 		}
 
 		case WM_RBUTTONUP:
 		{
+			ReleaseCapture();
 			mInput->OnMouseButtonAction(1,false);
 			return 0;
 		}
 
 		case WM_MBUTTONDOWN:
 		{
+			SetCapture(hwnd);
 			mInput->OnMouseButtonAction(2,true);
 			return 0;
 		}
 
 		case WM_MBUTTONUP:
 		{
+			ReleaseCapture();
 			mInput->OnMouseButtonAction(2,false);
 			return 0;
 		}
@@ -297,6 +315,10 @@ void MainSystem::ShutdownWindows() {
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam) {
 	switch(umessage)
 	{
+		case WM_CREATE:
+		{
+			return 0;
+		}
 		// Check if the window is being destroyed.
 		case WM_DESTROY:
 		{

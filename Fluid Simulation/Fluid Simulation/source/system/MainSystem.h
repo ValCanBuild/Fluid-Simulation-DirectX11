@@ -17,6 +17,7 @@ Version: 1.0
 #include "InputSystem.h"
 #include "ServiceProvider.h"
 #include "../utilities/AppTimer.h"
+#include "../utilities/PerformanceMonitor.h"
 
 using namespace std;
 
@@ -42,7 +43,8 @@ private:
 	HINSTANCE m_hinstance;
 	HWND m_hwnd;
 
-	AppTimer mAppTimer;
+	AppTimer			mAppTimer;
+	PerformanceMonitor	mPerfMonitor;
 	
 	unique_ptr<InputSystem> mInput;
 	unique_ptr<GraphicsSystem> mGraphics;

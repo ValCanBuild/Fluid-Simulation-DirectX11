@@ -29,10 +29,16 @@ struct ShaderDescription {
 			shaderFilename = nullptr;
 			shaderFunctionName = nullptr;
 		}
+
+		~ShaderFileDescription() {
+			shaderFunctionName = nullptr;	
+			shaderFilename = nullptr;
+		}
 	};
 
 	ShaderFileDescription vertexShaderDesc;
 	ShaderFileDescription pixelShaderDesc;
+	ShaderFileDescription computeShaderDesc;
 
 	D3D11_INPUT_ELEMENT_DESC *polygonLayout;
 	int numLayoutElements;
@@ -51,10 +57,13 @@ public:
 	bool Initialize (ID3D11Device* device, HWND hwnd);	
 
 private:
-	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename);
+	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) const;
 
 protected:
-	void RenderShader(ID3D11DeviceContext* context, int indexCount);
+	// This renders an object using the provided Pixel and Vertex Shaders given the index count
+	void RenderShader(ID3D11DeviceContext* context, int indexCount) const;
+
+	void SetComputeShader(ID3D11DeviceContext* context) const;
 
 	// every child of this class has to provide an implementation of these functions in order to get the correct shader name
 	virtual ShaderDescription GetShaderDescription() = 0;
@@ -63,6 +72,7 @@ protected:
 private:
 	CComPtr<ID3D11VertexShader>		mVertexShader;
 	CComPtr<ID3D11PixelShader>		mPixelShader;
+	CComPtr<ID3D11ComputeShader>	mComputeShader;
 	CComPtr<ID3D11InputLayout>		mLayout;
 };
 

@@ -45,6 +45,47 @@ bool WaveShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, ID3D1
 	return true;
 }
 
+void WaveShader::Compute(_In_ D3DGraphicsObject* graphicsObject, const Vector3 &mousePos, int pressed, _In_ ID3D11ShaderResourceView* texNow, _In_ ID3D11ShaderResourceView* texPrev, _In_ ID3D11UnorderedAccessView* result) const {
+	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
+
+	// set buffer
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	InputBuffer* dataPtr;
+
+	// Lock the input constant buffer so it can be written to.
+	HRESULT hr = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if(FAILED(hr)) {
+		return;
+	}
+
+	dataPtr = (InputBuffer*)mappedResource.pData;
+	dataPtr->mouse = mousePos;
+	dataPtr->mousePressed = pressed;
+
+	context->Unmap(mInputBuffer,0);
+
+	// Now set the constant buffer in the compute shader with the updated values.
+	context->CSSetConstantBuffers(0, 1, &(mInputBuffer.p));
+
+	context->CSSetShaderResources(0,1,&texNow);
+	context->CSSetShaderResources(1,1,&texPrev);
+	context->CSSetUnorderedAccessViews(0,1,&result,nullptr);
+
+	int width,height;
+	graphicsObject->GetScreenDimensions(width,height);
+	UINT numThreadX = ceil(width/32.0f);
+	UINT numThreadY = ceil(height/32.0f);
+	SetComputeShader(context);
+	context->Dispatch(numThreadX,numThreadY,1);
+
+	ID3D11UnorderedAccessView *const pUAV[1] = {NULL};
+	context->CSSetUnorderedAccessViews(0,1,pUAV,nullptr);
+	ID3D11ShaderResourceView *const pSRV[2] = {NULL,NULL};
+	context->CSSetShaderResources(0,2,pSRV);
+
+	
+}
+
 ShaderDescription WaveShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
@@ -53,6 +94,9 @@ ShaderDescription WaveShader::GetShaderDescription() {
 
 	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pWave_equation.psh";
 	shaderDescription.pixelShaderDesc.shaderFunctionName = "WavePixelShader";
+
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cWaveEquation.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "WaveComputeShader";
 
 	shaderDescription.polygonLayout = new D3D11_INPUT_ELEMENT_DESC[2];
 
@@ -78,17 +122,23 @@ ShaderDescription WaveShader::GetShaderDescription() {
 }
 
 bool WaveShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC screenSizeBufferDesc;
+	D3D11_BUFFER_DESC bufferDesc;
 	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	screenSizeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	screenSizeBufferDesc.ByteWidth = sizeof(ScreenSizeBuffer);
-	screenSizeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	screenSizeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	screenSizeBufferDesc.MiscFlags = 0;
-	screenSizeBufferDesc.StructureByteStride = 0;
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.ByteWidth = sizeof(ScreenSizeBuffer);
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bufferDesc.MiscFlags = 0;
+	bufferDesc.StructureByteStride = 0;
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&screenSizeBufferDesc, NULL, &mScreenSizeBuffer);
+	HRESULT result = device->CreateBuffer(&bufferDesc, NULL, &mScreenSizeBuffer);
+	if(FAILED(result)) {
+		return false;
+	}
+
+	bufferDesc.ByteWidth = sizeof(InputBuffer);
+	result = device->CreateBuffer(&bufferDesc, NULL, &mInputBuffer);
 	if(FAILED(result)) {
 		return false;
 	}

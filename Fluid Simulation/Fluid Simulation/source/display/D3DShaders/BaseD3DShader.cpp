@@ -17,8 +17,6 @@ using namespace std;
 
 bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	ShaderDescription shaderDesc = GetShaderDescription();	
-
-	ID3D10Blob* vertexShaderBuffer = 0;
 	ID3D10Blob* errorMessage = 0;
 
 	int flags = 0;
@@ -28,79 +26,93 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	flags = D3D10_SHADER_ENABLE_STRICTNESS;
 #endif
 
-	// Create vertex shader
-	HRESULT result = D3DCompileFromFile(shaderDesc.vertexShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.vertexShaderDesc.shaderFunctionName, "vs_5_0",
-										flags, 0, &vertexShaderBuffer, &errorMessage);
+	HRESULT result;
 
-	if(FAILED(result)) {
-		// If the shader failed to compile it should have writen something to the error message.
-		if(errorMessage) {
-			OutputShaderErrorMessage(errorMessage, hwnd, shaderDesc.vertexShaderDesc.shaderFilename);
+	// Create vertex shader if one exists
+	if (shaderDesc.vertexShaderDesc.shaderFilename) {
+		CComPtr<ID3D10Blob> vertexShaderBuffer;
+
+		result = D3DCompileFromFile(shaderDesc.vertexShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.vertexShaderDesc.shaderFunctionName, "vs_5_0",
+											flags, 0, &vertexShaderBuffer, &errorMessage);
+
+		if(FAILED(result)) {
+			// If the shader failed to compile it should have writen something to the error message.
+			if(errorMessage) {
+				OutputShaderErrorMessage(errorMessage, hwnd, shaderDesc.vertexShaderDesc.shaderFilename);
+			}
+			// If there was  nothing in the error message then it simply could not find the file itself.
+			else {
+				MessageBox(hwnd, shaderDesc.vertexShaderDesc.shaderFilename, L"Wrong Vertex Shader File", MB_OK);
+			}
+
+			return false;
 		}
-		// If there was  nothing in the error message then it simply could not find the file itself.
-		else {
-			MessageBox(hwnd, shaderDesc.vertexShaderDesc.shaderFilename, L"Missing Vertex Shader File", MB_OK);
-		}
-
-		return false;
-	}
-
-	ID3D10Blob* pixelShaderBuffer = 0;
-
-	// Create pixel shader
-	result = D3DCompileFromFile(shaderDesc.pixelShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.pixelShaderDesc.shaderFunctionName, "ps_5_0",
-										flags, 0, &pixelShaderBuffer, &errorMessage);
-
-	if(FAILED(result)) {
-		// If the shader failed to compile it should have writen something to the error message.
-		if(errorMessage) {
-			OutputShaderErrorMessage(errorMessage, hwnd, shaderDesc.pixelShaderDesc.shaderFilename);
-		}
-		// If there was  nothing in the error message then it simply could not find the file itself.
-		else {
-			MessageBox(hwnd, shaderDesc.pixelShaderDesc.shaderFilename, L"Missing Pixel Shader File", MB_OK);
+		// Create the vertex shader from the buffer.
+		result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &mVertexShader);
+		if(FAILED(result)) {
+			return false;
 		}
 
-		return false;
+		// Create polygon layout
+		result = device->CreateInputLayout(shaderDesc.polygonLayout,shaderDesc.numLayoutElements, 
+			vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &mLayout);
+
+		if (FAILED(result)) {
+			return false;
+		}
 	}
 
-	// Create the vertex shader from the buffer.
-	result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &mVertexShader);
-	if(FAILED(result)) {
-		return false;
+	// Create pixel shader if one exists
+	if (shaderDesc.pixelShaderDesc.shaderFilename) {
+		CComPtr<ID3D10Blob> pixelShaderBuffer;
+
+		result = D3DCompileFromFile(shaderDesc.pixelShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.pixelShaderDesc.shaderFunctionName, "ps_5_0",
+											flags, 0, &pixelShaderBuffer, &errorMessage);
+
+		if(FAILED(result)) {
+			// If the shader failed to compile it should have writen something to the error message.
+			if(errorMessage) {
+				OutputShaderErrorMessage(errorMessage, hwnd, shaderDesc.pixelShaderDesc.shaderFilename);
+			}
+			// If there was  nothing in the error message then it simply could not find the file itself.
+			else {
+				MessageBox(hwnd, shaderDesc.pixelShaderDesc.shaderFilename, L"Wrong Pixel Shader File", MB_OK);
+			}
+
+			return false;
+		}
+		// Create the pixel shader from the buffer.
+		result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &mPixelShader);
+		if(FAILED(result)) {
+			return false;
+		}
 	}
 
-	// Create the pixel shader from the buffer.
-	result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &mPixelShader);
-	if(FAILED(result)) {
-		return false;
+	// Create compute shader if one exists
+	if (shaderDesc.computeShaderDesc.shaderFilename) {
+		CComPtr<ID3D10Blob> computeShaderBuffer;
+
+		result = D3DCompileFromFile(shaderDesc.computeShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.computeShaderDesc.shaderFunctionName, "cs_5_0",
+											flags, 0, &computeShaderBuffer, &errorMessage);
+
+		if(FAILED(result)) {
+			// If the shader failed to compile it should have writen something to the error message.
+			if(errorMessage) {
+				OutputShaderErrorMessage(errorMessage, hwnd, shaderDesc.computeShaderDesc.shaderFilename);
+			}
+			// If there was  nothing in the error message then it simply could not find the file itself.
+			else {
+				MessageBox(hwnd, shaderDesc.computeShaderDesc.shaderFilename, L"Wrong Compute Shader File", MB_OK);
+			}
+
+			return false;
+		}
+		// Create the compute shader from the buffer.
+		result = device->CreateComputeShader(computeShaderBuffer->GetBufferPointer(), computeShaderBuffer->GetBufferSize(), NULL, &mComputeShader);
+		if(FAILED(result)) {
+			return false;
+		}
 	}
-
-	/*ID3D11ShaderReflection* reflector = nullptr;
-	D3DReflect(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**) &reflector);
-
-	ID3D11ShaderReflectionConstantBuffer* pBuffer = reflector->GetConstantBufferByIndex(0);
-
-	D3D11_SHADER_BUFFER_DESC desc;
-	pBuffer->GetDesc(&desc);
-
-	reflector->Release();
-	reflector = nullptr;*/
-	
-	// Create polygon layout
-	result = device->CreateInputLayout(shaderDesc.polygonLayout,shaderDesc.numLayoutElements, 
-		vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &mLayout);
-
-	if (FAILED(result)) {
-		return false;
-	}
-
-	// Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
-	vertexShaderBuffer->Release();
-	vertexShaderBuffer = nullptr;
-
-	pixelShaderBuffer->Release();
-	pixelShaderBuffer = nullptr;
 
 	// Perform any child-specific initializations
 	SpecificInitialization(device);
@@ -108,7 +120,7 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	return true;
 }
 
-void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) {
+void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) const {
 	// Set the vertex input layout.
 	context->IASetInputLayout(mLayout);
 
@@ -120,7 +132,11 @@ void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) {
 	context->DrawIndexed(indexCount, 0, 0);
 }
 
-void BaseD3DShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) {
+void BaseD3DShader::SetComputeShader(ID3D11DeviceContext* context) const {
+	context->CSSetShader(mComputeShader,NULL,0);
+}
+
+void BaseD3DShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) const {
 	char* compileErrors;
 	unsigned long bufferSize, i;
 	ofstream fout;

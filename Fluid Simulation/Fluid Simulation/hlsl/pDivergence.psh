@@ -27,10 +27,26 @@ float4 DivergencePixelShader(PixelInputType input) : SV_TARGET {
 	float2 rdFactors = float2(1.0f/fTextureWidth,1.0f/fTextureHeight);
 
 	// Find neighboring velocities
-	float2 vN = shaderTexture.Sample(SampleType, input.tex + float2(0.0f, rdFactors.y)).xy;
-	float2 vS = shaderTexture.Sample(SampleType, input.tex - float2(0.0f, rdFactors.y)).xy;
-	float2 vE = shaderTexture.Sample(SampleType, input.tex + float2(rdFactors.x, 0.0f)).xy;
-	float2 vW = shaderTexture.Sample(SampleType, input.tex - float2(rdFactors.x, 0.0f)).xy;
+	float2 coordN = input.tex + float2(0.0f, rdFactors.y);
+	float2 coordS = input.tex - float2(0.0f, rdFactors.y);
+	float2 coordE = input.tex + float2(rdFactors.x, 0.0f);
+	float2 coordW = input.tex - float2(rdFactors.x, 0.0f);
+
+	float2 vN = shaderTexture.Sample(SampleType, coordN).xy;
+	float2 vS = shaderTexture.Sample(SampleType, coordS).xy;
+	float2 vE = shaderTexture.Sample(SampleType, coordE).xy;
+	float2 vW = shaderTexture.Sample(SampleType, coordW).xy;
+
+	float2 vC = shaderTexture.Sample(SampleType, input.tex).xy;
+
+	if (coordN.y > 1.0f)
+		vN = vC;
+	if (coordS.y < 0.0f)
+		vS = vC;
+	if (coordE.x > 1.0f)
+		vE = vC;
+	if (coordW.x < 0.0f)
+		vW = vC;
 
 	float result = fHalfInverseCellSize * (vE.x - vW.x + vN.y - vS.y);
 

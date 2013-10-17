@@ -117,6 +117,7 @@
     <ClCompile Include="source\utilities\Camera.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
+    <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\display\D3DFrameBuffer.h" />
@@ -147,6 +148,10 @@
     <ClInclude Include="source\utilities\D3dIncludes.h" />
     <ClInclude Include="source\utilities\math\MathUtils.h" />
     <ClInclude Include="source\utilities\D3DTexture.h" />
+    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.h" />
+    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.InterfaceManager.Win.h" />
+    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.Manager.h" />
+    <ClInclude Include="source\utilities\PerformanceMonitor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\vOrthocolor.vsh">
@@ -220,6 +225,14 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">BuoyancyPixelShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="hlsl\cWaveEquation.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WaveComputeShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
