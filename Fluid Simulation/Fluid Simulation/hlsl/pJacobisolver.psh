@@ -4,10 +4,10 @@
 // BUFFERS //
 /////////////
 cbuffer InputBuffer {
-	float fTextureWidth;
-	float fTextureHeight;
 	float fAlpha;
 	float fInverseBeta;
+	float fTextureWidth;
+	float fTextureHeight;
 };
 
 /////////////

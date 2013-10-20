@@ -12,6 +12,9 @@ Version: 1.0
 #define _BASED3DSHADER_H
 
 #include <atlbase.h>
+#if defined (_DEBUG)
+#pragma comment(lib,"atlsd.lib")
+#endif
 
 #include "../../utilities/D3dIncludes.h"
 
@@ -65,9 +68,9 @@ protected:
 
 	void SetComputeShader(ID3D11DeviceContext* context) const;
 
-	// every child of this class has to provide an implementation of these functions in order to get the correct shader name
+	// Every child of this class has to provide an implementation of these functions in order to get the correct shader name
 	virtual ShaderDescription GetShaderDescription() = 0;
-	// at the end of the Initialize function this function will be called in order to do any child-specific initialization
+	// At the end of the Initialize function this function will be called in order to do any child-specific initialization
 	virtual bool SpecificInitialization(ID3D11Device* device) = 0;
 private:
 	CComPtr<ID3D11VertexShader>		mVertexShader;

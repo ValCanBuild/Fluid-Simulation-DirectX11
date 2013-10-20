@@ -11,6 +11,9 @@ Version: 1.0
 #define _D3DRENDERER_H
 
 #include <atlbase.h>
+#if defined (_DEBUG)
+#pragma comment(lib,"atlsd.lib")
+#endif
 
 #include "../utilities/D3dIncludes.h"
 

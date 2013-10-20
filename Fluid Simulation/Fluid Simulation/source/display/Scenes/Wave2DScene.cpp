@@ -82,7 +82,7 @@ bool Wave2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 
 	mColorQuad->mTransform.scale = Vector3(0.03f,0.03f,1.0f);
 
-	ID3D11Texture2D* renderTargetTexture[3];
+	ID3D11Texture2D* texture[3];
 	D3D11_TEXTURE2D_DESC textureDesc;
 	ZeroMemory(&textureDesc, sizeof(D3D11_TEXTURE2D_DESC));
 	textureDesc.Width = width;
@@ -96,7 +96,7 @@ bool Wave2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 	for (int i = 0; i < 3; i++) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &renderTargetTexture[i]);
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &texture[i]);
 		if (FAILED(hr))
 		  return false;
 	}
@@ -118,12 +118,12 @@ bool Wave2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 
 	// Create the shader resource views.
 	for (int i = 0; i < 3; ++i) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(renderTargetTexture[i], &shaderResourceViewDesc, &mWaveTextures[i]);
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(texture[i], &shaderResourceViewDesc, &mWaveTextures[i]);
 		if(FAILED(hr)) {
 			return false;
 		}
 		// create UAV
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(renderTargetTexture[i], &uavDesc, &mWaveUAVs[i]);
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(texture[i], &uavDesc, &mWaveUAVs[i]);
 		if(FAILED(hr)) {
 			return false;
 		}

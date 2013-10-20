@@ -118,7 +118,7 @@ bool AdvectionShader::SpecificInitialization(ID3D11Device* device) {
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
 	samplerDesc.MipLODBias = 0.0f;
 	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;	// changed this from ALWAYS
 	samplerDesc.BorderColor[0] = 0;
 	samplerDesc.BorderColor[1] = 0;
 	samplerDesc.BorderColor[2] = 0;
@@ -266,8 +266,9 @@ bool JacobiShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, flo
 	dataPtr = (InputBuffer*)mappedResource.pData;
 	int width,height;
 	graphicsObject->GetScreenDimensions(width,height);
-	dataPtr->fTextureWidth = (float)width;
-	dataPtr->fTextureHeight = (float)height;
+	dataPtr->vDimensions = Vector2((float)width,(float)height);
+	//dataPtr->fTextureWidth = (float)width;
+	//dataPtr->fTextureHeight = (float)height;
 	dataPtr->fAlpha = alpha;
 	dataPtr->fInverseBeta = inverseBeta;
 
@@ -289,6 +290,51 @@ bool JacobiShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, flo
 	return true;
 }
 
+bool JacobiShader::Compute(_In_ D3DGraphicsObject* graphicsObject, float alpha, float inverseBeta, _In_ ID3D11ShaderResourceView* pressureField, _In_ ID3D11ShaderResourceView* divergence, _In_ ID3D11UnorderedAccessView* pressureResult) {
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	InputBuffer* dataPtr;
+
+	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
+
+	// Lock the screen size constant buffer so it can be written to.
+	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if(FAILED(result)) {
+		return false;
+	}
+
+	dataPtr = (InputBuffer*)mappedResource.pData;
+	int width,height;
+	graphicsObject->GetScreenDimensions(width,height);
+	dataPtr->fAlpha = alpha;
+	dataPtr->fInverseBeta = inverseBeta;
+	dataPtr->vDimensions = Vector2((float)width,(float)height);
+	//dataPtr->fTextureWidth = (float)width;
+	//dataPtr->fTextureHeight = (float)height;
+
+	context->Unmap(mInputBuffer,0);
+
+	// Set the buffer inside the compute shader
+	context->CSSetConstantBuffers(0,1,&(mInputBuffer.p));
+
+	// Set the parameters inside the pixel shader
+	context->CSSetShaderResources(0,1,&pressureField);
+	context->CSSetShaderResources(1,1,&divergence);
+	context->CSSetUnorderedAccessViews(0,1,&pressureResult,nullptr);
+
+	UINT numThreadX = (UINT)ceil(width/32.0f);
+	UINT numThreadY = (UINT)ceil(height/32.0f);
+
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(numThreadX,numThreadY,1);
+
+	// Unbind resources from pipeline 
+	ID3D11UnorderedAccessView *const pUAV[1] = {NULL};
+	context->CSSetUnorderedAccessViews(0,1,pUAV,nullptr);
+
+	return true;
+}
+
 ShaderDescription JacobiShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
@@ -297,6 +343,9 @@ ShaderDescription JacobiShader::GetShaderDescription() {
 
 	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pJacobisolver.psh";
 	shaderDescription.pixelShaderDesc.shaderFunctionName = "JacobiPixelShader";
+
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "JacobiComputeShader";
 
 	shaderDescription.polygonLayout = CreateCommonInputLayout();
 

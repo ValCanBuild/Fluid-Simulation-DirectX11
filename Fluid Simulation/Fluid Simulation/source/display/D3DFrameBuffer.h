@@ -6,11 +6,13 @@ Author: Valentin Hinov
 Date: 03/09/2013
 Version: 1.0
 **************************************************************/
-
 #ifndef _D3DFRAMEBUFFER_H
 #define _D3DFRAMEBUFFER_H
 
 #include <atlbase.h>
+#if defined (_DEBUG)
+#pragma comment(lib,"atlsd.lib")
+#endif
 
 #include "IFrameBuffer.h"
 #include "../utilities/D3dIncludes.h"
@@ -32,7 +34,6 @@ public:
 	const void* GetTextureResource() const;
 
 private:
-	CComPtr<ID3D11Texture2D>			mRenderTargetTexture;
 	CComPtr<ID3D11RenderTargetView>		mRenderTargetView;
 	CComPtr<ID3D11ShaderResourceView>	mShaderResourceView;
 

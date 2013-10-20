@@ -129,11 +129,11 @@
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp">
-      <Filter>Source Files\Display\D3DShaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp">
       <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\ComputeFluid2DShaders.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,9 +218,6 @@
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h">
       <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h">
-      <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
     <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.h">
       <Filter>Header Files\Utilities\NVPerfKit</Filter>
     </ClInclude>
@@ -233,12 +230,11 @@
     <ClInclude Include="source\utilities\PerformanceMonitor.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\ComputeFluid2DShaders.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram.cd" />
-    <None Include="hlsl\CommonMath.fxh">
-      <Filter>HLSL</Filter>
-    </None>
     <None Include="hlsl\pAdvection.psh">
       <Filter>HLSL</Filter>
     </None>
@@ -275,9 +271,12 @@
     <None Include="hlsl\vWave_equation.vsh">
       <Filter>HLSL</Filter>
     </None>
+    <None Include="hlsl\cWaveEquation.hlsl">
+      <Filter>HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="hlsl\cWaveEquation.hlsl">
+    <FxCompile Include="hlsl\cFluid2D.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

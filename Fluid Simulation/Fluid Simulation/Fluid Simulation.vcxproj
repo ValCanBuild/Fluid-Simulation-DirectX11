@@ -100,7 +100,7 @@
     <ClCompile Include="source\display\D3DGraphicsObject.cpp" />
     <ClCompile Include="source\display\D3DRenderer.cpp" />
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp" />
+    <ClCompile Include="source\display\D3DShaders\ComputeFluid2DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
@@ -124,7 +124,7 @@
     <ClInclude Include="source\display\D3DGraphicsObject.h" />
     <ClInclude Include="source\display\D3DRenderer.h" />
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h" />
+    <ClInclude Include="source\display\D3DShaders\ComputeFluid2DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
@@ -191,15 +191,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram.cd" />
     <None Include="hlsl\pAdvection.psh">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AdvectionPixelShader</EntryPointName>
-    </None>
-    <None Include="hlsl\CommonMath.fxh">
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
     </None>
     <None Include="hlsl\pJacobisolver.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">JacobiPixelShader</EntryPointName>
@@ -234,6 +229,15 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="hlsl\cFluid2D.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AdvectComputeShader</EntryPointName>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

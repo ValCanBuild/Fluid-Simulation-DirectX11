@@ -13,6 +13,9 @@ Version: 1.0
 #define WIN32_LEAN_AND_MEAN
 
 #include <atlbase.h>
+#if defined (_DEBUG)
+#pragma comment(lib,"atlsd.lib")
+#endif
 
 #include "IGraphicsObject.h"
 #include "../utilities/D3dIncludes.h"

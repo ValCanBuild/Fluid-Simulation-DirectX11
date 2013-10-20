@@ -66,7 +66,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	}*/
 
 	// Initialize current scene
-	mCurrentScene = unique_ptr<IScene>(new Wave2DScene());
+	mCurrentScene = unique_ptr<IScene>(new Fluid2DScene());
 	result = mCurrentScene->Initialize(mGraphicsObj.get(),hwnd);
 	if (!result) {
 		MessageBox(hwnd, L"Could not initialize the scene", L"Error", MB_OK);

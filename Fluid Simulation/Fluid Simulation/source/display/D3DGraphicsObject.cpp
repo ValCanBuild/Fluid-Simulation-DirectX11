@@ -159,12 +159,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	swapChainDesc.SampleDesc.Quality = 0;
 
 	// Set to full screen or windowed mode.
-	if(fullscreen) {
-		swapChainDesc.Windowed = false;
-	}
-	else {
-		swapChainDesc.Windowed = true;
-	}
+	swapChainDesc.Windowed = !fullscreen;
 
 	// Set the scan line ordering and scaling to unspecified.
 	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -420,16 +415,7 @@ void D3DGraphicsObject::BeginRender(float red, float green, float blue, float al
 
 void D3DGraphicsObject::EndRender() {
 	// Present the back buffer to the screen since rendering is complete.
-	if(mVsyncEnabled) {
-		// Lock to screen refresh rate.
-		mSwapChain->Present(1, 0);
-	}
-	else {
-		// Present as fast as possible.
-		mSwapChain->Present(0, 0);
-	}
-
-	return;
+	mSwapChain->Present(mVsyncEnabled ? 1 : 0, 0);
 }
 
 void D3DGraphicsObject::SetBackBufferRenderTarget() const {

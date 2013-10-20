@@ -9,7 +9,7 @@ Date: 10/09/2013
 
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/Camera.h"
-#include "../D3DShaders/Fluid2DShaders.h"
+#include "../D3DShaders/ComputeFluid2DShaders.h"
 #include "../D3DFrameBuffer.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
@@ -19,36 +19,26 @@ Fluid2DScene::Fluid2DScene() {
 }
 
 Fluid2DScene::~Fluid2DScene() {
-	for (int i = 0; i < 2; i++) {
-		delete mVelocityFrameBuffer[i];
-		mVelocityFrameBuffer[i] = nullptr;
+	if (mPressureSP) {
+		delete [] mPressureSP;
+		mPressureSP = nullptr;
 	}
-	delete [] mVelocityFrameBuffer;
-	mVelocityFrameBuffer = nullptr;
-
-	for (int i = 0; i < 2; i++) {
-		delete mDensityFrameBuffer[i];
-		mDensityFrameBuffer[i] = nullptr;
+	if (mDensitySP) {
+		delete [] mDensitySP;
+		mDensitySP = nullptr;
 	}
-	delete [] mDensityFrameBuffer;
-	mDensityFrameBuffer = nullptr;
-
-	for (int i = 0; i < 2; i++) {
-		delete mTemperatureFrameBuffer[i];
-		mTemperatureFrameBuffer[i] = nullptr;
+	if (mTemperatureSP) {
+		delete [] mTemperatureSP;
+		mTemperatureSP = nullptr;
 	}
-	delete [] mTemperatureFrameBuffer;
-	mTemperatureFrameBuffer = nullptr;
-
-	for (int i = 0; i < 2; i++) {
-		delete mPressureFrameBuffer[i];
-		mPressureFrameBuffer[i] = nullptr;
+	if (mVelocitySP) {
+		delete [] mVelocitySP;
+		mVelocitySP = nullptr;
 	}
-	delete [] mPressureFrameBuffer;
-	mPressureFrameBuffer = nullptr;
-
-	delete mDivergenceFrameBuffer;
-	mDivergenceFrameBuffer = nullptr;
+	if (mDivergenceSP) {
+		delete mVelocitySP;
+		mDivergenceSP = nullptr;
+	}
 
 	pD3dGraphicsObj = nullptr;
 }
@@ -96,42 +86,189 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 
 	int width,height;
 	pD3dGraphicsObj->GetScreenDimensions(width,height);
-	//width = 512;
-	//height = 512;
 
-	// Create the frame buffer array that will hold the states of all the fields
-	mVelocityFrameBuffer = new IFrameBuffer*[2];
-	mDensityFrameBuffer = new IFrameBuffer*[2];
-	mPressureFrameBuffer = new IFrameBuffer*[2];
-	mTemperatureFrameBuffer = new IFrameBuffer*[2];
-	for (int i = 0; i < 2; i++) {
-		mVelocityFrameBuffer[i] = new D3DFrameBuffer(DXGI_FORMAT_R32G32_FLOAT);
-		mVelocityFrameBuffer[i]->Initialize(graphicsObject,width,height);
-		mVelocityFrameBuffer[i]->BeginRender(0.0f,0.0f,0.0f,1.0f);
-		mVelocityFrameBuffer[i]->EndRender();
+	// Create the velocity shader params
+	CComPtr<ID3D11Texture2D> velocityText[2];
+	mVelocitySP = new ShaderParams[2];
+	D3D11_TEXTURE2D_DESC textureDesc;
+	ZeroMemory(&textureDesc, sizeof(D3D11_TEXTURE2D_DESC));
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
 
-		mDensityFrameBuffer[i] = new D3DFrameBuffer(DXGI_FORMAT_R32_FLOAT);
-		mDensityFrameBuffer[i]->Initialize(graphicsObject,width,height);
-		mDensityFrameBuffer[i]->BeginRender(0.0f,0.0f,0.0f,1.0f);
-		mDensityFrameBuffer[i]->EndRender();
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	uavDesc.Format = textureDesc.Format;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+	uavDesc.Texture2D.MipSlice = 0;
 
-		mPressureFrameBuffer[i] = new D3DFrameBuffer(DXGI_FORMAT_R32_FLOAT);
-		mPressureFrameBuffer[i]->Initialize(graphicsObject,width,height);
-		mPressureFrameBuffer[i]->BeginRender(0.0f,0.0f,0.0f,1.0f);
-		mPressureFrameBuffer[i]->EndRender();
-
-		mTemperatureFrameBuffer[i] = new D3DFrameBuffer(DXGI_FORMAT_R32_FLOAT);
-		mTemperatureFrameBuffer[i]->Initialize(graphicsObject,width,height);
-		mTemperatureFrameBuffer[i]->BeginRender(0.0f,0.0f,0.0f,1.0f);
-		mTemperatureFrameBuffer[i]->EndRender();
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &velocityText[i]);
+		if (FAILED(hr)) {
+		  return false;
+		}
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(velocityText[i], &srvDesc, &mVelocitySP[i].mSRV);
+		if(FAILED(hr)) {
+			return false;
+		}
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(velocityText[i], &uavDesc, &mVelocitySP[i].mUAV);
+		if(FAILED(hr)) {
+			return false;
+		}
 	}
 
-	mDivergenceFrameBuffer = new D3DFrameBuffer(DXGI_FORMAT_R32_FLOAT);
-	mDivergenceFrameBuffer->Initialize(graphicsObject,width,height);
-	mDivergenceFrameBuffer->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	mDivergenceFrameBuffer->EndRender();
+	// Create the density shader params
+	CComPtr<ID3D11Texture2D> densityText[2];
+	mDensitySP = new ShaderParams[2];
+	textureDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.Format = textureDesc.Format;
+	uavDesc.Format = textureDesc.Format;
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &densityText[i]);
+		if (FAILED(hr)){
+		  return false;
+		}
+		// Create the SRV and UAV.
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(densityText[i], &srvDesc, &mDensitySP[i].mSRV);
+		if(FAILED(hr)) {
+			return false;
+		}
 
-	// Create the quad
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(densityText[i], &uavDesc, &mDensitySP[i].mUAV);
+		if(FAILED(hr)) {
+			return false;
+		}
+	}
+
+	// Create the temperature shader params
+	CComPtr<ID3D11Texture2D> temperatureText[2];
+	mTemperatureSP = new ShaderParams[2];
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &temperatureText[i]);
+		if (FAILED(hr)){
+		  return false;
+		}
+		// Create the SRV and UAV.
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(temperatureText[i], &srvDesc, &mTemperatureSP[i].mSRV);
+		if(FAILED(hr)) {
+			return false;
+		}
+
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(temperatureText[i], &uavDesc, &mTemperatureSP[i].mUAV);
+		if(FAILED(hr)) {
+			return false;
+		}
+	}
+
+	// Create divergence shader params
+	CComPtr<ID3D11Texture2D> divergenceText;
+	mDivergenceSP = new ShaderParams();
+	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &divergenceText);
+	// Create the SRV and UAV.
+	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(divergenceText, &srvDesc, &mDivergenceSP->mSRV);
+	if(FAILED(hresult)) {
+		return false;
+	}
+
+	hresult = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(divergenceText, &uavDesc, &mDivergenceSP->mUAV);
+	if(FAILED(hresult)) {
+		return false;
+	}
+
+	// Create pressure shader params and render targets
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+	renderTargetViewDesc.Format = textureDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDesc.Texture2D.MipSlice = 0;
+	mPressureSP = new ShaderParams[2];
+	CComPtr<ID3D11Texture2D> pressureText[2];	
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET;
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &pressureText[i]);
+		if (FAILED(hr)) {
+		  return false;
+		}
+		// Create the SRV and UAV.
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(pressureText[i], &srvDesc, &mPressureSP[i].mSRV);
+		if(FAILED(hr)) {
+			return false;
+		}
+
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(pressureText[i], &uavDesc, &mPressureSP[i].mUAV);
+		if(FAILED(hr)) {
+			return false;
+		}
+		// Create the render target
+		hr = pD3dGraphicsObj->GetDevice()->CreateRenderTargetView(pressureText[i], &renderTargetViewDesc, &mPressureRenderTargets[i]);
+		if (FAILED(hr)) {
+			return false;
+		}
+	}
+
+	// Create the constant buffers
+	D3D11_BUFFER_DESC inputBufferDesc;
+	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	inputBufferDesc.ByteWidth = sizeof(InputBufferGeneral);
+	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	inputBufferDesc.MiscFlags = 0;
+	inputBufferDesc.StructureByteStride = 0;
+	// General buffer
+	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferGeneral);
+	if(FAILED(hresult)) {
+		return false;
+	}
+	// Dissipation buffer
+	inputBufferDesc.ByteWidth = sizeof(InputBufferDissipation);
+	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferDissipation);
+	if(FAILED(hresult)) {
+		return false;
+	}
+	// Impulse buffer
+	inputBufferDesc.ByteWidth = sizeof(InputBufferImpulse);
+	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferImpulse);
+	if(FAILED(hresult)) {
+		return false;
+	}
+
+	// Create the sampler
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+	hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &mSampleState);
+	if(FAILED(result)) {
+		return false;
+	}
+
+	// Samplers don't change in this scene
+	pD3dGraphicsObj->GetDeviceContext()->CSSetSamplers(0,1,&(mSampleState.p));
+
+	// Create the quad for 2d rendering
 	mTexQuad = unique_ptr<D2DTexQuad>(new D2DTexQuad());
 	result = mTexQuad->Initialize(graphicsObject,hwnd);
 	if (!result) {
@@ -161,114 +298,156 @@ bool Fluid2DScene::Render() {
 	int READ = 0;
 	int WRITE = 1;
 
-	// To use for flushing render targets out of the pixel shaders
-	ID3D11ShaderResourceView *const pSRV[3] = {NULL,NULL,NULL};
+	ID3D11DeviceContext* context = pD3dGraphicsObj->GetDeviceContext();
+
+	// Set the general constant buffer
+	result = SetGeneralBuffer();
+	if (!result) {
+		return false;
+	}
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
 
 	// Advect velocity against itself
-	Advect((ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(),
-		   (ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(),
-		   mVelocityFrameBuffer[WRITE], VEL_DISSIPATION);
+	result = SetDissipationBuffer(VEL_DISSIPATION);
+	if (!result) {
+		return false;
+	}
+	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[READ],&mVelocitySP[WRITE]);
 
 	//Advect temperature against velocity
-	Advect((ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(),
-		   (ID3D11ShaderResourceView*)mTemperatureFrameBuffer[READ]->GetTextureResource(),
-		   mTemperatureFrameBuffer[WRITE], TEMPERATURE_DISSIPATION);
+	result = SetDissipationBuffer(TEMPERATURE_DISSIPATION);
+	if (!result) {
+		return false;
+	}
+	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
 
 	// Advect density against velocity
-	Advect((ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(),
-		   (ID3D11ShaderResourceView*)mDensityFrameBuffer[READ]->GetTextureResource(),
-		   mDensityFrameBuffer[WRITE], DENSITY_DISSIPATION);
+	result = SetDissipationBuffer(DENSITY_DISSIPATION);
+	if (!result) {
+		return false;
+	}
+	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mDensitySP[READ],&mDensitySP[WRITE]);
 
-	pD3dGraphicsObj->GetDeviceContext()->PSSetShaderResources(0, 2, pSRV);
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	
-	SwapBuffers(mVelocityFrameBuffer);
-	SwapBuffers(mTemperatureFrameBuffer);
-	SwapBuffers(mDensityFrameBuffer);	
+	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
+	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
+	swap(mDensitySP[READ],mDensitySP[WRITE]);
 
 	//Determine how the flow of the fluid changes the velocity
-	ApplyBuoyancy((ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(),
-				  (ID3D11ShaderResourceView*)mTemperatureFrameBuffer[READ]->GetTextureResource(),
-				  (ID3D11ShaderResourceView*)mDensityFrameBuffer[READ]->GetTextureResource(),
-				  mVelocityFrameBuffer[WRITE]);
+	mBuoyancyShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
 
-	pD3dGraphicsObj->GetDeviceContext()->PSSetShaderResources(0, 3, pSRV);
+	context->CSSetShaderResources(0, 3, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
-	SwapBuffers(mVelocityFrameBuffer);
+	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
 	//refresh the impulse of the density and temperature
-	ApplyImpulse(Vector2(400,600),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS, (ID3D11ShaderResourceView*)mDensityFrameBuffer[READ]->GetTextureResource(), mDensityFrameBuffer[WRITE]);
-	ApplyImpulse(Vector2(400,600),Vector2(IMPULSE_TEMPERATURE,IMPULSE_TEMPERATURE), IMPULSE_RADIUS, (ID3D11ShaderResourceView*)mTemperatureFrameBuffer[READ]->GetTextureResource(), mTemperatureFrameBuffer[WRITE]);
-	
+	result = SetImpulseBuffer(Vector2(400.0f,600.0f),Vector2(IMPULSE_TEMPERATURE,IMPULSE_TEMPERATURE), IMPULSE_RADIUS);
+	if (!result) {
+		return false;
+	}
+	mImpulseShader->Compute(pD3dGraphicsObj,&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
 
-	SwapBuffers(mTemperatureFrameBuffer);
-	SwapBuffers(mDensityFrameBuffer);	
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 
-	// Apply impulses to density and velocity
+	result = SetImpulseBuffer(Vector2(400.0f,600.0f),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS);
+	if (!result) {
+		return false;
+	}
+	mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
+
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+	swap(mDensitySP[READ],mDensitySP[WRITE]);	
+
+	// Apply impulses to density velocity and temperature
 	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	int x,y;
+	inputSystem->GetMousePos(x,y);
+	int xDelta,yDelta;
+	inputSystem->GetMouseDelta(xDelta,yDelta);
 	// mouse left button adds density
 	if (inputSystem->IsMouseLeftDown()) {
-		pD3dGraphicsObj->GetDeviceContext()->PSSetShaderResources(0, 2, pSRV);
-		int x,y;
-		inputSystem->GetMousePos(x,y);
-		int xDelta,yDelta;
-		inputSystem->GetMouseDelta(xDelta,yDelta);
-		ApplyImpulse(Vector2((float)x,(float)y), Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), INTERACTION_IMPULSE_RADIUS, (ID3D11ShaderResourceView*)mDensityFrameBuffer[READ]->GetTextureResource(), mDensityFrameBuffer[WRITE]);
-		SwapBuffers(mDensityFrameBuffer);
+		context->PSSetShaderResources(0, 2, pSRVNULL);		
+		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), INTERACTION_IMPULSE_RADIUS);
+		if (!result) {
+			return false;
+		}
+		mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
+		swap(mDensitySP[READ],mDensitySP[WRITE]);
+		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(xDelta*1.5f,yDelta*1.5f), INTERACTION_IMPULSE_RADIUS);
+		if (!result) {
+			return false;
+		}
+		mImpulseShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[WRITE]);
+		swap(mVelocitySP[READ],mVelocitySP[WRITE]);
+		context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	}
 	// mouse right button adds velocity
 	else if (inputSystem->IsMouseRightDown()) {
-		pD3dGraphicsObj->GetDeviceContext()->PSSetShaderResources(0, 2, pSRV);
-		int x,y;
-		inputSystem->GetMousePos(x,y);
-		int xDelta,yDelta;
-		inputSystem->GetMouseDelta(xDelta,yDelta);
-		ApplyImpulse(Vector2((float)x,(float)y), Vector2(xDelta*1.5f,yDelta*1.5f), INTERACTION_IMPULSE_RADIUS, (ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(), mVelocityFrameBuffer[WRITE]);
-		SwapBuffers(mVelocityFrameBuffer);
+		context->PSSetShaderResources(0, 2, pSRVNULL);
+		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(xDelta*1.5f,yDelta*1.5f), INTERACTION_IMPULSE_RADIUS);
+		if (!result) {
+			return false;
+		}
+		mImpulseShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[WRITE]);
+		swap(mVelocitySP[READ],mVelocitySP[WRITE]);
+		context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	}	
 	// mouse mid button adds temperature
 	else if (inputSystem->IsMouseMidDown()) {
-		pD3dGraphicsObj->GetDeviceContext()->PSSetShaderResources(0, 2, pSRV);
-		int x,y;
-		inputSystem->GetMousePos(x,y);
-		int xDelta,yDelta;
-		inputSystem->GetMouseDelta(xDelta,yDelta);
-		ApplyImpulse(Vector2((float)x,(float)y), Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), IMPULSE_RADIUS*0.4f, (ID3D11ShaderResourceView*)mTemperatureFrameBuffer[READ]->GetTextureResource(), mTemperatureFrameBuffer[WRITE]);
-		SwapBuffers(mTemperatureFrameBuffer);
+		context->PSSetShaderResources(0, 2, pSRVNULL);
+		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), INTERACTION_IMPULSE_RADIUS);
+		if (!result) {
+			return false;
+		}
+		mImpulseShader->Compute(pD3dGraphicsObj,&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
+		swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 	}	
 
 	// Calculate the divergence of the velocity
-	ComputeDivergence((ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(), 
-					  mDivergenceFrameBuffer);
+	mDivergenceShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],mDivergenceSP);
 
-	// clear pressure frame buffer
-	mPressureFrameBuffer[READ]->BeginRender(0,0,0,0);
-	mPressureFrameBuffer[READ]->EndRender();
+	// clear pressure texture to prepare for jacobi
+	float clearCol[4] = {0.0f,0.0f,0.0f,0.0f};
+	context->ClearRenderTargetView(mPressureRenderTargets[READ], clearCol);
+	
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	// perform jacobi on pressure field
 	int i;
-	for (i = 0; i < JACOBI_ITERATIONS; ++i) {
-		Jacobi((ID3D11ShaderResourceView*)mPressureFrameBuffer[READ]->GetTextureResource(), 
-			   (ID3D11ShaderResourceView*)mDivergenceFrameBuffer->GetTextureResource(),
-			   mPressureFrameBuffer[WRITE]);
-		SwapBuffers(mPressureFrameBuffer);		
-		pD3dGraphicsObj->GetDeviceContext()->PSSetShaderResources(0, 2, pSRV);
+	for (i = 0; i < JACOBI_ITERATIONS; ++i) {		
+		mJacobiShader->Compute(pD3dGraphicsObj,
+								&mPressureSP[READ],
+								mDivergenceSP,
+								&mPressureSP[WRITE]);
+
+		swap(mPressureSP[READ],mPressureSP[WRITE]);
+		context->CSSetShaderResources(0, 2, pSRVNULL);
+		context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	}
 
-	//Use the pressure tex that was last rendered into. This computes divergence free velocity
-	SubtractGradient((ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource(),
-					 (ID3D11ShaderResourceView*)mPressureFrameBuffer[READ]->GetTextureResource(),
-					 mVelocityFrameBuffer[WRITE]);
+	//Use the pressure tex that was last computed. This computes divergence free velocity
+	mSubtractGradientShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mPressureSP[READ],&mVelocitySP[WRITE]);
 
-	SwapBuffers(mVelocityFrameBuffer);
+	std::swap(mVelocitySP[READ],mVelocitySP[WRITE]);
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	// choose the texture to see
 	ID3D11ShaderResourceView* currTexture = nullptr;
 	if (textureShowing == 0)
-		currTexture = (ID3D11ShaderResourceView*)mDensityFrameBuffer[READ]->GetTextureResource();
+		currTexture = mDensitySP[READ].mSRV;
 	else if (textureShowing == 1)
-		currTexture = (ID3D11ShaderResourceView*)mTemperatureFrameBuffer[READ]->GetTextureResource();
+		currTexture = mTemperatureSP[READ].mSRV;
 	else 
-		currTexture = (ID3D11ShaderResourceView*)mVelocityFrameBuffer[READ]->GetTextureResource();
+		currTexture = mVelocitySP[READ].mSRV;
 
 	// Render texture to screen
 	mTexQuad->SetTexture(currTexture);
@@ -278,82 +457,87 @@ bool Fluid2DScene::Render() {
 	return true;
 }
 
-void Fluid2DScene::Advect(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* advectionTarget, IFrameBuffer* renderTarget, float dissipation) {
-	renderTarget->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	{
-		pD3dGraphicsObj->SetZBufferState(false);
-		D3DRenderer *renderer = mTexQuad->GetRenderer();
-		renderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-		mAdvectionShader->Render(pD3dGraphicsObj, renderer->GetIndexCount(), TIME_STEP, dissipation, velocityField, advectionTarget);
-		pD3dGraphicsObj->SetZBufferState(true);
-	}
-	renderTarget->EndRender();
-}
+bool Fluid2DScene::SetGeneralBuffer() {
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	InputBufferGeneral* dataPtr;
 
-void Fluid2DScene::ApplyBuoyancy(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* temperatureField, ID3D11ShaderResourceView* density, IFrameBuffer* renderTarget) {
-	renderTarget->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	{
-		pD3dGraphicsObj->SetZBufferState(false);
-		D3DRenderer *renderer = mTexQuad->GetRenderer();
-		renderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-		mBuoyancyShader->Render(pD3dGraphicsObj, renderer->GetIndexCount(), TIME_STEP, SMOKE_BUOYANCY, SMOKE_WEIGHT, AMBIENT_TEMPERATURE, velocityField, temperatureField, density); 
-		pD3dGraphicsObj->SetZBufferState(true);
-	}
-	renderTarget->EndRender();
-}
+	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
-void Fluid2DScene::ApplyImpulse(Vector2 mousePoint, Vector2 amount, float radius, ID3D11ShaderResourceView* originalState, IFrameBuffer* renderTarget) {
-	// normalize mouse coords
+	// Lock the screen size constant buffer so it can be written to.
+	HRESULT result = context->Map(mInputBufferGeneral, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if(FAILED(result)) {
+		return false;
+	}
+
+	dataPtr = (InputBufferGeneral*)mappedResource.pData;
 	int width,height;
 	pD3dGraphicsObj->GetScreenDimensions(width,height);
-	mousePoint.x = MapValue(mousePoint.x,0.0f,(float)width,0.0f,1.0f);
-	mousePoint.y = MapValue(mousePoint.y,0.0f,(float)height,0.0f,1.0f);
-	
-	renderTarget->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	{
-		pD3dGraphicsObj->SetZBufferState(false);
-		D3DRenderer *renderer = mTexQuad->GetRenderer();
-		renderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-		mImpulseShader->Render(pD3dGraphicsObj, renderer->GetIndexCount(), mousePoint, amount, radius, originalState);
-		pD3dGraphicsObj->SetZBufferState(true);
-	}
-	renderTarget->EndRender();
+	dataPtr->fTimeStep = TIME_STEP;
+	dataPtr->fBuoyancy = SMOKE_BUOYANCY;
+	dataPtr->fDensityWeight	= SMOKE_WEIGHT;
+	dataPtr->fAmbientTemperature = AMBIENT_TEMPERATURE;
+	dataPtr->fAlpha	= -CELL_SIZE*CELL_SIZE;
+	dataPtr->fInverseBeta = 0.25f;
+	dataPtr->fHalfInverseCellSize = 0.5f/CELL_SIZE;	
+	dataPtr->fGradientScale	= GRADIENT_SCALE;
+	dataPtr->vDimensions = Vector2((float)width,(float)height);
+	dataPtr->padding0 = Vector2();
+
+	context->Unmap(mInputBufferGeneral,0);
+
+	// Set the buffer inside the compute shader
+	context->CSSetConstantBuffers(0,1,&(mInputBufferGeneral.p));
+	return true;
 }
 
-void Fluid2DScene::Jacobi(ID3D11ShaderResourceView* pressure, ID3D11ShaderResourceView* divergence, IFrameBuffer* renderTarget) {
-	renderTarget->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	{
-		pD3dGraphicsObj->SetZBufferState(false);
-		D3DRenderer *renderer = mTexQuad->GetRenderer();
-		renderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-		mJacobiShader->Render(pD3dGraphicsObj, renderer->GetIndexCount(), -CELL_SIZE*CELL_SIZE, 0.25f, pressure, divergence);
-		pD3dGraphicsObj->SetZBufferState(true);
+bool Fluid2DScene::SetDissipationBuffer(float dissipation) {
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	InputBufferDissipation* dataPtr;
+
+	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+
+	// Lock the screen size constant buffer so it can be written to.
+	HRESULT result = context->Map(mInputBufferDissipation, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if(FAILED(result)) {
+		return false;
 	}
-	renderTarget->EndRender();
+
+	dataPtr = (InputBufferDissipation*)mappedResource.pData;
+	dataPtr->fDissipation = dissipation;	
+	dataPtr->padding1 = Vector3();
+
+	context->Unmap(mInputBufferDissipation,0);
+
+	// Set the buffer inside the compute shader
+	context->CSSetConstantBuffers(1,1,&(mInputBufferDissipation.p));
+
+	return true;
 }
 
-void Fluid2DScene::ComputeDivergence(ID3D11ShaderResourceView* velocityField, IFrameBuffer* renderTarget) {
-	renderTarget->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	{
-		pD3dGraphicsObj->SetZBufferState(false);
-		D3DRenderer *renderer = mTexQuad->GetRenderer();
-		renderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-		mDivergenceShader->Render(pD3dGraphicsObj, renderer->GetIndexCount(), 0.5f/CELL_SIZE, velocityField);
-		pD3dGraphicsObj->SetZBufferState(true);
-	}
-	renderTarget->EndRender();
-}
+bool Fluid2DScene::SetImpulseBuffer(Vector2& point, Vector2& amount, float radius) {
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	InputBufferImpulse* dataPtr;
 
-void Fluid2DScene::SubtractGradient(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* pressure, IFrameBuffer* renderTarget) {
-	renderTarget->BeginRender(0.0f,0.0f,0.0f,1.0f);
-	{
-		pD3dGraphicsObj->SetZBufferState(false);
-		D3DRenderer *renderer = mTexQuad->GetRenderer();
-		renderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
-		mSubtractGradientShader->Render(pD3dGraphicsObj, renderer->GetIndexCount(), GRADIENT_SCALE, velocityField, pressure);
-		pD3dGraphicsObj->SetZBufferState(true);
+	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+
+	// Lock the screen size constant buffer so it can be written to.
+	HRESULT result = context->Map(mInputBufferImpulse, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if(FAILED(result)) {
+		return false;
 	}
-	renderTarget->EndRender();
+
+	dataPtr = (InputBufferImpulse*)mappedResource.pData;
+	dataPtr->vPoint	= point;
+	dataPtr->vFillColor	= amount;
+	dataPtr->fRadius = radius;	
+	dataPtr->padding2 = Vector3();
+
+	context->Unmap(mInputBufferImpulse,0);
+
+	// Set the buffer inside the compute shader
+	context->CSSetConstantBuffers(2,1,&(mInputBufferImpulse.p));
+
+	return true;
 }
 
 void Fluid2DScene::SwapBuffers(IFrameBuffer** buffers) {

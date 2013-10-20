@@ -1,6 +1,6 @@
 /*************************************************************
 Fluid2DShaders.h: Contains all the shader classes needed for
-2D fluid simulation
+2D fluid simulation as well as utilities for resource methods
 
 Author: Valentin Hinov
 Date: 11/09/2013
@@ -11,6 +11,12 @@ Date: 11/09/2013
 #include "BaseD3DShader.h"
 
 class D3DGraphicsObject;
+
+// Struct to encapsulate the common resources required for the shaders
+/*struct ShaderParams {
+	CComPtr<ID3D11ShaderResourceView>	mSRV;
+	CComPtr<ID3D11UnorderedAccessView>  mUAV;
+};*/
 
 class AdvectionShader : public BaseD3DShader {
 public:
@@ -34,7 +40,6 @@ private:
 	CComPtr<ID3D11Buffer>		mInputBuffer;
 	CComPtr<ID3D11SamplerState> mSampleState;
 };
-
 
 class ImpulseShader : public BaseD3DShader {
 public:
@@ -67,16 +72,19 @@ public:
 
 	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, float alpha, float inverseBeta, ID3D11ShaderResourceView* pressureField, ID3D11ShaderResourceView* divergence);
 
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, float alpha, float inverseBeta, _In_ ID3D11ShaderResourceView* pressureField, _In_ ID3D11ShaderResourceView* divergence, _In_ ID3D11UnorderedAccessView* pressureResult);
+
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
 
 private:
 	struct InputBuffer {
-		float fTextureWidth;
-		float fTextureHeight;
 		float fAlpha;
 		float fInverseBeta;
+		Vector2 vDimensions;
+		//float fTextureWidth;
+		//float fTextureHeight;
 	};
 
 	CComPtr<ID3D11Buffer>		mInputBuffer;

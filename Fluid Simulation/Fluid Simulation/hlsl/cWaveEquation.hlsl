@@ -20,13 +20,14 @@ void WaveComputeShader(uint3 dispatchThreadId : SV_DispatchThreadID) {
 	uint i = dispatchThreadId.x;
 	uint j = dispatchThreadId.y;
 
+	// Texture2D.Load() and the [] operator provide similar functionality
 	float u = InputTexNow.Load(int3(i,j,0));
 	float uPrev = InputTexPrev.Load(int3(i,j,0));
 
-	float col1 = InputTexNow.Load(int3(i+1,j,0)); //i+1, 0
-	float col2 = InputTexNow.Load(int3(i-1,j,0)); //i-1, 0
-	float col3 = InputTexNow.Load(int3(i,j+1,0)); //0, j+1
-	float col4 = InputTexNow.Load(int3(i,j-1,0)); //0, j-1
+	float col1 = InputTexNow[uint2(i+1,j)]; //i+1, 0
+	float col2 = InputTexNow[uint2(i-1,j)]; //i-1, 0
+	float col3 = InputTexNow[uint2(i,j+1)]; //0, j+1
+	float col4 = InputTexNow[uint2(i,j-1)]; //0, j-1
 
 	float ctx2 = pow(fWaveSpeed*fTimeStep,2);
 	float final = (2.0f*u) - uPrev + ( col1+col2+col3+col4 - (4.0f*u) )*ctx2;

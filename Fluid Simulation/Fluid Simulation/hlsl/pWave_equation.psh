@@ -36,8 +36,6 @@ float4 WavePixelShader(PixelInputType input) : SV_TARGET {
 
 	float ctx2 = pow(fWaveSpeed*fTimeStep,2);
 
-	
-	//float final = u - uPrev;// + (col1 + col2 + col3 + col4 - 4.0*u )*ctx2;
 	float timeDampDivTwo = fTimeStep*fDampFactor/2.0f;
 	float final = (2.0f*u) - (uPrev*(1.0f - timeDampDivTwo)) + ( col1+col2+col3+col4 - (4.0f*u) )*ctx2;
 	final /= (1.0f + timeDampDivTwo);

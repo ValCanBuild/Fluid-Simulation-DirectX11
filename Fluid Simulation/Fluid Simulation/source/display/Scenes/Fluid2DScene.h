@@ -8,6 +8,11 @@ Date: 10/09/2013
 #ifndef _FLUID2DSCENE_H
 #define _FLUID2DSCENE_H
 
+#include <atlbase.h>
+#if defined (_DEBUG)
+#pragma comment(lib,"atlsd.lib")
+#endif
+
 #include <vector>
 #include <memory>
 #include "IScene.h"
@@ -22,14 +27,22 @@ class JacobiShader;
 class DivergenceShader;
 class SubtractGradientShader;
 class BuoyancyShader;
+struct ShaderParams;
+struct InputBufferGeneral;
+struct InputBufferDissipation;
+struct InputBufferImpulse;
 
 struct ID3D11ShaderResourceView;
+//struct ID3D11UnorderedAccessView;
+struct ID3D11RenderTargetView;
+struct ID3D11Buffer;
+struct ID3D11SamplerState;
 
 using namespace std;
 
 #define TIME_STEP 0.125f
-#define IMPULSE_RADIUS 0.03f
-#define INTERACTION_IMPULSE_RADIUS 0.015f
+#define IMPULSE_RADIUS 20.0f
+#define INTERACTION_IMPULSE_RADIUS 7.0f
 #define JACOBI_ITERATIONS 50
 #define CELL_SIZE 1.0f
 #define GRADIENT_SCALE 1.0f
@@ -39,7 +52,7 @@ using namespace std;
 #define SMOKE_BUOYANCY 1.0f
 #define SMOKE_WEIGHT 0.05f
 #define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 10.0f
+#define IMPULSE_TEMPERATURE 1.5f
 #define IMPULSE_DENSITY	1.0f
 
 class Fluid2DScene : public IScene {
@@ -60,6 +73,10 @@ private:
 	void SubtractGradient(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* pressure, IFrameBuffer* renderTarget);
 
 	void SwapBuffers(IFrameBuffer** buffers); // Useful function to swap the pointers of 2 frame buffers
+	bool SetGeneralBuffer();
+	bool SetImpulseBuffer(Vector2& point, Vector2& amount, float radius);
+	bool SetDissipationBuffer(float dissipation);
+
 private:
 	unique_ptr<Camera>					mCamera;
 	unique_ptr<D2DTexQuad>				mTexQuad;
@@ -71,12 +88,17 @@ private:
 	unique_ptr<SubtractGradientShader>	mSubtractGradientShader;
 	unique_ptr<BuoyancyShader>			mBuoyancyShader;
 
-	IFrameBuffer** mVelocityFrameBuffer;
-	IFrameBuffer** mDensityFrameBuffer;
-	IFrameBuffer** mTemperatureFrameBuffer;
-	IFrameBuffer** mPressureFrameBuffer;
+	ShaderParams* mVelocitySP;
+	ShaderParams* mDensitySP;
+	ShaderParams* mTemperatureSP;
+	ShaderParams* mPressureSP;
+	ShaderParams* mDivergenceSP;
+	CComPtr<ID3D11RenderTargetView>		mPressureRenderTargets[2];
 
-	IFrameBuffer*  mDivergenceFrameBuffer;
+	CComPtr<ID3D11Buffer>				mInputBufferGeneral;
+	CComPtr<ID3D11Buffer>				mInputBufferImpulse;
+	CComPtr<ID3D11Buffer>				mInputBufferDissipation;
+	CComPtr<ID3D11SamplerState>			mSampleState;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
