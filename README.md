@@ -6,7 +6,15 @@ Codebase for my Honours Project: Adaptive Fluid Simulation using DirectX 11
 Trello board for this project: https://trello.com/b/0ueEoeJs/honours-project-board
 
 This will feature different experiments of simulating fluid mechanics in a 2D or 3D environment and seeing how to algorithms
-can be adapted to be used in Real-time. As the project progresses so will this description. Changelog so far:
+can be adapted to be used in Real-time. As the project progresses so will this description. 
+
+This project requires:
+Windows 8 SDK: http://msdn.microsoft.com/en-us/windows/desktop/aa904949
+DirectX 11: Part of the Windows SDK
+DirectXTK (provided): http://directxtk.codeplex.com/
+AntTweakBar: http://anttweakbar.sourceforge.net/
+
+Changelog so far:
 
 v1.0.0: Initial working version of 2D Fluid Simulation with small interactivity. 
  
