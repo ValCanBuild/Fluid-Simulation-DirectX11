@@ -8,10 +8,10 @@ Trello board for this project: https://trello.com/b/0ueEoeJs/honours-project-boa
 This will feature different experiments of simulating fluid mechanics in a 2D or 3D environment and seeing how to algorithms
 can be adapted to be used in Real-time. As the project progresses so will this description. 
 
-This project requires:
-Windows 8 SDK: http://msdn.microsoft.com/en-us/windows/desktop/aa904949
-DirectX 11: Part of the Windows SDK
-DirectXTK (provided): http://directxtk.codeplex.com/
+This project requires:   
+Windows 8 SDK: http://msdn.microsoft.com/en-us/windows/desktop/aa904949             
+DirectX 11: Part of the Windows SDK    
+DirectXTK (provided): http://directxtk.codeplex.com/    
 AntTweakBar: http://anttweakbar.sourceforge.net/
 
 Changelog so far:
