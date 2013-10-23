@@ -20,3 +20,6 @@ v1.0.0: Initial working version of 2D Fluid Simulation with small interactivity.
  
 v1.0.1: Implemented proper boundary conditions for 2D Fluid Simulation, changed 2D Wave Equation simulation 
 to use DirectCompute. Added simple UI overlay for basic information displaying.
+
+v1.1: 2D Fluid Simulation now running on Compute Shaders. Added AntTweakBar to the project in order to edit simulation
+parameters at runtime.
