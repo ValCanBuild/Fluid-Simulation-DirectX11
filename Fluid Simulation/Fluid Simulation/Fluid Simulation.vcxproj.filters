@@ -271,12 +271,12 @@
     <None Include="hlsl\vWave_equation.vsh">
       <Filter>HLSL</Filter>
     </None>
-    <None Include="hlsl\cWaveEquation.hlsl">
+    <None Include="hlsl\cFluid2D.hlsl">
       <Filter>HLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="hlsl\cFluid2D.hlsl">
+    <FxCompile Include="hlsl\cWaveEquation.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

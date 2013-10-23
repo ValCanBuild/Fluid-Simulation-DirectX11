@@ -27,12 +27,19 @@ bool AdvectionShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ Shade
 
 	context->CSSetUnorderedAccessViews(0,1,&(advectResult->mUAV.p),nullptr);
 
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/6.0f);
+	UINT numThreadY = (UINT)ceil(height/6.0f);
 
 	// Run compute shader
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -65,12 +72,19 @@ bool ImpulseShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderP
 	context->CSSetShaderResources(0,1,&(impulseInitial->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(impulseResult->mUAV.p),nullptr);
 
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/6.0f);
+	UINT numThreadY = (UINT)ceil(height/6.0f);
 
 	// Run compute shader
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 1, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -104,12 +118,19 @@ bool JacobiShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderPa
 	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(pressureResult->mUAV.p),nullptr);
 
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/6.0f);
+	UINT numThreadY = (UINT)ceil(height/6.0f);
 
 	// Run compute shader
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -142,12 +163,19 @@ bool DivergenceShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ Shad
 	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(divergenceResult->mUAV.p),nullptr);
 
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/6.0f);
+	UINT numThreadY = (UINT)ceil(height/6.0f);
 
 	// Run compute shader
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 1, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -181,12 +209,19 @@ bool SubtractGradientShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In
 	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
 
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/6.0f);
+	UINT numThreadY = (UINT)ceil(height/6.0f);
 
 	// Run compute shader
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -221,12 +256,19 @@ bool BuoyancyShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ Shader
 	context->CSSetShaderResources(2,1,&(density->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
 
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/6.0f);
+	UINT numThreadY = (UINT)ceil(height/6.0f);
 
 	// Run compute shader
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 3, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }

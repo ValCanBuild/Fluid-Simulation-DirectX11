@@ -64,7 +64,7 @@ RWTexture2D<float> pressureResult : register (u0); // Used for JacobiComputeShad
 
 RWTexture2D<float2> velocityResult : register (u0); // Used for SubtractGradientComputeShader
 
-[numthreads(32, 32, 1)]
+[numthreads(6, 6, 1)]
 // Advect the speed by sampling at pos - deltaTime*velocity
 void AdvectComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	// advect by trace back
@@ -92,10 +92,10 @@ void AdvectComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 
 	float2 result = advectionTarget.SampleLevel(linearSampler, prevPos, 0);
 
-	advectionResult[i] = result;
+	advectionResult[i] = result*fDissipation;
 }
 
-[numthreads(32, 32, 1)]
+[numthreads(6, 6, 1)]
 // Create upward force by using the temperature difference
 void BuoyancyComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -111,7 +111,7 @@ void BuoyancyComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	buoyancyResult[i] = result;
 }
 
-[numthreads(32, 32, 1)]
+[numthreads(6, 6, 1)]
 // Adds impulse depending on point of interaction
 void ImpulseComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -127,7 +127,7 @@ void ImpulseComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 		impulseResult[i] = impulseInitial[i];
 }
 
-[numthreads(32, 32, 1)]
+[numthreads(6, 6, 1)]
 // calculate the velocity divergence
 void DivergenceComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -171,15 +171,10 @@ void DivergenceComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	divergenceResult[i] = result;
 }
 
-[numthreads(32, 32, 1)]
+[numthreads(6, 6, 1)]
 // jacobi shader to compute the gradient pressure field
 void JacobiComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
-
-	/*uint2 coordT = i.xy + uint2(0, 1);
-	uint2 coordB = i.xy - uint2(0, 1);
-	uint2 coordR = i.xy + uint2(1, 0);
-	uint2 coordL = i.xy - uint2(1, 0);*/
 
 	uint2 coordT = uint2(i.x, min(i.y+1,vDimensions.y-1));
 	uint2 coordB = uint2(i.x, max(i.y-1,1));
@@ -190,18 +185,6 @@ void JacobiComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	float xB = pressure[coordB];
 	float xR = pressure[coordR];
 	float xL = pressure[coordL];
-	
-	/*float xC = pressure[i];
-
-	// Enforce boundary conditions
-	if (coordT.y > vDimensions.y - 1)
-		xT = xC;
-	if (coordB.y < 1)
-		xB = xC;
-	if (coordR.x > vDimensions.x - 1)
-		xR = xC;
-	if (coordL.x < 1)
-		xL = xC;*/
 
 	// Sample divergence
 	float bC = divergence[i];
@@ -211,7 +194,7 @@ void JacobiComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	pressureResult[i] = final;
 }
 
-[numthreads(32, 32, 1)]
+[numthreads(6, 6, 1)]
 // enforce incompressibility condition by making the velocity divergence 0 by subtracting the pressure gradient
 void SubtractGradientComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;

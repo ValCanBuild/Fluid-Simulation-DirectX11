@@ -7,6 +7,7 @@ Version: 1.0
 **************************************************************/
 #include <windowsx.h>
 #include <iostream>
+#include <AntTweakBar.h> // include anttweakbar here in order to pass windows messages to it
 #include "MainSystem.h"
 
 
@@ -137,6 +138,9 @@ bool MainSystem::Frame() {
 }
 
 LRESULT CALLBACK MainSystem::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) {
+	if (TwEventWin(hwnd,umsg,wparam,lparam)) { // send event message to AntTweakBar
+		return 0; // event has been handled by AntTweakBar
+	}
 	switch(umsg) {
 		// Check if a key has been pressed on the keyboard.
 		case WM_KEYDOWN:

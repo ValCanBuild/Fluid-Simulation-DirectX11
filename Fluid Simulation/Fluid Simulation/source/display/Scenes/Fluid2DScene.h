@@ -9,6 +9,7 @@ Date: 10/09/2013
 #define _FLUID2DSCENE_H
 
 #include <atlbase.h>
+#include <AntTweakBar.h>
 #if defined (_DEBUG)
 #pragma comment(lib,"atlsd.lib")
 #endif
@@ -32,8 +33,6 @@ struct InputBufferGeneral;
 struct InputBufferDissipation;
 struct InputBufferImpulse;
 
-struct ID3D11ShaderResourceView;
-//struct ID3D11UnorderedAccessView;
 struct ID3D11RenderTargetView;
 struct ID3D11Buffer;
 struct ID3D11SamplerState;
@@ -46,13 +45,13 @@ using namespace std;
 #define JACOBI_ITERATIONS 50
 #define CELL_SIZE 1.0f
 #define GRADIENT_SCALE 1.0f
-#define VEL_DISSIPATION 0.99f
-#define DENSITY_DISSIPATION 0.9999f
+#define VEL_DISSIPATION 0.999f
+#define DENSITY_DISSIPATION 0.999f
 #define TEMPERATURE_DISSIPATION 0.99f
 #define SMOKE_BUOYANCY 1.0f
 #define SMOKE_WEIGHT 0.05f
 #define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 1.5f
+#define IMPULSE_TEMPERATURE 3.0f
 #define IMPULSE_DENSITY	1.0f
 
 class Fluid2DScene : public IScene {
@@ -65,17 +64,12 @@ public:
 	bool Render();
 
 private:
-	void Advect(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* advectionTarget, IFrameBuffer* renderTarget, float dissipation);
-	void ApplyBuoyancy(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* temperatureField, ID3D11ShaderResourceView* density, IFrameBuffer* renderTarget);
-	void ApplyImpulse(Vector2 mousePoint, Vector2 amount, float radius, ID3D11ShaderResourceView* originalState, IFrameBuffer* renderTarget);
-	void Jacobi(ID3D11ShaderResourceView* pressure, ID3D11ShaderResourceView* divergence, IFrameBuffer* renderTarget);
-	void ComputeDivergence(ID3D11ShaderResourceView* velocityField, IFrameBuffer* renderTarget);
-	void SubtractGradient(ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* pressure, IFrameBuffer* renderTarget);
-
 	void SwapBuffers(IFrameBuffer** buffers); // Useful function to swap the pointers of 2 frame buffers
 	bool SetGeneralBuffer();
 	bool SetImpulseBuffer(Vector2& point, Vector2& amount, float radius);
 	bool SetDissipationBuffer(float dissipation);
+
+	bool PerformComputation();
 
 private:
 	unique_ptr<Camera>					mCamera;
@@ -92,7 +86,7 @@ private:
 	ShaderParams* mDensitySP;
 	ShaderParams* mTemperatureSP;
 	ShaderParams* mPressureSP;
-	ShaderParams* mDivergenceSP;
+	unique_ptr<ShaderParams>			mDivergenceSP;
 	CComPtr<ID3D11RenderTargetView>		mPressureRenderTargets[2];
 
 	CComPtr<ID3D11Buffer>				mInputBufferGeneral;
@@ -103,6 +97,11 @@ private:
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	int textureShowing;
+	bool mPaused;
+
+// Simulation Variables
+private:
+	int mJacobiIterations;
 };
 
 #endif

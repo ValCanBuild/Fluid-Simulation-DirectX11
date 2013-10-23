@@ -14,8 +14,17 @@ Date: 10/09/2013
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
 
+#define READ 0
+#define WRITE 1
+
 Fluid2DScene::Fluid2DScene() {
 	textureShowing = 0;
+	mPaused = false;
+	mJacobiIterations = JACOBI_ITERATIONS;
+	mVelocitySP = nullptr;
+	mDensitySP = nullptr;
+	mTemperatureSP = nullptr;
+	mPressureSP = nullptr;
 }
 
 Fluid2DScene::~Fluid2DScene() {
@@ -35,12 +44,14 @@ Fluid2DScene::~Fluid2DScene() {
 		delete [] mVelocitySP;
 		mVelocitySP = nullptr;
 	}
-	if (mDivergenceSP) {
-		delete mVelocitySP;
-		mDivergenceSP = nullptr;
-	}
 
 	pD3dGraphicsObj = nullptr;
+
+	// Terminate AntTweakBar
+	int result = TwTerminate();
+	if (result == 0) {
+		// AntTweakBar did not terminate properly
+	}
 }
 
 bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
@@ -174,7 +185,7 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 
 	// Create divergence shader params
 	CComPtr<ID3D11Texture2D> divergenceText;
-	mDivergenceSP = new ShaderParams();
+	mDivergenceSP = unique_ptr<ShaderParams>(new ShaderParams());
 	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &divergenceText);
 	// Create the SRV and UAV.
 	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(divergenceText, &srvDesc, &mDivergenceSP->mSRV);
@@ -274,7 +285,21 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	if (!result) {
 		return false;
 	}
+	
+	// Initialize AntTweakBar
+	TwInit(TW_DIRECT3D11, pD3dGraphicsObj->GetDevice());
+	TwWindowSize(width,height);
+	TwBar *twBar;
+	twBar = TwNewBar("2D Fluid Simulation");
+	// Position bar
+	int barPos[2] = {580,2};
+	TwSetParam(twBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
+	int barSize[2] = {220,150};
+	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 
+	// Add Variables to tweak bar
+	TwAddVarRW(twBar,"Jacobi Iterations", TW_TYPE_INT32, &mJacobiIterations, "min=1 max=100 step=1");
+	TwAddVarRW(twBar,"Simulation Paused", TW_TYPE_BOOLCPP, &mPaused, nullptr);
 	return true;
 }
 
@@ -293,22 +318,44 @@ bool Fluid2DScene::Render() {
 	pD3dGraphicsObj->GetOrthoMatrix(orthoMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
 
-	bool result;
+	if (!mPaused) {
+		if (!PerformComputation()) {
+			return false;
+		}
+	}
 
-	int READ = 0;
-	int WRITE = 1;
+	// choose the texture to see
+	ID3D11ShaderResourceView* currTexture = nullptr;
+	if (textureShowing == 0)
+		currTexture = mDensitySP[READ].mSRV;
+	else if (textureShowing == 1)
+		currTexture = mTemperatureSP[READ].mSRV;
+	else 
+		currTexture = mVelocitySP[READ].mSRV;
 
-	ID3D11DeviceContext* context = pD3dGraphicsObj->GetDeviceContext();
+	// Render texture to screen
+	mTexQuad->SetTexture(currTexture);
+	bool result = mTexQuad->Render(&viewMatrix,&orthoMatrix);
+	if (!result)
+		return false;
 
+	// Render AntTweakBar
+	int twResult = TwDraw();
+	if (twResult == 0) {
+		// TWDraw failed, use TwGetLastError to retrieve error
+	}
+
+	return true;
+}
+
+bool Fluid2DScene::PerformComputation() {
 	// Set the general constant buffer
-	result = SetGeneralBuffer();
+	bool result = SetGeneralBuffer();
 	if (!result) {
 		return false;
 	}
 
-	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11DeviceContext* context = pD3dGraphicsObj->GetDeviceContext();
 
 	// Advect velocity against itself
 	result = SetDissipationBuffer(VEL_DISSIPATION);
@@ -330,9 +377,6 @@ bool Fluid2DScene::Render() {
 		return false;
 	}
 	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mDensitySP[READ],&mDensitySP[WRITE]);
-
-	context->CSSetShaderResources(0, 2, pSRVNULL);
-	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	
 	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
@@ -340,9 +384,6 @@ bool Fluid2DScene::Render() {
 
 	//Determine how the flow of the fluid changes the velocity
 	mBuoyancyShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
-
-	context->CSSetShaderResources(0, 3, pSRVNULL);
-	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
@@ -353,7 +394,6 @@ bool Fluid2DScene::Render() {
 	}
 	mImpulseShader->Compute(pD3dGraphicsObj,&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
 
-	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 
 	result = SetImpulseBuffer(Vector2(400.0f,600.0f),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS);
@@ -362,7 +402,6 @@ bool Fluid2DScene::Render() {
 	}
 	mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
 
-	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	swap(mDensitySP[READ],mDensitySP[WRITE]);	
 
 	// Apply impulses to density velocity and temperature
@@ -373,7 +412,6 @@ bool Fluid2DScene::Render() {
 	inputSystem->GetMouseDelta(xDelta,yDelta);
 	// mouse left button adds density
 	if (inputSystem->IsMouseLeftDown()) {
-		context->PSSetShaderResources(0, 2, pSRVNULL);		
 		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), INTERACTION_IMPULSE_RADIUS);
 		if (!result) {
 			return false;
@@ -386,22 +424,18 @@ bool Fluid2DScene::Render() {
 		}
 		mImpulseShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[WRITE]);
 		swap(mVelocitySP[READ],mVelocitySP[WRITE]);
-		context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	}
 	// mouse right button adds velocity
 	else if (inputSystem->IsMouseRightDown()) {
-		context->PSSetShaderResources(0, 2, pSRVNULL);
 		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(xDelta*1.5f,yDelta*1.5f), INTERACTION_IMPULSE_RADIUS);
 		if (!result) {
 			return false;
 		}
 		mImpulseShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[WRITE]);
 		swap(mVelocitySP[READ],mVelocitySP[WRITE]);
-		context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	}	
 	// mouse mid button adds temperature
 	else if (inputSystem->IsMouseMidDown()) {
-		context->PSSetShaderResources(0, 2, pSRVNULL);
 		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), INTERACTION_IMPULSE_RADIUS);
 		if (!result) {
 			return false;
@@ -411,25 +445,21 @@ bool Fluid2DScene::Render() {
 	}	
 
 	// Calculate the divergence of the velocity
-	mDivergenceShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],mDivergenceSP);
+	mDivergenceShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],mDivergenceSP.get());
 
 	// clear pressure texture to prepare for jacobi
 	float clearCol[4] = {0.0f,0.0f,0.0f,0.0f};
 	context->ClearRenderTargetView(mPressureRenderTargets[READ], clearCol);
-	
-	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	// perform jacobi on pressure field
 	int i;
-	for (i = 0; i < JACOBI_ITERATIONS; ++i) {		
+	for (i = 0; i < mJacobiIterations; ++i) {		
 		mJacobiShader->Compute(pD3dGraphicsObj,
 								&mPressureSP[READ],
-								mDivergenceSP,
+								mDivergenceSP.get(),
 								&mPressureSP[WRITE]);
 
 		swap(mPressureSP[READ],mPressureSP[WRITE]);
-		context->CSSetShaderResources(0, 2, pSRVNULL);
-		context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 	}
 
 	//Use the pressure tex that was last computed. This computes divergence free velocity
@@ -437,23 +467,6 @@ bool Fluid2DScene::Render() {
 
 	std::swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
-	context->CSSetShaderResources(0, 2, pSRVNULL);
-	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	// choose the texture to see
-	ID3D11ShaderResourceView* currTexture = nullptr;
-	if (textureShowing == 0)
-		currTexture = mDensitySP[READ].mSRV;
-	else if (textureShowing == 1)
-		currTexture = mTemperatureSP[READ].mSRV;
-	else 
-		currTexture = mVelocitySP[READ].mSRV;
-
-	// Render texture to screen
-	mTexQuad->SetTexture(currTexture);
-	result = mTexQuad->Render(&viewMatrix,&orthoMatrix);
-	if (!result)
-		return false;
 	return true;
 }
 
