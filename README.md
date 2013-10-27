@@ -16,10 +16,13 @@ AntTweakBar: http://anttweakbar.sourceforge.net/
 
 Changelog so far:
 
-v1.0.0: Initial working version of 2D Fluid Simulation with small interactivity. 
- 
-v1.0.1: Implemented proper boundary conditions for 2D Fluid Simulation, changed 2D Wave Equation simulation 
-to use DirectCompute. Added simple UI overlay for basic information displaying.
+v1.1.1: Implemented obstacles for 2D Fluid Simulation. Slightly improved performance by reducing floating point
+precision for Textures to 16-bits. Changed advection calculation to use the MacCormack scheme.
 
 v1.1: 2D Fluid Simulation now running on Compute Shaders. Added AntTweakBar to the project in order to edit simulation
 parameters at runtime.
+
+v1.0.1: Implemented proper boundary conditions for 2D Fluid Simulation, changed 2D Wave Equation simulation 
+to use DirectCompute. Added simple UI overlay for basic information displaying.
+
+v1.0.0: Initial working version of 2D Fluid Simulation with small interactivity. 
