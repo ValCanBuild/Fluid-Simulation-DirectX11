@@ -52,14 +52,24 @@ struct InputBufferImpulse {
 
 class AdvectionShader : public BaseD3DShader {
 public:
-	AdvectionShader();
+	enum AdvectionType_t {
+		ADVECTION_TYPE_FORWARD,
+		ADVECTION_TYPE_BACKWARD,
+		ADVECTION_TYPE_MACCORMARCK
+	};
+
+public:
+	AdvectionShader(AdvectionType_t advectionType);
 	~AdvectionShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* obstacles, _In_ ShaderParams* advectResult);
 
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device) {return true;};
+
+private:
+	AdvectionType_t mAdvectionType;
 };
 
 
@@ -81,7 +91,7 @@ public:
 	JacobiShader();
 	~JacobiShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* obstacles, _In_ ShaderParams* pressureResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -94,7 +104,7 @@ public:
 	DivergenceShader();
 	~DivergenceShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* obstacles, _In_ ShaderParams* divergenceResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -107,7 +117,7 @@ public:
 	SubtractGradientShader();
 	~SubtractGradientShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* obstacles, _In_ ShaderParams* velocityResult);
 
 private:
 	ShaderDescription GetShaderDescription();

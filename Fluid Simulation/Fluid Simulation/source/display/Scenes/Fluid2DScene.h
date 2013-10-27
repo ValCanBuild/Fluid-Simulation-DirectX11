@@ -4,12 +4,11 @@ simulation using Direct3D
 
 Author: Valentin Hinov
 Date: 10/09/2013
-**************************************************************/
+***************************************************************/
 #ifndef _FLUID2DSCENE_H
 #define _FLUID2DSCENE_H
 
 #include <atlbase.h>
-#include <AntTweakBar.h>
 #if defined (_DEBUG)
 #pragma comment(lib,"atlsd.lib")
 #endif
@@ -20,7 +19,6 @@ Date: 10/09/2013
 
 class D2DTexQuad;
 class Camera;
-class IFrameBuffer;
 class D3DGraphicsObject;
 class AdvectionShader;
 class ImpulseShader;
@@ -39,21 +37,6 @@ struct ID3D11SamplerState;
 
 using namespace std;
 
-#define TIME_STEP 0.125f
-#define IMPULSE_RADIUS 20.0f
-#define INTERACTION_IMPULSE_RADIUS 7.0f
-#define JACOBI_ITERATIONS 50
-#define CELL_SIZE 1.0f
-#define GRADIENT_SCALE 1.0f
-#define VEL_DISSIPATION 0.999f
-#define DENSITY_DISSIPATION 0.999f
-#define TEMPERATURE_DISSIPATION 0.99f
-#define SMOKE_BUOYANCY 1.0f
-#define SMOKE_WEIGHT 0.05f
-#define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 3.0f
-#define IMPULSE_DENSITY	1.0f
-
 class Fluid2DScene : public IScene {
 public:
 	Fluid2DScene();
@@ -64,7 +47,6 @@ public:
 	bool Render();
 
 private:
-	void SwapBuffers(IFrameBuffer** buffers); // Useful function to swap the pointers of 2 frame buffers
 	bool SetGeneralBuffer();
 	bool SetImpulseBuffer(Vector2& point, Vector2& amount, float radius);
 	bool SetDissipationBuffer(float dissipation);
@@ -72,10 +54,15 @@ private:
 	bool PerformComputation();
 
 private:
+	TwBar *mTwBar;
+
+private:
 	unique_ptr<Camera>					mCamera;
 	unique_ptr<D2DTexQuad>				mTexQuad;
 
-	unique_ptr<AdvectionShader>			mAdvectionShader;
+	unique_ptr<AdvectionShader>			mForwardAdvectionShader;
+	unique_ptr<AdvectionShader>			mBackwardAdvectionShader;
+	unique_ptr<AdvectionShader>			mMacCormarckAdvectionShader;
 	unique_ptr<ImpulseShader>			mImpulseShader;
 	unique_ptr<JacobiShader>			mJacobiShader;
 	unique_ptr<DivergenceShader>		mDivergenceShader;
@@ -86,6 +73,7 @@ private:
 	ShaderParams* mDensitySP;
 	ShaderParams* mTemperatureSP;
 	ShaderParams* mPressureSP;
+	ShaderParams* mObstacleSP;
 	unique_ptr<ShaderParams>			mDivergenceSP;
 	CComPtr<ID3D11RenderTargetView>		mPressureRenderTargets[2];
 
@@ -102,6 +90,8 @@ private:
 // Simulation Variables
 private:
 	int mJacobiIterations;
+	float mTimeStep;
+	bool mMacCormackEnabled;
 };
 
 #endif

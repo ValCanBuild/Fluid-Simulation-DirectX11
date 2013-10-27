@@ -34,22 +34,16 @@ void Camera::Update() {
 	// Transform the lookAt and up vector by the rotation matrix so the view is correctly rotated at the origin.
 	Vector3::TransformNormal(mDefaultLookAt,rotationMatrix,mLookAt);
 	Vector3::TransformNormal(mDefaultUp,rotationMatrix,mUp);
-	//D3DXVec3TransformNormal(&mLookAt, &mDefaultLookAt, &rotationMatrix);
-	//D3DXVec3TransformNormal(&mUp, &mDefaultUp, &rotationMatrix);
 
 	// Transform the right vector by the yaw matrix
 	Matrix yawMatrix = Matrix::CreateRotationY(mYaw);
 	Vector3::TransformNormal(mDefaultRight,yawMatrix,mRight);
-	//D3DXMATRIX yawMatrix;
-	//D3DXMatrixRotationY(&yawMatrix, mYaw);
-	//D3DXVec3TransformNormal(&mRight, &mDefaultRight, &yawMatrix);	
 
 	// update the target
 	mTarget = mPosition + mLookAt;
 
 	// Finally create the view matrix from the three updated vectors.
-	mViewMatrix = Matrix::CreateLookAt(mPosition, mLookAt, mUp);
-	//D3DXMatrixLookAtLH(&mViewMatrix, &mPosition, &mLookAt, &mUp);
+	mViewMatrix = Matrix::CreateLookAt(mPosition, mTarget, mUp);
 }
 
 void Camera::MoveFacing(float forwardAmount, float rightAmount) {

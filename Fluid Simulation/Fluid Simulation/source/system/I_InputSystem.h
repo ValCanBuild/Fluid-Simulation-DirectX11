@@ -15,6 +15,7 @@ public:
 	virtual ~I_InputSystem(){};
 
 	virtual bool IsKeyDown(unsigned int vKey) const = 0;
+	virtual bool IsKeyClicked(unsigned int) const = 0;
 
 	virtual bool IsMouseLeftDown() const = 0;
 	virtual bool IsMouseRightDown() const = 0;

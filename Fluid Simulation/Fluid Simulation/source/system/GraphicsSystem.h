@@ -1,6 +1,7 @@
 /***************************************************************
-GraphicsSystem.h: In charge of displaying all content on the
-screen.
+GraphicsSystem.h: In charge of displaying content on the screen.
+Calls Render on the current active Scene and renders the GUI
+overlay. 
 
 Author: Valentin Hinov
 Date: 02/09/2013
@@ -42,11 +43,16 @@ public:
 
 	void SetMonitorData(int fps, int cpuUsage);
 
+	bool ResetScene();
+
 private:
 	bool Render() const;
 	bool RenderOverlay() const;
 
 	bool InitializeNVPerfKit(HWND hwnd);
+
+private:
+	HWND mHwnd;
 
 private:
 	unique_ptr<IGraphicsObject> mGraphicsObj;

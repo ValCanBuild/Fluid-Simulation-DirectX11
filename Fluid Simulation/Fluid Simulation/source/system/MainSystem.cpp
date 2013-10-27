@@ -10,7 +10,6 @@ Version: 1.0
 #include <AntTweakBar.h> // include anttweakbar here in order to pass windows messages to it
 #include "MainSystem.h"
 
-
 MainSystem::MainSystem() {
 }
 
@@ -53,7 +52,10 @@ bool MainSystem::Initialize() {
 	mAppTimer.Reset();
 
 	// Init input
-	mInput->Initialize();
+	result = mInput->Initialize(m_hinstance, m_hwnd);
+	if (!result) {
+		return false;
+	}
 
 	// Initialize performance monitor
 	result = mPerfMonitor.Initialize();

@@ -1,10 +1,12 @@
 /***************************************************************
-GraphicsSystem.cpp: In charge of displaying all content on the
-screen.
+GraphicsSystem.h: In charge of displaying content on the screen.
+Calls Render on the current active Scene and renders the GUI
+overlay. 
 
 Author: Valentin Hinov
 Date: 02/09/2013
 **************************************************************/
+#include <AntTweakBar.h>
 #include "GraphicsSystem.h"
 #include "ServiceProvider.h"
 
@@ -26,22 +28,36 @@ const NvPmApi *GetNvPmApi() {return S_NVPMManager.Api();}
 
 #include "../display/Scenes/Wave2DScene.h"
 #include "../display/Scenes/Fluid2DScene.h"
+#include "../display/Scenes/Fluid3DScene.h"
+
+/// ANT TWEAK BAR CALLBACKS ///
+void TW_CALL ResetCallback(void *clientData) {
+	GraphicsSystem *thisSystem = static_cast<GraphicsSystem*>(clientData);
+	bool result = thisSystem->ResetScene();
+	if (!result) {
+		// reset failed
+	}
+}
+/// ~ANT TWEAK BAR CALLBACKS ///
+
 
 GraphicsSystem::GraphicsSystem() {
 	mFps = mCpuUsage = 0;
 }
 
-
 GraphicsSystem::GraphicsSystem(const GraphicsSystem& other) {
 }
 
-
 GraphicsSystem::~GraphicsSystem() {
-
+	// Terminate AntTweakBar
+	int result = TwTerminate();
+	if (result == 0) {
+		// AntTweakBar did not terminate properly
+	}
 }
 
-
 bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
+	mHwnd = hwnd;
 
 	#if defined (D3D)
 		mGraphicsObj = unique_ptr<IGraphicsObject>(new D3DGraphicsObject());
@@ -65,6 +81,10 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 		return false;
 	}*/
 
+	// Initialize AntTweak before the current scene
+	TwInit(TW_DIRECT3D11, d3dObject->GetDevice());
+	TwWindowSize(screenWidth,screenHeight);
+
 	// Initialize current scene
 	mCurrentScene = unique_ptr<IScene>(new Fluid2DScene());
 	result = mCurrentScene->Initialize(mGraphicsObj.get(),hwnd);
@@ -76,6 +96,27 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	// Initialize font
 	mSpriteBatch = unique_ptr<SpriteBatch>(new SpriteBatch(d3dObject->GetDeviceContext()));
 	mSpriteFont = unique_ptr<SpriteFont>(new SpriteFont(d3dObject->GetDevice(), L"data/TBNA.spritefont"));
+
+	// Initialize the main tweak bar
+	TwBar *twBar;
+	twBar = TwNewBar("MainControl");
+	// Position bar
+	int barPos[2] = {1,screenHeight-60};
+	TwSetParam(twBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
+	int barSize[2] = {60,40};
+	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
+	TwDefine(" MainControl iconified=true ");
+	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
+
+	return true;
+}
+
+bool GraphicsSystem::ResetScene() {
+	mCurrentScene.reset(new Fluid2DScene());
+	bool result = mCurrentScene->Initialize(mGraphicsObj.get(),mHwnd);
+	if (!result) {
+		return false;
+	}
 	return true;
 }
 
@@ -108,7 +149,7 @@ bool GraphicsSystem::Render() const {
 }
 
 bool GraphicsSystem::RenderOverlay() const {
-	// Render overlay
+	// Render overlay information
 	mSpriteBatch->Begin();
 	{
 		// Display FPS
@@ -132,6 +173,14 @@ bool GraphicsSystem::RenderOverlay() const {
 		mSpriteFont->DrawString(mSpriteBatch.get(),gpuText.c_str(),XMFLOAT2(10,30));*/
 	}
 	mSpriteBatch->End();
+
+	// Render Ant Tweak Bar
+	// Render AntTweakBar
+	int twResult = TwDraw();
+	if (twResult == 0) {
+		// TWDraw failed, use TwGetLastError to retrieve error
+		return false;
+	}
 
 	return true;
 }

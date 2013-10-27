@@ -8,6 +8,9 @@ Date: 17/09/2013
 ***************************************************************/
 #pragma warning(disable : 3203)	// disable signed/unsigned mismatch warning
 
+#define NUM_THREADS_X 16
+#define NUM_THREADS_Y 8
+
 // Constant buffers
 cbuffer InputBufferGeneral : register (b0) {
 	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader
@@ -46,8 +49,10 @@ SamplerState linearSampler : register (s0);
 
 // Texture Inputs
 Texture2D<float2>	velocity : register (t0);	// Used for AdvectComputeShader, DivergenceComputeShader, BuoyancyComputeShader, SubtractGradientComputeShader
-Texture2D<float2>	advectionTarget : register (t1); // Used for AdvectComputeShader
-RWTexture2D<float2> advectionResult : register (u0); // Used for AdvectComputeShader
+Texture2D<float2>	advectionTargetA : register (t1); // Used for AdvectComputeShader, AdvectBackwardComputeShader
+Texture2D<float2>	advectionTargetB : register (t2); // User for AdvectMacCormackComputeShader
+Texture2D<float2>	advectionTargetC : register (t3); // User for AdvectMacCormackComputeShader
+RWTexture2D<float2> advectionResult : register (u0); // Used for AdvectComputeShader, AdvectBackwardComputeShader, AdvectMacCormackComputeShader
 
 Texture2D<float>	temperature : register (t1); // Used for BuoyancyComputeShader
 Texture2D<float>	density : register (t2); // Used for BuoyancyComputeShader
@@ -64,38 +69,90 @@ RWTexture2D<float> pressureResult : register (u0); // Used for JacobiComputeShad
 
 RWTexture2D<float2> velocityResult : register (u0); // Used for SubtractGradientComputeShader
 
-[numthreads(6, 6, 1)]
+Texture2D<float>	obstacles;	// Used for Advection, Jacobi, Divergence and Subtract Gradient, Obstacles
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 // Advect the speed by sampling at pos - deltaTime*velocity
 void AdvectComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	// advect by trace back
 	uint2 i = DTid.xy;
 
-	if (i.y > vDimensions.y - 1) {
-		advectionResult[i] = float2(0,0);
-		return;
-	}
-	if (i.y < 1) {
-		advectionResult[i] = float2(0,0);
-		return;
-	}
-	if (i.x > vDimensions.x - 1) {
-		advectionResult[i] = float2(0,0);
-		return;
-	}
-	if (i.x < 1) {
-		advectionResult[i] = float2(0,0);
-		return;
-	}
-
-	float2 prevPos = i - velocity[i];
+	float2 prevPos = i - fTimeStep * velocity[i];
 	prevPos = (prevPos+0.5f)/vDimensions;
 
-	float2 result = advectionTarget.SampleLevel(linearSampler, prevPos, 0);
+	// Sample obstacles texture and make result 0 if an obstacle exists
+	if (obstacles[(uint2)prevPos] > 0.0f) {
+		advectionResult[i] = float2(0,0);
+		return;
+	}
 
-	advectionResult[i] = result*fDissipation;
+	float2 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
+
+	advectionResult[i] = result;//*fDissipation;
 }
 
-[numthreads(6, 6, 1)]
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
+// Advect the speed by sampling at pos - deltaTime*velocity
+void AdvectBackwardComputeShader( uint3 DTid : SV_DispatchThreadID ) {
+	// advect by trace back
+	uint2 i = DTid.xy;
+
+	float2 prevPos = i + fTimeStep * velocity[i];
+	prevPos = (prevPos+0.5f)/vDimensions;
+
+	// Sample obstacles texture and make result 0 if an obstacle exists
+	if (obstacles[(uint2)prevPos] > 0.0f) {
+		advectionResult[i] = float2(0,0);
+		return;
+	}
+
+	float2 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
+
+	advectionResult[i] = result;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
+// Advect the speed by using the two intermediate semi-Lagrangian steps to achieve higher-order accuracy
+void AdvectMacCormackComputeShader( uint3 DTid : SV_DispatchThreadID ) {
+	uint2 i = DTid.xy;
+
+	// advect by trace back
+	float2 prevPos = i - fTimeStep * velocity[i];
+	uint2 j = (uint2) prevPos;
+
+	// Sample obstacles texture and make result 0 if an obstacle exists
+	if (obstacles[j] > 0.0f) {
+		advectionResult[i] = float2(0,0);
+		return;
+	}
+
+	prevPos = (prevPos+0.5f)/vDimensions;
+
+	// Get the values of nodes that contribute to the interpolated value.  
+	float2 r0 = advectionTargetA[j + uint2(0,0)];
+	float2 r1 = advectionTargetA[j + uint2(1,0)];
+	float2 r2 = advectionTargetA[j + uint2(0,1)];
+	float2 r3 = advectionTargetA[j + uint2(1,1)];
+
+	// Determine a valid range for the result.
+	float2 lmin = min(r0,min(r1,min(r2, r3)));
+	float2 lmax = max(r0,max(r1,max(r2, r3)));
+
+	// Perform final advection, combining values from intermediate advection steps.
+	// based on http://http.developer.nvidia.com/GPUGems3/elementLinks/0640equ01.jpg
+	float2 phi_n_1_hat = advectionTargetA.SampleLevel(linearSampler,prevPos, 0);
+	float2 phi_n_hat = advectionTargetB.SampleLevel(linearSampler,prevPos, 0);
+	float2 phi_n = advectionTargetC.SampleLevel(linearSampler,prevPos, 0);
+	
+	float2 s = phi_n_1_hat + 0.5f*(phi_n - phi_n_hat);
+
+	// clamp results to desired range
+	s = clamp(s,lmin,lmax);
+
+	advectionResult[i] = s*fDissipation;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 // Create upward force by using the temperature difference
 void BuoyancyComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -111,8 +168,8 @@ void BuoyancyComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	buoyancyResult[i] = result;
 }
 
-[numthreads(6, 6, 1)]
-// Adds impulse depending on point of interaction
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
+// Adds impulse depending on point of interaction, also used for rendering obstacles
 void ImpulseComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
 
@@ -127,7 +184,7 @@ void ImpulseComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 		impulseResult[i] = impulseInitial[i];
 }
 
-[numthreads(6, 6, 1)]
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 // calculate the velocity divergence
 void DivergenceComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -136,33 +193,29 @@ void DivergenceComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 coordB = i - uint2(0, 1);
 	uint2 coordR = i + uint2(1, 0);
 	uint2 coordL = i - uint2(1, 0);
-	/*uint2 coordT = uint2(i.x, min(i.y+1,vDimensions.y-1));
-	uint2 coordB = uint2(i.x, max(i.y-1,0));
-	uint2 coordR = uint2(min(i.x+1,vDimensions.x-1), i.y);
-	uint2 coordL = uint2(max(i.x-1,0), i.y);*/
 
 	// Find neighbouring velocities
 	float2 vT = velocity[coordT];
 	float2 vB = velocity[coordB];
 	float2 vR = velocity[coordR];
 	float2 vL = velocity[coordL];
-	//float2 vC =	velocity[i];
+	
+	bool oT = obstacles[coordT] > 0.0f;
+	bool oB = obstacles[coordB] > 0.0f;
+	bool oR = obstacles[coordR] > 0.0f;
+	bool oL = obstacles[coordL] > 0.0f;
 
 	// Enforce boundaries
-	if (coordT.y > vDimensions.y - 1) {
-		//vT = vC;
+	if (oT || coordT.y > vDimensions.y - 1) {
 		vT = 0;
 	}
-	if (coordB.y < 1) {
-		//vB = vC;
+	if (oB || coordB.y < 1) {
 		vB = 0;
 	}
-	if (coordR.x > vDimensions.x - 1) {
-		//vR = vC;
+	if (oR || coordR.x > vDimensions.x - 1) {
 		vR = 0;
 	}
-	if (coordL.x < 1) {
-		//vL = vC;
+	if (oL || coordL.x < 1) {
 		vL = 0;
 	}
 
@@ -171,7 +224,7 @@ void DivergenceComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	divergenceResult[i] = result;
 }
 
-[numthreads(6, 6, 1)]
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 // jacobi shader to compute the gradient pressure field
 void JacobiComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -181,10 +234,25 @@ void JacobiComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 coordR = uint2(min(i.x+1,vDimensions.x-1), i.y);
 	uint2 coordL = uint2(max(i.x-1,1), i.y);
 
+	float xC = pressure[i];
+
 	float xT = pressure[coordT];
 	float xB = pressure[coordB];
 	float xR = pressure[coordR];
 	float xL = pressure[coordL];
+
+	if (obstacles[coordT] > 0.0f) {
+		xT = xC;
+	}
+	if (obstacles[coordB] > 0.0f) {
+		xB = xC;
+	}
+	if (obstacles[coordR] > 0.0f) {
+		xR = xC;
+	}
+	if (obstacles[coordL] > 0.0f) {
+		xL = xC;
+	}
 
 	// Sample divergence
 	float bC = divergence[i];
@@ -194,7 +262,7 @@ void JacobiComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	pressureResult[i] = final;
 }
 
-[numthreads(6, 6, 1)]
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 // enforce incompressibility condition by making the velocity divergence 0 by subtracting the pressure gradient
 void SubtractGradientComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
@@ -211,31 +279,28 @@ void SubtractGradientComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	float pL = pressure[coordL];
 	float pC = pressure[i];
 
+	bool oT = obstacles[coordT] > 0.0f;
+	bool oB = obstacles[coordB] > 0.0f;
+	bool oR = obstacles[coordR] > 0.0f;
+	bool oL = obstacles[coordL] > 0.0f;
+
 	float2 obstV = float2(0,0);
 	float2 vMask = float2(1,1);
 	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity. 
-	if (coordT.y > vDimensions.y - 1) {
+	if (oT || coordT.y > vDimensions.y - 1) {
 		pT = pC;
-		//obstV.y = velocity[coordT].y;
-		//vMask.y = 0;
 	}
 
-	if (coordB.y < 1) {
+	if (oB || coordB.y < 1) {
 		pB = pC;
-		//obstV.y = velocity[coordB].y;
-		//vMask.y = 0;
 	}
 
-	if (coordR.x > vDimensions.x - 1) {
+	if (oR || coordR.x > vDimensions.x - 1) {
 		pR = pC;
-		//obstV.x = 0;
-		//vMask.x = 0;
 	}
 
-	if (coordL.x < 1) {
+	if (oL || coordL.x < 1) {
 		pL = pC;
-		//obstV.x = 0;
-		//vMask.x = 0;
 	}
 
 	// Compute the gradient of pressure at the current cell by taking central differences of neighboring pressure values. 

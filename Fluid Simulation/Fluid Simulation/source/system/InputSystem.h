@@ -4,10 +4,14 @@ engine input system.
 
 Author: Valentin Hinov
 Date: 02/09/2013
-Version: 1.0
 **************************************************************/
 #ifndef _INPUTSYSTEM_H_
 #define _INPUTSYSTEM_H_
+
+struct IDirectInput8;
+struct IDirectInputDevice8;
+struct _DIMOUSESTATE;
+typedef _DIMOUSESTATE DIMOUSESTATE;
 
 #include "I_InputSystem.h"
 
@@ -17,20 +21,22 @@ public:
 	InputSystem(const InputSystem&);
 	~InputSystem();
 
-	void Initialize();
+	bool Initialize(HINSTANCE hInstance, HWND hwnd);
 	void Update(float delta);
 
 	void KeyDown(unsigned int);
 	void KeyUp(unsigned int);
-	
-	bool IsKeyDown(unsigned int) const;
 
 	void SetMousePos(int x, int y);
+
 	// change in mouse key status
 	// 0 - Left
 	// 1 - Right
 	// 2 - Mid
 	void OnMouseButtonAction(int key, bool status);
+
+	bool IsKeyDown(unsigned int) const;
+	bool IsKeyClicked(unsigned int) const;
 
 	bool IsMouseLeftDown() const;
 	bool IsMouseRightDown() const;
@@ -46,7 +52,13 @@ private:
 	bool mMouseLeft,mMouseRight, mMouseMid;
 
 	int mMouseX,mMouseY;
-	int mMouseDeltaX,mMouseDeltaY;
+
+	// Need direct input for mouse delta
+	IDirectInput8* mDirectInput;
+	IDirectInputDevice8* mKeyboard;
+	IDirectInputDevice8* mMouse;
+
+	DIMOUSESTATE* mMouseState;
 };
 
 #endif

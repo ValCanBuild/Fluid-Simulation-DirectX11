@@ -1,24 +1,46 @@
 /***************************************************************
-Fluid2DScene.cpp: Describes a scene that displays the 2D wave 
-equation using Direct3D
+Fluid2DScene.cpp: Describes a scene that displays a 2D fluid
+simulation using Direct3D
 
 Author: Valentin Hinov
 Date: 10/09/2013
-**************************************************************/
+***************************************************************/
+#include <AntTweakBar.h>
 #include "Fluid2DScene.h"
 
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/Camera.h"
-#include "../D3DShaders/ComputeFluid2DShaders.h"
+#include "../D3DShaders/Fluid2DComputeShaders.h"
 #include "../D3DFrameBuffer.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
 
 #define READ 0
 #define WRITE 1
+#define WRITE2 2
+#define WRITE3 3
+
+// Simulation parameters
+#define TIME_STEP 0.125f
+#define IMPULSE_RADIUS 20.0f
+#define INTERACTION_IMPULSE_RADIUS 7.0f
+#define OBSTACLES_IMPULSE_RADIUS 4.0f
+#define JACOBI_ITERATIONS 50
+#define CELL_SIZE 1.0f
+#define GRADIENT_SCALE 1.0f
+#define VEL_DISSIPATION 0.999f
+#define DENSITY_DISSIPATION 0.999f
+#define TEMPERATURE_DISSIPATION 0.99f
+#define SMOKE_BUOYANCY 1.0f
+#define SMOKE_WEIGHT 0.05f
+#define AMBIENT_TEMPERATURE 0.0f
+#define IMPULSE_TEMPERATURE 4.0f
+#define IMPULSE_DENSITY	1.0f
 
 Fluid2DScene::Fluid2DScene() {
+	mTimeStep = TIME_STEP;
 	textureShowing = 0;
+	mMacCormackEnabled = true;
 	mPaused = false;
 	mJacobiIterations = JACOBI_ITERATIONS;
 	mVelocitySP = nullptr;
@@ -44,14 +66,18 @@ Fluid2DScene::~Fluid2DScene() {
 		delete [] mVelocitySP;
 		mVelocitySP = nullptr;
 	}
+	if (mObstacleSP) {
+		delete [] mObstacleSP;
+		mObstacleSP = nullptr;
+	}
 
 	pD3dGraphicsObj = nullptr;
 
-	// Terminate AntTweakBar
-	int result = TwTerminate();
-	if (result == 0) {
-		// AntTweakBar did not terminate properly
+	int twResult = TwDeleteBar(mTwBar);
+	if (twResult == 0) {
+		// deletion failed, Call TwGetLastError to retrieve error
 	}
+	mTwBar = nullptr;
 }
 
 bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
@@ -59,8 +85,20 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	mCamera = unique_ptr<Camera>(new Camera());	
 	mCamera->SetPosition(0,0,0);
 
-	mAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader());
-	bool result = mAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD));
+	bool result = mForwardAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_BACKWARD));
+	result = mBackwardAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mMacCormarckAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_MACCORMARCK));
+	result = mMacCormarckAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
 	if (!result) {
 		return false;
 	}
@@ -99,15 +137,15 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj->GetScreenDimensions(width,height);
 
 	// Create the velocity shader params
-	CComPtr<ID3D11Texture2D> velocityText[2];
-	mVelocitySP = new ShaderParams[2];
+	CComPtr<ID3D11Texture2D> velocityText[4];
+	mVelocitySP = new ShaderParams[4];
 	D3D11_TEXTURE2D_DESC textureDesc;
 	ZeroMemory(&textureDesc, sizeof(D3D11_TEXTURE2D_DESC));
 	textureDesc.Width = width;
 	textureDesc.Height = height;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+	textureDesc.Format = DXGI_FORMAT_R16G16_FLOAT;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
@@ -125,7 +163,7 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 	uavDesc.Texture2D.MipSlice = 0;
 
-	for (int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 4; ++i) {
 		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &velocityText[i]);
 		if (FAILED(hr)) {
 		  return false;
@@ -141,12 +179,12 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	}
 
 	// Create the density shader params
-	CComPtr<ID3D11Texture2D> densityText[2];
-	mDensitySP = new ShaderParams[2];
-	textureDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	CComPtr<ID3D11Texture2D> densityText[4];
+	mDensitySP = new ShaderParams[4];
+	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
 	srvDesc.Format = textureDesc.Format;
 	uavDesc.Format = textureDesc.Format;
-	for (int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 4; ++i) {
 		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &densityText[i]);
 		if (FAILED(hr)){
 		  return false;
@@ -164,9 +202,9 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	}
 
 	// Create the temperature shader params
-	CComPtr<ID3D11Texture2D> temperatureText[2];
-	mTemperatureSP = new ShaderParams[2];
-	for (int i = 0; i < 2; ++i) {
+	CComPtr<ID3D11Texture2D> temperatureText[4];
+	mTemperatureSP = new ShaderParams[4];
+	for (int i = 0; i < 4; ++i) {
 		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &temperatureText[i]);
 		if (FAILED(hr)){
 		  return false;
@@ -178,6 +216,26 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		}
 
 		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(temperatureText[i], &uavDesc, &mTemperatureSP[i].mUAV);
+		if(FAILED(hr)) {
+			return false;
+		}
+	}
+
+	// Create the obstacles shader params
+	CComPtr<ID3D11Texture2D> obstaclesText[2];
+	mObstacleSP = new ShaderParams[2];
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &obstaclesText[i]);
+		if (FAILED(hr)){
+		  return false;
+		}
+		// Create the SRV and UAV.
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(obstaclesText[i], &srvDesc, &mObstacleSP[i].mSRV);
+		if(FAILED(hr)) {
+			return false;
+		}
+
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(obstaclesText[i], &uavDesc, &mObstacleSP[i].mUAV);
 		if(FAILED(hr)) {
 			return false;
 		}
@@ -286,31 +344,38 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		return false;
 	}
 	
-	// Initialize AntTweakBar
-	TwInit(TW_DIRECT3D11, pD3dGraphicsObj->GetDevice());
-	TwWindowSize(width,height);
-	TwBar *twBar;
-	twBar = TwNewBar("2D Fluid Simulation");
+	// Initialize this scene's tweak bar
+	mTwBar = TwNewBar("2D Fluid Simulation");
 	// Position bar
 	int barPos[2] = {580,2};
-	TwSetParam(twBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
-	int barSize[2] = {220,150};
-	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
+	TwSetParam(mTwBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
+	int barSize[2] = {218,150};
+	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 
 	// Add Variables to tweak bar
-	TwAddVarRW(twBar,"Jacobi Iterations", TW_TYPE_INT32, &mJacobiIterations, "min=1 max=100 step=1");
-	TwAddVarRW(twBar,"Simulation Paused", TW_TYPE_BOOLCPP, &mPaused, nullptr);
+	TwAddVarRW(mTwBar,"Jacobi Iterations", TW_TYPE_INT32, &mJacobiIterations, "min=1 max=100 step=1");
+	TwAddVarRW(mTwBar,"Time Step", TW_TYPE_FLOAT, &mTimeStep, "min=0.0 max=1.0 step=0.001");
+	TwAddVarRW(mTwBar,"MacCormarck Advection", TW_TYPE_BOOLCPP, &mMacCormackEnabled, nullptr);
+	TwAddVarRW(mTwBar,"Simulation Paused", TW_TYPE_BOOLCPP, &mPaused, nullptr);
 	return true;
 }
 
 void Fluid2DScene::Update(float delta) {
 	mCamera->Update();
 	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
-	if (inputSystem->IsKeyDown(VK_SPACE)) {
+	if (inputSystem->IsKeyClicked(VK_SPACE)) {
 		++textureShowing;
 		if (textureShowing > 2)
 			textureShowing = 0;
 	}
+	// mouse mid button adds obstacles
+	if (inputSystem->IsMouseMidDown()) {
+		int x,y;
+		inputSystem->GetMousePos(x,y);
+		SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(1,1), OBSTACLES_IMPULSE_RADIUS);
+		mImpulseShader->Compute(pD3dGraphicsObj,&mObstacleSP[READ],&mObstacleSP[WRITE]);
+		swap(mObstacleSP[READ],mObstacleSP[WRITE]);
+	}	
 }
 
 bool Fluid2DScene::Render() {
@@ -329,7 +394,7 @@ bool Fluid2DScene::Render() {
 	if (textureShowing == 0)
 		currTexture = mDensitySP[READ].mSRV;
 	else if (textureShowing == 1)
-		currTexture = mTemperatureSP[READ].mSRV;
+		currTexture = mObstacleSP[READ].mSRV;
 	else 
 		currTexture = mVelocitySP[READ].mSRV;
 
@@ -338,12 +403,6 @@ bool Fluid2DScene::Render() {
 	bool result = mTexQuad->Render(&viewMatrix,&orthoMatrix);
 	if (!result)
 		return false;
-
-	// Render AntTweakBar
-	int twResult = TwDraw();
-	if (twResult == 0) {
-		// TWDraw failed, use TwGetLastError to retrieve error
-	}
 
 	return true;
 }
@@ -362,25 +421,42 @@ bool Fluid2DScene::PerformComputation() {
 	if (!result) {
 		return false;
 	}
-	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[READ],&mVelocitySP[WRITE]);
+	mForwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[READ],&mObstacleSP[READ],&mVelocitySP[WRITE2]);
+	if (mMacCormackEnabled) {
+		mBackwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[WRITE2],&mObstacleSP[READ],&mVelocitySP[WRITE3]);
+		ShaderParams advectArrayVel[3] = {mVelocitySP[WRITE2], mVelocitySP[WRITE3], mVelocitySP[READ]};
+		mMacCormarckAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],advectArrayVel,&mObstacleSP[READ],&mVelocitySP[WRITE]);
+	}
 
 	//Advect temperature against velocity
 	result = SetDissipationBuffer(TEMPERATURE_DISSIPATION);
 	if (!result) {
 		return false;
 	}
-	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
+	mForwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mObstacleSP[READ],&mTemperatureSP[WRITE2]);
+	if (mMacCormackEnabled) {
+		mBackwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[WRITE2],&mObstacleSP[READ],&mTemperatureSP[WRITE3]);
+		ShaderParams advectArrayTemp[3] = {mTemperatureSP[WRITE2], mTemperatureSP[WRITE3], mTemperatureSP[READ]};
+		mMacCormarckAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],advectArrayTemp,&mObstacleSP[READ],&mTemperatureSP[WRITE]);
+	}
 
 	// Advect density against velocity
 	result = SetDissipationBuffer(DENSITY_DISSIPATION);
 	if (!result) {
 		return false;
 	}
-	mAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mDensitySP[READ],&mDensitySP[WRITE]);
+	mForwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mDensitySP[READ],&mObstacleSP[READ],&mDensitySP[WRITE2]);
+	if (mMacCormackEnabled) {
+		mBackwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mDensitySP[WRITE2],&mObstacleSP[READ],&mDensitySP[WRITE3]);
+		ShaderParams advectArrayDens[3] = {mDensitySP[WRITE2], mDensitySP[WRITE3], mDensitySP[READ]};
+		mMacCormarckAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],advectArrayDens,&mObstacleSP[READ],&mDensitySP[WRITE]);
+	}
 	
-	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
-	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
-	swap(mDensitySP[READ],mDensitySP[WRITE]);
+	int resultBuffer = mMacCormackEnabled ? WRITE : WRITE2;
+
+	swap(mVelocitySP[READ],mVelocitySP[resultBuffer]);
+	swap(mTemperatureSP[READ],mTemperatureSP[resultBuffer]);
+	swap(mDensitySP[READ],mDensitySP[resultBuffer]);
 
 	//Determine how the flow of the fluid changes the velocity
 	mBuoyancyShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
@@ -402,7 +478,7 @@ bool Fluid2DScene::PerformComputation() {
 	}
 	mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
 
-	swap(mDensitySP[READ],mDensitySP[WRITE]);	
+	swap(mDensitySP[READ],mDensitySP[WRITE]);
 
 	// Apply impulses to density velocity and temperature
 	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
@@ -434,18 +510,9 @@ bool Fluid2DScene::PerformComputation() {
 		mImpulseShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mVelocitySP[WRITE]);
 		swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 	}	
-	// mouse mid button adds temperature
-	else if (inputSystem->IsMouseMidDown()) {
-		result = SetImpulseBuffer(Vector2((float)x,(float)y),Vector2(abs(xDelta*1.5f),abs(yDelta*1.5f)), INTERACTION_IMPULSE_RADIUS);
-		if (!result) {
-			return false;
-		}
-		mImpulseShader->Compute(pD3dGraphicsObj,&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
-		swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
-	}	
 
 	// Calculate the divergence of the velocity
-	mDivergenceShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],mDivergenceSP.get());
+	mDivergenceShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mObstacleSP[READ],mDivergenceSP.get());
 
 	// clear pressure texture to prepare for jacobi
 	float clearCol[4] = {0.0f,0.0f,0.0f,0.0f};
@@ -457,13 +524,14 @@ bool Fluid2DScene::PerformComputation() {
 		mJacobiShader->Compute(pD3dGraphicsObj,
 								&mPressureSP[READ],
 								mDivergenceSP.get(),
+								&mObstacleSP[READ],
 								&mPressureSP[WRITE]);
 
 		swap(mPressureSP[READ],mPressureSP[WRITE]);
 	}
 
 	//Use the pressure tex that was last computed. This computes divergence free velocity
-	mSubtractGradientShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mPressureSP[READ],&mVelocitySP[WRITE]);
+	mSubtractGradientShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mPressureSP[READ],&mObstacleSP[READ],&mVelocitySP[WRITE]);
 
 	std::swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
@@ -485,7 +553,7 @@ bool Fluid2DScene::SetGeneralBuffer() {
 	dataPtr = (InputBufferGeneral*)mappedResource.pData;
 	int width,height;
 	pD3dGraphicsObj->GetScreenDimensions(width,height);
-	dataPtr->fTimeStep = TIME_STEP;
+	dataPtr->fTimeStep = mTimeStep;
 	dataPtr->fBuoyancy = SMOKE_BUOYANCY;
 	dataPtr->fDensityWeight	= SMOKE_WEIGHT;
 	dataPtr->fAmbientTemperature = AMBIENT_TEMPERATURE;
@@ -551,10 +619,4 @@ bool Fluid2DScene::SetImpulseBuffer(Vector2& point, Vector2& amount, float radiu
 	context->CSSetConstantBuffers(2,1,&(mInputBufferImpulse.p));
 
 	return true;
-}
-
-void Fluid2DScene::SwapBuffers(IFrameBuffer** buffers) {
-	IFrameBuffer* temp = buffers[0];
-	buffers[0] = buffers[1];
-	buffers[1] = temp;
 }
