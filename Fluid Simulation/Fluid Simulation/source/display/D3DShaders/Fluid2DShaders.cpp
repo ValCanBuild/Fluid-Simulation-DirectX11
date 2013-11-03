@@ -8,72 +8,54 @@ Date: 11/09/2013
 #include "Fluid2DShaders.h"
 #include "../D3DGraphicsObject.h"
 
-D3D11_INPUT_ELEMENT_DESC *CreateCommonInputLayout() {
-	D3D11_INPUT_ELEMENT_DESC *polygonLayout = new D3D11_INPUT_ELEMENT_DESC[2];
-
-	polygonLayout[0].SemanticName = "POSITION";
-	polygonLayout[0].SemanticIndex = 0;
-	polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	polygonLayout[0].InputSlot = 0;
-	polygonLayout[0].AlignedByteOffset = 0;
-	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[0].InstanceDataStepRate = 0;
-
-	polygonLayout[1].SemanticName = "TEXCOORD";
-	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	polygonLayout[1].InputSlot = 0;
-	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[1].InstanceDataStepRate = 0;
-
-	return polygonLayout;
-}
+// Thread number defines based on values from cFluid2D.hlsl
+#define NUM_THREADS_X 16.0f
+#define NUM_THREADS_Y 8.0f
 
 ///////ADVECTION SHADER BEGIN////////
-AdvectionShader::AdvectionShader() {
-
+AdvectionShader::AdvectionShader(AdvectionType_t advectionType) 
+: mAdvectionType(advectionType) {
 }
 
 AdvectionShader::~AdvectionShader() {
-
 }
 
-bool AdvectionShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, float timeStep, float dissipation, ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* advectTarget) {
-	// set the parameters inside the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
+bool AdvectionShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* obstacles, _In_ ShaderParams* advectResult) {
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
+	// Set the parameters inside the compute shader
+	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
+
+	// MacCormarck expects 3 advection targets
+	if (mAdvectionType == ADVECTION_TYPE_MACCORMARCK) {
+		context->CSSetShaderResources(1,1,&(advectTarget[0].mSRV.p));
+		context->CSSetShaderResources(2,1,&(advectTarget[1].mSRV.p));
+		context->CSSetShaderResources(3,1,&(advectTarget[2].mSRV.p));
+		context->CSSetShaderResources(4,1,&(obstacles->mSRV.p));
+	}
+	else {
+		context->CSSetShaderResources(1,1,&(advectTarget->mSRV.p));
+		context->CSSetShaderResources(2,1,&(obstacles->mSRV.p));
 	}
 
-	dataPtr = (InputBuffer*)mappedResource.pData;
 	int width,height;
 	graphicsObject->GetScreenDimensions(width,height);
-	dataPtr->fTextureWidth = (float)width;
-	dataPtr->fTextureHeight = (float)height;
-	dataPtr->fTimeStep = timeStep;
-	dataPtr->fDissipation = dissipation;
 
-	context->Unmap(mInputBuffer,0);
+	context->CSSetUnorderedAccessViews(0,1,&(advectResult->mUAV.p),nullptr);
 
-	// Set the buffer inside the pixel shader
-	context->PSSetConstantBuffers(0,1,&(mInputBuffer.p));
+	UINT numThreadGroupX = (UINT)ceil(width/NUM_THREADS_X);
+	UINT numThreadGroupY = (UINT)ceil(height/NUM_THREADS_Y);
 
-	// Set the parameters inside the pixel shader
-	context->PSSetShaderResources(0,1,&velocityField);
-	context->PSSetShaderResources(1,1,&advectTarget);
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(numThreadGroupX,numThreadGroupY,1);
 
-	// Set the pixel shader sampler
-	context->PSSetSamplers(0,1,&(mSampleState.p));
-	
-	// Render
-	RenderShader(context,indexCount);
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[5] = {NULL,NULL,NULL,NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 5, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -81,103 +63,54 @@ bool AdvectionShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, 
 ShaderDescription AdvectionShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthotexture.vsh";
-	shaderDescription.vertexShaderDesc.shaderFunctionName = "TextureVertexShader";
-
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pAdvection.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "AdvectionPixelShader";
-
-	shaderDescription.polygonLayout = CreateCommonInputLayout();
-
-	shaderDescription.numLayoutElements = 2;
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
+	switch (mAdvectionType) {
+		case ADVECTION_TYPE_FORWARD:
+			shaderDescription.computeShaderDesc.shaderFunctionName = "AdvectComputeShader";
+			break;
+		case ADVECTION_TYPE_BACKWARD:
+			shaderDescription.computeShaderDesc.shaderFunctionName = "AdvectBackwardComputeShader";
+			break;
+		case ADVECTION_TYPE_MACCORMARCK:
+			shaderDescription.computeShaderDesc.shaderFunctionName = "AdvectMacCormackComputeShader";
+			break;
+	}
 
 	return shaderDescription;
-}
-
-bool AdvectionShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC inputBufferDesc;
-	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBuffer);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&inputBufferDesc, NULL, &mInputBuffer);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	// Setup the sampler description
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;	// changed this from ALWAYS
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	return true;
 }
 ///////ADVECTION SHADER END////////
 
 
 ///////IMPULSE SHADER BEGIN////////
 ImpulseShader::ImpulseShader() {
-
 }
 
 ImpulseShader::~ImpulseShader() {
-
 }
 
-bool ImpulseShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, Vector2 point, Vector2 fill, float radius, ID3D11ShaderResourceView* originalState) {
-// set the parameters inside the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
+bool ImpulseShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult) {
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
-	}
+	// Set the parameters inside the compute shader	
+	int width,height;
+	graphicsObject->GetScreenDimensions(width,height);
 
-	dataPtr = (InputBuffer*)mappedResource.pData;
-	dataPtr->vPoint = point;
-	dataPtr->vFillColor = fill;
-	dataPtr->fRadius = radius;
-	dataPtr->padding = Vector3();
+	context->CSSetShaderResources(0,1,&(impulseInitial->mSRV.p));
+	context->CSSetUnorderedAccessViews(0,1,&(impulseResult->mUAV.p),nullptr);
 
-	context->Unmap(mInputBuffer,0);
+	UINT numThreadGroupX = (UINT)ceil(width/NUM_THREADS_X);
+	UINT numThreadGroupY = (UINT)ceil(height/NUM_THREADS_Y);
 
-	// Set the buffer inside the pixel shader
-	context->PSSetConstantBuffers(0,1,&(mInputBuffer.p));
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(numThreadGroupX,numThreadGroupY,1);
 
-	// Set the texture inside the pixel shader
-	context->PSSetShaderResources(0,1,&originalState);
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
 
-	// Set the sampler inside the pixel shader
-	context->PSSetSamplers(0,1,&(mSampleState.p));
-	
-	// Render
-	RenderShader(context,indexCount);
+	context->CSSetShaderResources(0, 1, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -185,152 +118,46 @@ bool ImpulseShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, Ve
 ShaderDescription ImpulseShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthotexture.vsh";
-	shaderDescription.vertexShaderDesc.shaderFunctionName = "TextureVertexShader";
-
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pImpulse.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "ImpulsePixelShader";
-
-	shaderDescription.polygonLayout = CreateCommonInputLayout();
-
-	shaderDescription.numLayoutElements = 2;
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "ImpulseComputeShader";
 
 	return shaderDescription;
-}
-
-bool ImpulseShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC inputBufferDesc;
-	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBuffer);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&inputBufferDesc, NULL, &mInputBuffer);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	// Setup the sampler description
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	return true;
 }
 ///////IMPULSE SHADER END////////
 
 
 ///////JACOBI SHADER BEGIN////////
 JacobiShader::JacobiShader() {
-
 }
 
 JacobiShader::~JacobiShader() {
-
 }
 
-bool JacobiShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, float alpha, float inverseBeta, ID3D11ShaderResourceView* pressureField, ID3D11ShaderResourceView* divergence) {
-// set the parameters inside the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
+bool JacobiShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* obstacles, _In_ ShaderParams* pressureResult) {
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	dataPtr = (InputBuffer*)mappedResource.pData;
 	int width,height;
 	graphicsObject->GetScreenDimensions(width,height);
-	dataPtr->vDimensions = Vector2((float)width,(float)height);
-	//dataPtr->fTextureWidth = (float)width;
-	//dataPtr->fTextureHeight = (float)height;
-	dataPtr->fAlpha = alpha;
-	dataPtr->fInverseBeta = inverseBeta;
-
-	context->Unmap(mInputBuffer,0);
-
-	// Set the buffer inside the pixel shader
-	context->PSSetConstantBuffers(0,1,&(mInputBuffer.p));
 
 	// Set the parameters inside the pixel shader
-	context->PSSetShaderResources(0,1,&pressureField);
-	context->PSSetShaderResources(1,1,&divergence);
+	context->CSSetShaderResources(0,1,&(divergence->mSRV.p));
+	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
+	context->CSSetShaderResources(2,1,&(obstacles->mSRV.p));
+	context->CSSetUnorderedAccessViews(0,1,&(pressureResult->mUAV.p),nullptr);
 
-	// Set the pixel shader sampler
-	context->PSSetSamplers(0,1,&(mSampleState.p));
-	
-	// Render
-	RenderShader(context,indexCount);
-
-	return true;
-}
-
-bool JacobiShader::Compute(_In_ D3DGraphicsObject* graphicsObject, float alpha, float inverseBeta, _In_ ID3D11ShaderResourceView* pressureField, _In_ ID3D11ShaderResourceView* divergence, _In_ ID3D11UnorderedAccessView* pressureResult) {
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	dataPtr = (InputBuffer*)mappedResource.pData;
-	int width,height;
-	graphicsObject->GetScreenDimensions(width,height);
-	dataPtr->fAlpha = alpha;
-	dataPtr->fInverseBeta = inverseBeta;
-	dataPtr->vDimensions = Vector2((float)width,(float)height);
-	//dataPtr->fTextureWidth = (float)width;
-	//dataPtr->fTextureHeight = (float)height;
-
-	context->Unmap(mInputBuffer,0);
-
-	// Set the buffer inside the compute shader
-	context->CSSetConstantBuffers(0,1,&(mInputBuffer.p));
-
-	// Set the parameters inside the pixel shader
-	context->CSSetShaderResources(0,1,&pressureField);
-	context->CSSetShaderResources(1,1,&divergence);
-	context->CSSetUnorderedAccessViews(0,1,&pressureResult,nullptr);
-
-	UINT numThreadX = (UINT)ceil(width/32.0f);
-	UINT numThreadY = (UINT)ceil(height/32.0f);
+	UINT numThreadGroupX = (UINT)ceil(width/NUM_THREADS_X);
+	UINT numThreadGroupY = (UINT)ceil(height/NUM_THREADS_Y);
 
 	// Run compute shader
 	SetComputeShader(context);
-	context->Dispatch(numThreadX,numThreadY,1);
+	context->Dispatch(numThreadGroupX,numThreadGroupY,1);
 
-	// Unbind resources from pipeline 
-	ID3D11UnorderedAccessView *const pUAV[1] = {NULL};
-	context->CSSetUnorderedAccessViews(0,1,pUAV,nullptr);
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 3, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -338,108 +165,45 @@ bool JacobiShader::Compute(_In_ D3DGraphicsObject* graphicsObject, float alpha, 
 ShaderDescription JacobiShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthotexture.vsh";
-	shaderDescription.vertexShaderDesc.shaderFunctionName = "TextureVertexShader";
-
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pJacobisolver.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "JacobiPixelShader";
-
 	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
 	shaderDescription.computeShaderDesc.shaderFunctionName = "JacobiComputeShader";
 
-	shaderDescription.polygonLayout = CreateCommonInputLayout();
-
-	shaderDescription.numLayoutElements = 2;
-
 	return shaderDescription;
-}
-
-bool JacobiShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC inputBufferDesc;
-	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBuffer);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&inputBufferDesc, NULL, &mInputBuffer);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	// Setup the sampler description
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;	// Jacobi requires exact texel values, disable linear interpolation
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	return true;
 }
 ///////JACOBI SHADER END////////
 
 
 ///////DIVERGENCE SHADER BEGIN////////
 DivergenceShader::DivergenceShader() {
-
 }
 
 DivergenceShader::~DivergenceShader() {
-
 }
 
-bool DivergenceShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, float halfInverseCellSize, ID3D11ShaderResourceView* targetField) {
-// set the parameters inside the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
+bool DivergenceShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* obstacles, _In_ ShaderParams* divergenceResult) {
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	dataPtr = (InputBuffer*)mappedResource.pData;
 	int width,height;
 	graphicsObject->GetScreenDimensions(width,height);
-	dataPtr->fTextureWidth = (float)width;
-	dataPtr->fTextureHeight = (float)height;
-	dataPtr->fHalfInverseCellSize = halfInverseCellSize;
-	dataPtr->padding = 0.0f;
-
-	context->Unmap(mInputBuffer,0);
-
-	// Set the buffer inside the pixel shader
-	context->PSSetConstantBuffers(0,1,&(mInputBuffer.p));
 
 	// Set the parameters inside the pixel shader
-	context->PSSetShaderResources(0,1,&targetField);
+	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
+	context->CSSetShaderResources(1,1,&(obstacles->mSRV.p));
+	context->CSSetUnorderedAccessViews(0,1,&(divergenceResult->mUAV.p),nullptr);
 
-	// Set the pixel shader sampler
-	context->PSSetSamplers(0,1,&(mSampleState.p));
-	
-	// Render
-	RenderShader(context,indexCount);
+	UINT numThreadGroupX = (UINT)ceil(width/NUM_THREADS_X);
+	UINT numThreadGroupY = (UINT)ceil(height/NUM_THREADS_Y);
+
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(numThreadGroupX,numThreadGroupY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -447,107 +211,46 @@ bool DivergenceShader::Render(D3DGraphicsObject* graphicsObject, int indexCount,
 ShaderDescription DivergenceShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthotexture.vsh";
-	shaderDescription.vertexShaderDesc.shaderFunctionName = "TextureVertexShader";
-
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pDivergence.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "DivergencePixelShader";
-
-	shaderDescription.polygonLayout = CreateCommonInputLayout();
-
-	shaderDescription.numLayoutElements = 2;
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "DivergenceComputeShader";
 
 	return shaderDescription;
-}
-
-bool DivergenceShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC inputBufferDesc;
-	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBuffer);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&inputBufferDesc, NULL, &mInputBuffer);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	// Setup the sampler description
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	return true;
 }
 ///////DIVERGENCE SHADER END////////
 
 
 ///////SUBTRACT GRADIENT SHADER END////////
 SubtractGradientShader::SubtractGradientShader() {
-
 }
 
 SubtractGradientShader::~SubtractGradientShader() {
-
 }
 
-bool SubtractGradientShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, float gradientScale, ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* pressureField) {
-// set the parameters inside the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
+bool SubtractGradientShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* obstacles, _In_ ShaderParams* velocityResult) {
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	dataPtr = (InputBuffer*)mappedResource.pData;
 	int width,height;
 	graphicsObject->GetScreenDimensions(width,height);
-	dataPtr->fTextureWidth = (float)width;
-	dataPtr->fTextureHeight = (float)height;
-	dataPtr->fGradientScale = gradientScale;
-	dataPtr->padding0 = 0.0f;
-
-	context->Unmap(mInputBuffer,0);
-
-	// Set the buffer inside the pixel shader
-	context->PSSetConstantBuffers(0,1,&(mInputBuffer.p));
 
 	// Set the parameters inside the pixel shader
-	context->PSSetShaderResources(0,1,&velocityField);
-	context->PSSetShaderResources(1,1,&pressureField);
+	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
+	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
+	context->CSSetShaderResources(2,1,&(obstacles->mSRV.p));
+	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
 
-	// Set the pixel shader sampler
-	context->PSSetSamplers(0,1,&(mSampleStateVelocity.p));
-	context->PSSetSamplers(1,1,&(mSampleStatePressure.p));
-	
-	// Render
-	RenderShader(context,indexCount);
+	UINT numThreadGroupX = (UINT)ceil(width/NUM_THREADS_X);
+	UINT numThreadGroupY = (UINT)ceil(height/NUM_THREADS_Y);
+
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(numThreadGroupX,numThreadGroupY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 3, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -555,112 +258,46 @@ bool SubtractGradientShader::Render(D3DGraphicsObject* graphicsObject, int index
 ShaderDescription SubtractGradientShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
-	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthotexture.vsh";
-	shaderDescription.vertexShaderDesc.shaderFunctionName = "TextureVertexShader";
-
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pSubtractgradient.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "SubtractGradientPixelShader";
-
-	shaderDescription.polygonLayout = CreateCommonInputLayout();
-
-	shaderDescription.numLayoutElements = 2;
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "SubtractGradientComputeShader";
 
 	return shaderDescription;
-}
-
-bool SubtractGradientShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC inputBufferDesc;
-	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBuffer);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&inputBufferDesc, NULL, &mInputBuffer);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	// Setup the sampler description
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleStateVelocity);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;	// have to sample the pressure at precise point
-	result = device->CreateSamplerState(&samplerDesc, &mSampleStatePressure);
-	if(FAILED(result)) {
-		return false;
-	}
-
-
-	return true;
 }
 ///////SUBTRACT GRADIENT SHADER END////////
 
 
 ///////BUOYANCY SHADER BEGIN////////
 BuoyancyShader::BuoyancyShader() {
-
 }
 
 BuoyancyShader::~BuoyancyShader() {
-
 }
 
-bool BuoyancyShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, float timeStep, float buoyancy, float weight, float ambTemp, ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* temperatureField, ID3D11ShaderResourceView* density) {
-	// set the parameters inside the vertex shader
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBuffer* dataPtr;
-
+bool BuoyancyShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult) {
 	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
 
-	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if(FAILED(result)) {
-		return false;
-	}
-
-	dataPtr = (InputBuffer*)mappedResource.pData;
-	dataPtr->fTimeStep = timeStep;
-	dataPtr->fSigma = buoyancy;
-	dataPtr->fKappa = weight;
-	dataPtr->fAmbientTemperature = ambTemp;
-
-	context->Unmap(mInputBuffer,0);
-
-	// Set the buffer inside the pixel shader
-	context->PSSetConstantBuffers(0,1,&(mInputBuffer.p));
+	int width,height;
+	graphicsObject->GetScreenDimensions(width,height);
 
 	// Set the parameters inside the pixel shader
-	context->PSSetShaderResources(0,1,&velocityField);
-	context->PSSetShaderResources(1,1,&temperatureField);
-	context->PSSetShaderResources(2,1,&density);
+	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
+	context->CSSetShaderResources(1,1,&(temperatureField->mSRV.p));
+	context->CSSetShaderResources(2,1,&(density->mSRV.p));
+	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
 
-	// Set the pixel shader sampler
-	context->PSSetSamplers(0,1,&(mSampleState.p));
-	
-	// Render
-	RenderShader(context,indexCount);
+	UINT numThreadGroupX = (UINT)ceil(width/NUM_THREADS_X);
+	UINT numThreadGroupY = (UINT)ceil(height/NUM_THREADS_Y);
+
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(numThreadGroupX,numThreadGroupY,1);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+
+	context->CSSetShaderResources(0, 3, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
 
 	return true;
 }
@@ -668,35 +305,70 @@ bool BuoyancyShader::Render(D3DGraphicsObject* graphicsObject, int indexCount, f
 ShaderDescription BuoyancyShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid2D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "BuoyancyComputeShader";
+
+	return shaderDescription;
+}
+///////BUOYANCY SHADER END////////
+
+
+///////FLUID2DRENDERSHADER BEGIN////////
+Fluid2DRenderShader::Fluid2DRenderShader() {
+}
+
+Fluid2DRenderShader::~Fluid2DRenderShader() {
+}
+
+bool Fluid2DRenderShader::Render(_In_ D3DGraphicsObject* graphicsObject, int indexCount, _In_ ID3D11ShaderResourceView* obstacleTexture, _In_ ID3D11ShaderResourceView* targetToRender) {
+	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
+
+	// Set the parameters inside the shader
+	context->PSSetShaderResources(0,1,&targetToRender);
+	context->PSSetShaderResources(1,1,&obstacleTexture);
+
+	// Set the samplers inside the pixel shader
+	context->PSSetSamplers(0,1,&(mSampleState.p));
+
+	// Render
+	RenderShader(context,indexCount);
+
+	return true;
+}
+
+ShaderDescription Fluid2DRenderShader::GetShaderDescription() {
+	ShaderDescription shaderDescription;
+
 	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vOrthotexture.vsh";
 	shaderDescription.vertexShaderDesc.shaderFunctionName = "TextureVertexShader";
 
-	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pBuoyancy.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "BuoyancyPixelShader";
+	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pFluid2DTexture.psh";
+	shaderDescription.pixelShaderDesc.shaderFunctionName = "FluidPixelShader";
 
-	shaderDescription.polygonLayout = CreateCommonInputLayout();
+	shaderDescription.polygonLayout = new D3D11_INPUT_ELEMENT_DESC[2];
+
+	shaderDescription.polygonLayout[0].SemanticName = "POSITION";
+	shaderDescription.polygonLayout[0].SemanticIndex = 0;
+	shaderDescription.polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	shaderDescription.polygonLayout[0].InputSlot = 0;
+	shaderDescription.polygonLayout[0].AlignedByteOffset = 0;
+	shaderDescription.polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	shaderDescription.polygonLayout[0].InstanceDataStepRate = 0;
+
+	shaderDescription.polygonLayout[1].SemanticName = "TEXCOORD";
+	shaderDescription.polygonLayout[1].SemanticIndex = 0;
+	shaderDescription.polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+	shaderDescription.polygonLayout[1].InputSlot = 0;
+	shaderDescription.polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+	shaderDescription.polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	shaderDescription.polygonLayout[1].InstanceDataStepRate = 0;
 
 	shaderDescription.numLayoutElements = 2;
 
 	return shaderDescription;
 }
 
-bool BuoyancyShader::SpecificInitialization(ID3D11Device* device) {
-	D3D11_BUFFER_DESC inputBufferDesc;
-	// Setup the description of the dynamic screen size constant buffer that is in the vertex shader.
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBuffer);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	HRESULT result = device->CreateBuffer(&inputBufferDesc, NULL, &mInputBuffer);
-	if(FAILED(result)) {
-		return false;
-	}
-
+bool Fluid2DRenderShader::SpecificInitialization(ID3D11Device* device) {
 	// Setup the sampler description
 	D3D11_SAMPLER_DESC samplerDesc;
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -714,11 +386,11 @@ bool BuoyancyShader::SpecificInitialization(ID3D11Device* device) {
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	result = device->CreateSamplerState(&samplerDesc, &mSampleState);
+	HRESULT result = device->CreateSamplerState(&samplerDesc, &mSampleState);
 	if(FAILED(result)) {
 		return false;
 	}
-
 	return true;
 }
-///////BUOYANCY SHADER END////////
+
+///////FLUID2DRENDERSHADER SHADER END////////

@@ -28,6 +28,8 @@ const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.1f;
+const int SCREEN_WIDTH_WINDOWED = 800;
+const int SCREEN_HEIGHT_WINDOWED = 600;
 
 class GraphicsSystem
 {
@@ -49,8 +51,6 @@ private:
 	bool Render() const;
 	bool RenderOverlay() const;
 
-	bool InitializeNVPerfKit(HWND hwnd);
-
 private:
 	HWND mHwnd;
 
@@ -60,8 +60,6 @@ private:
 
 	unique_ptr<SpriteBatch> mSpriteBatch;
 	unique_ptr<SpriteFont>  mSpriteFont;
-
-	uint64_t	mNVPMContext;	// Nvidia Perfkit context
 
 	int	mFps, mCpuUsage;
 	wstring	mCardName;

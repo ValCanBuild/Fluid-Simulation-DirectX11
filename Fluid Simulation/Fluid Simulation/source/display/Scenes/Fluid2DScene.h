@@ -26,6 +26,7 @@ class JacobiShader;
 class DivergenceShader;
 class SubtractGradientShader;
 class BuoyancyShader;
+class Fluid2DRenderShader;
 struct ShaderParams;
 struct InputBufferGeneral;
 struct InputBufferDissipation;
@@ -68,6 +69,7 @@ private:
 	unique_ptr<DivergenceShader>		mDivergenceShader;
 	unique_ptr<SubtractGradientShader>	mSubtractGradientShader;
 	unique_ptr<BuoyancyShader>			mBuoyancyShader;
+	unique_ptr<Fluid2DRenderShader>		mFluidRenderShader;
 
 	ShaderParams* mVelocitySP;
 	ShaderParams* mDensitySP;

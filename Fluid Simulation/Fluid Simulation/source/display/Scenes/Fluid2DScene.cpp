@@ -10,7 +10,7 @@ Date: 10/09/2013
 
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/Camera.h"
-#include "../D3DShaders/Fluid2DComputeShaders.h"
+#include "../D3DShaders/Fluid2DShaders.h"
 #include "../D3DFrameBuffer.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
@@ -132,6 +132,12 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	if (!result) {
 		return false;
 	}
+
+	mFluidRenderShader = unique_ptr<Fluid2DRenderShader>(new Fluid2DRenderShader());
+	result = mFluidRenderShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	if (!result) {
+		return false;
+	} 
 
 	int width,height;
 	pD3dGraphicsObj->GetScreenDimensions(width,height);
@@ -394,13 +400,15 @@ bool Fluid2DScene::Render() {
 	if (textureShowing == 0)
 		currTexture = mDensitySP[READ].mSRV;
 	else if (textureShowing == 1)
-		currTexture = mObstacleSP[READ].mSRV;
+		currTexture = mTemperatureSP[READ].mSRV;
 	else 
 		currTexture = mVelocitySP[READ].mSRV;
 
 	// Render texture to screen
-	mTexQuad->SetTexture(currTexture);
-	bool result = mTexQuad->Render(&viewMatrix,&orthoMatrix);
+	//mTexQuad->SetTexture(currTexture);
+	D3DRenderer* quadRenderer = mTexQuad->GetRenderer();
+	quadRenderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
+	bool result = mFluidRenderShader->Render(pD3dGraphicsObj,quadRenderer->GetIndexCount(),mObstacleSP[READ].mSRV,currTexture);
 	if (!result)
 		return false;
 

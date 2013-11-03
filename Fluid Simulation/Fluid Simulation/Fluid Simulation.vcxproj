@@ -103,7 +103,7 @@
     <ClCompile Include="source\display\D3DGraphicsObject.cpp" />
     <ClCompile Include="source\display\D3DRenderer.cpp" />
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid2DComputeShaders.cpp" />
+    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
@@ -128,7 +128,7 @@
     <ClInclude Include="source\display\D3DGraphicsObject.h" />
     <ClInclude Include="source\display\D3DRenderer.h" />
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid2DComputeShaders.h" />
+    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
@@ -153,9 +153,6 @@
     <ClInclude Include="source\utilities\D3dIncludes.h" />
     <ClInclude Include="source\utilities\math\MathUtils.h" />
     <ClInclude Include="source\utilities\D3DTexture.h" />
-    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.h" />
-    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.InterfaceManager.Win.h" />
-    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.Manager.h" />
     <ClInclude Include="source\utilities\PerformanceMonitor.h" />
   </ItemGroup>
   <ItemGroup>

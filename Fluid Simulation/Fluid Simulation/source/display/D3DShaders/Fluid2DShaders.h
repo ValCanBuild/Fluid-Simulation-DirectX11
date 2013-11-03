@@ -3,7 +3,7 @@ Fluid2DShaders.h: Contains all the shader classes needed for
 2D fluid simulation as well as utilities for resource methods
 
 Author: Valentin Hinov
-Date: 11/09/2013
+Date: 18/09/2013
 **************************************************************/
 #ifndef _FLUID2DSHADERS_H
 #define _FLUID2DSHADERS_H
@@ -13,55 +13,76 @@ Date: 11/09/2013
 class D3DGraphicsObject;
 
 // Struct to encapsulate the common resources required for the shaders
-/*struct ShaderParams {
+struct ShaderParams {
 	CComPtr<ID3D11ShaderResourceView>	mSRV;
 	CComPtr<ID3D11UnorderedAccessView>  mUAV;
-};*/
+};
+
+struct InputBufferGeneral {
+	float fTimeStep;
+
+	float fBuoyancy;	
+	float fDensityWeight;		
+	float fAmbientTemperature;  				
+
+	float fAlpha;				
+	float fInverseBeta;			
+
+	float fHalfInverseCellSize;	
+
+	float fGradientScale;		
+
+	Vector2 vDimensions;
+
+	Vector2 padding0;	// pad to 48 bytes
+};
+
+struct InputBufferDissipation {
+	float fDissipation;
+	Vector3 padding1;
+};
+
+struct InputBufferImpulse {
+	Vector2 vPoint;				
+	Vector2 vFillColor;			
+	float fRadius;
+
+	Vector3 padding2; // pad to 32 bytes
+};
 
 class AdvectionShader : public BaseD3DShader {
 public:
-	AdvectionShader();
+	enum AdvectionType_t {
+		ADVECTION_TYPE_FORWARD,
+		ADVECTION_TYPE_BACKWARD,
+		ADVECTION_TYPE_MACCORMARCK
+	};
+
+public:
+	AdvectionShader(AdvectionType_t advectionType);
 	~AdvectionShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, float timeStep, float dissipation, ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* advectTarget);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* obstacles, _In_ ShaderParams* advectResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device);
+	bool SpecificInitialization(ID3D11Device* device) {return true;};
 
 private:
-	struct InputBuffer {
-		float fTextureWidth;
-		float fTextureHeight;
-		float fTimeStep;
-		float fDissipation;
-	};
-
-	CComPtr<ID3D11Buffer>		mInputBuffer;
-	CComPtr<ID3D11SamplerState> mSampleState;
+	AdvectionType_t mAdvectionType;
 };
+
 
 class ImpulseShader : public BaseD3DShader {
 public:
 	ImpulseShader();
 	~ImpulseShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, Vector2 point, Vector2 fill, float radius, ID3D11ShaderResourceView* originalState);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device);
-
-private:
-	struct InputBuffer {
-		Vector2 vPoint;	// the point of user interaction, must be in normalized window coordinates [0,1]
-		Vector2 vFillColor;	// the color which will represent the impulse magnitudes in the X and Y directions
-		float  fRadius;	// the extent to which the point of interaction affects neighbouring pixels
-		Vector3 padding;	//padding to align to 16 bytes
-	};
-
-	CComPtr<ID3D11Buffer>		mInputBuffer;
-	CComPtr<ID3D11SamplerState> mSampleState;
+	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
@@ -70,25 +91,11 @@ public:
 	JacobiShader();
 	~JacobiShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, float alpha, float inverseBeta, ID3D11ShaderResourceView* pressureField, ID3D11ShaderResourceView* divergence);
-
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, float alpha, float inverseBeta, _In_ ID3D11ShaderResourceView* pressureField, _In_ ID3D11ShaderResourceView* divergence, _In_ ID3D11UnorderedAccessView* pressureResult);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* obstacles, _In_ ShaderParams* pressureResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device);
-
-private:
-	struct InputBuffer {
-		float fAlpha;
-		float fInverseBeta;
-		Vector2 vDimensions;
-		//float fTextureWidth;
-		//float fTextureHeight;
-	};
-
-	CComPtr<ID3D11Buffer>		mInputBuffer;
-	CComPtr<ID3D11SamplerState> mSampleState;
+	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
@@ -97,22 +104,11 @@ public:
 	DivergenceShader();
 	~DivergenceShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, float halfInverseCellSize, ID3D11ShaderResourceView* targetField);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* obstacles, _In_ ShaderParams* divergenceResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device);
-
-private:
-	struct InputBuffer {
-		float fTextureWidth;
-		float fTextureHeight;
-		float fHalfInverseCellSize;
-		float padding;	//padding to align to 16 bytes
-	};
-
-	CComPtr<ID3D11Buffer>		mInputBuffer;
-	CComPtr<ID3D11SamplerState> mSampleState;
+	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
@@ -121,23 +117,11 @@ public:
 	SubtractGradientShader();
 	~SubtractGradientShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, float gradientScale, ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* pressureField);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* obstacles, _In_ ShaderParams* velocityResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device);
-
-private:
-	struct InputBuffer {
-		float fTextureWidth;
-		float fTextureHeight;
-		float fGradientScale;	//usually is 0.5f/gridScale
-		float padding0;	//padding to align to 16 bytes
-	};
-
-	CComPtr<ID3D11Buffer>		mInputBuffer;
-	CComPtr<ID3D11SamplerState> mSampleStateVelocity;
-	CComPtr<ID3D11SamplerState> mSampleStatePressure;
+	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
@@ -146,22 +130,25 @@ public:
 	BuoyancyShader();
 	~BuoyancyShader();
 
-	bool Render(D3DGraphicsObject* graphicsObject, int indexCount, float timeStep, float buoyancy, float weight, float ambTemp, ID3D11ShaderResourceView* velocityField, ID3D11ShaderResourceView* temperatureField, ID3D11ShaderResourceView* density);
+	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult);
+
+private:
+	ShaderDescription GetShaderDescription();
+	bool SpecificInitialization(ID3D11Device* device) {return true;};
+};
+
+class Fluid2DRenderShader : public BaseD3DShader {
+public:
+	Fluid2DRenderShader();
+	~Fluid2DRenderShader();
+
+	bool Render(_In_ D3DGraphicsObject* graphicsObject, int indexCount, _In_ ID3D11ShaderResourceView* obstacleTexture, _In_ ID3D11ShaderResourceView* targetToRender);
 
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
 
 private:
-	struct InputBuffer {
-		float fAmbientTemperature;
-		float fTimeStep;
-		float fSigma;
-		float fKappa;	
-		//Vector4 padding1; // padding to align to 32 bytes
-	};
-
-	CComPtr<ID3D11Buffer>		mInputBuffer;
 	CComPtr<ID3D11SamplerState> mSampleState;
 };
 

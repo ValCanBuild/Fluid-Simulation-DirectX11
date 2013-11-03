@@ -6,14 +6,14 @@ struct PixelInputType {
     float2 texC : TEXCOORD0;
 };
 
-Texture2D fluidTexture;
-Texture2D obstacleTexture;
-SamplerState SampleType;
+Texture2D fluidTexture : register (t0);
+Texture2D obstacleTexture : register (t1);
+SamplerState SampleType : register (s0);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Pixel Shader
 ////////////////////////////////////////////////////////////////////////////////
-float4 TexturePixelShader(PixelInputType input) : SV_TARGET {
+float4 FluidPixelShader(PixelInputType input) : SV_TARGET {
     float4 col = fluidTexture.Sample(SampleType, input.texC);
 	float4 obs = obstacleTexture.Sample(SampleType, input.texC).r;
 

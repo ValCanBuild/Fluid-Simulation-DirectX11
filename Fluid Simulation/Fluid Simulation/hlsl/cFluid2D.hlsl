@@ -82,7 +82,7 @@ void AdvectComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 
 	// Sample obstacles texture and make result 0 if an obstacle exists
 	if (obstacles[(uint2)prevPos] > 0.0f) {
-		advectionResult[i] = float2(0,0);
+		advectionResult[i] = float2(0.0f,0.0f);
 		return;
 	}
 
@@ -92,7 +92,7 @@ void AdvectComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
-// Advect the speed by sampling at pos - deltaTime*velocity
+// Advect the speed by sampling at pos + deltaTime*velocity
 void AdvectBackwardComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	// advect by trace back
 	uint2 i = DTid.xy;
@@ -102,7 +102,7 @@ void AdvectBackwardComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 
 	// Sample obstacles texture and make result 0 if an obstacle exists
 	if (obstacles[(uint2)prevPos] > 0.0f) {
-		advectionResult[i] = float2(0,0);
+		advectionResult[i] = float2(0.0f,0.0f);
 		return;
 	}
 
@@ -122,7 +122,7 @@ void AdvectMacCormackComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 
 	// Sample obstacles texture and make result 0 if an obstacle exists
 	if (obstacles[j] > 0.0f) {
-		advectionResult[i] = float2(0,0);
+		advectionResult[i] = float2(0.0f,0.0f);
 		return;
 	}
 
@@ -284,8 +284,8 @@ void SubtractGradientComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	bool oR = obstacles[coordR] > 0.0f;
 	bool oL = obstacles[coordL] > 0.0f;
 
-	float2 obstV = float2(0,0);
-	float2 vMask = float2(1,1);
+	//float2 obstV = float2(0,0);
+	//float2 vMask = float2(1,1);
 	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity. 
 	if (oT || coordT.y > vDimensions.y - 1) {
 		pT = pC;

@@ -64,9 +64,6 @@
     <Filter Include="Source Files\Display\Scenes">
       <UniqueIdentifier>{551c5a9e-6413-48ca-8f09-6bc15cb6a9f5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Utilities\NVPerfKit">
-      <UniqueIdentifier>{163927b3-4bb5-46ab-aee2-8ce23a7c1823}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -132,11 +129,11 @@
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\Fluid2DComputeShaders.cpp">
-      <Filter>Source Files\Display\D3DShaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,23 +218,14 @@
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h">
       <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.h">
-      <Filter>Header Files\Utilities\NVPerfKit</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.InterfaceManager.Win.h">
-      <Filter>Header Files\Utilities\NVPerfKit</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\NVPerfKit\NvPmApi.Manager.h">
-      <Filter>Header Files\Utilities\NVPerfKit</Filter>
-    </ClInclude>
     <ClInclude Include="source\utilities\PerformanceMonitor.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\Fluid2DComputeShaders.h">
-      <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h">
       <Filter>Header Files\Display\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
