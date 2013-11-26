@@ -17,6 +17,11 @@ public:
 		
 	}
 
+	Transform(Vector3 &position, Vector3 &rotation, Vector3 &scale = Vector3(1,1,1)) 
+		: position(position),rotation(rotation),scale(scale){
+		
+	}
+
 	Vector3 position;
 	Vector3 rotation;
 	Vector3 scale;

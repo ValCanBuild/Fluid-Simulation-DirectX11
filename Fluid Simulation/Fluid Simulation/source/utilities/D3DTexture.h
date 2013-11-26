@@ -18,7 +18,7 @@ public:
 	D3DTexture();
 	~D3DTexture();
 
-	bool Initialize(ID3D11Device* device, ID3D11DeviceContext* context, WCHAR* filename);
+	bool Initialize(ID3D11Device* device, ID3D11DeviceContext* context, WCHAR* filename, HWND hwnd = nullptr);
 
 	ID3D11ShaderResourceView* GetTexture();
 

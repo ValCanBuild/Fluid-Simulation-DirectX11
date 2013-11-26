@@ -160,3 +160,7 @@ void InputSystem::GetMouseDelta(int& xDelta, int& yDelta) const {
 	xDelta = mMouseState->lX;
 	yDelta = mMouseState->lY;
 }
+
+void InputSystem::GetMouseScrollDelta(int &scrollDelta) const {
+	scrollDelta = mMouseState->lZ;
+}

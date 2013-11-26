@@ -44,7 +44,7 @@ public:
 
 	void GetMousePos(int& xPos, int& yPos) const;
 	void GetMouseDelta(int& xDelta, int& yDelta) const;
-
+	void GetMouseScrollDelta(int &scrollDelta) const;
 
 private:
 	bool mKeys[256];

@@ -14,7 +14,7 @@ Date: 17/09/2013
 // Constant buffers
 cbuffer InputBufferGeneral : register (b0) {
 	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader
-
+	
 	float fBuoyancy;			// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
 	float fAmbientTemperature;  // Used for BuoyancyComputeShader
@@ -69,7 +69,7 @@ RWTexture2D<float> pressureResult : register (u0); // Used for JacobiComputeShad
 
 RWTexture2D<float2> velocityResult : register (u0); // Used for SubtractGradientComputeShader
 
-Texture2D<float>	obstacles;	// Used for Advection, Jacobi, Divergence and Subtract Gradient, Obstacles
+Texture2D<float>	obstacles : register (t4);	// Used for Advection, Jacobi, Divergence and Subtract Gradient, Obstacles
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 // Advect the speed by sampling at pos - deltaTime*velocity
@@ -77,14 +77,14 @@ void AdvectComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	// advect by trace back
 	uint2 i = DTid.xy;
 
-	float2 prevPos = i - fTimeStep * velocity[i];
-	prevPos = (prevPos+0.5f)/vDimensions;
-
 	// Sample obstacles texture and make result 0 if an obstacle exists
-	if (obstacles[(uint2)prevPos] > 0.0f) {
+	if (obstacles[i] > 0.0f) {
 		advectionResult[i] = float2(0.0f,0.0f);
 		return;
 	}
+
+	float2 prevPos = i - fTimeStep * velocity[i];
+	prevPos = (prevPos+0.5f)/vDimensions;
 
 	float2 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
@@ -97,14 +97,14 @@ void AdvectBackwardComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	// advect by trace back
 	uint2 i = DTid.xy;
 
-	float2 prevPos = i + fTimeStep * velocity[i];
-	prevPos = (prevPos+0.5f)/vDimensions;
-
 	// Sample obstacles texture and make result 0 if an obstacle exists
-	if (obstacles[(uint2)prevPos] > 0.0f) {
+	if (obstacles[i] > 0.0f) {
 		advectionResult[i] = float2(0.0f,0.0f);
 		return;
 	}
+
+	float2 prevPos = i + fTimeStep * velocity[i];
+	prevPos = (prevPos+0.5f)/vDimensions;
 
 	float2 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
@@ -116,15 +116,15 @@ void AdvectBackwardComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 void AdvectMacCormackComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	uint2 i = DTid.xy;
 
-	// advect by trace back
-	float2 prevPos = i - fTimeStep * velocity[i];
-	uint2 j = (uint2) prevPos;
-
 	// Sample obstacles texture and make result 0 if an obstacle exists
-	if (obstacles[j] > 0.0f) {
+	if (obstacles[i] > 0.0f) {
 		advectionResult[i] = float2(0.0f,0.0f);
 		return;
 	}
+
+	// advect by trace back
+	float2 prevPos = i - fTimeStep * velocity[i];
+	uint2 j = (uint2) prevPos;
 
 	prevPos = (prevPos+0.5f)/vDimensions;
 
@@ -207,16 +207,16 @@ void DivergenceComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 
 	// Enforce boundaries
 	if (oT || coordT.y > vDimensions.y - 1) {
-		vT = 0;
+		vT.y = 0.0f;
 	}
 	if (oB || coordB.y < 1) {
-		vB = 0;
+		vB.y = 0.0f;
 	}
 	if (oR || coordR.x > vDimensions.x - 1) {
-		vR = 0;
+		vR.x = 0.0f;
 	}
 	if (oL || coordL.x < 1) {
-		vL = 0;
+		vL.x = 0.0f;
 	}
 
 	float result = fHalfInverseCellSize * (vR.x - vL.x + vT.y - vB.y);
@@ -309,8 +309,8 @@ void SubtractGradientComputeShader( uint3 DTid : SV_DispatchThreadID ) {
 	float2 oldV = velocity[i];
 	float2 newV = oldV - grad;
 	// Explicitly enforce the free-slip boundary condition by  
-    // replacing the appropriate components of the new velocity with  
-    // obstacle velocities. 
+	// replacing the appropriate components of the new velocity with  
+	// obstacle velocities. 
 
 	//newV = (vMask * newV) + obstV;
 

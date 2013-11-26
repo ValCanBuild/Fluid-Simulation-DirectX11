@@ -24,7 +24,7 @@ Date: 10/09/2013
 #define TIME_STEP 0.125f
 #define IMPULSE_RADIUS 20.0f
 #define INTERACTION_IMPULSE_RADIUS 7.0f
-#define OBSTACLES_IMPULSE_RADIUS 4.0f
+#define OBSTACLES_IMPULSE_RADIUS 5.0f
 #define JACOBI_ITERATIONS 50
 #define CELL_SIZE 1.0f
 #define GRADIENT_SCALE 1.0f
@@ -158,27 +158,16 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	srvDesc.Format = textureDesc.Format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	
-	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-	uavDesc.Format = textureDesc.Format;
-	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-	uavDesc.Texture2D.MipSlice = 0;
-
 	for (int i = 0; i < 4; ++i) {
 		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &velocityText[i]);
 		if (FAILED(hr)) {
 		  return false;
 		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(velocityText[i], &srvDesc, &mVelocitySP[i].mSRV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(velocityText[i], NULL, &mVelocitySP[i].mSRV);
 		if(FAILED(hr)) {
 			return false;
 		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(velocityText[i], &uavDesc, &mVelocitySP[i].mUAV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(velocityText[i], NULL, &mVelocitySP[i].mUAV);
 		if(FAILED(hr)) {
 			return false;
 		}
@@ -188,20 +177,18 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	CComPtr<ID3D11Texture2D> densityText[4];
 	mDensitySP = new ShaderParams[4];
 	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
-	srvDesc.Format = textureDesc.Format;
-	uavDesc.Format = textureDesc.Format;
 	for (int i = 0; i < 4; ++i) {
 		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &densityText[i]);
 		if (FAILED(hr)){
 		  return false;
 		}
 		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(densityText[i], &srvDesc, &mDensitySP[i].mSRV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(densityText[i], NULL, &mDensitySP[i].mSRV);
 		if(FAILED(hr)) {
 			return false;
 		}
 
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(densityText[i], &uavDesc, &mDensitySP[i].mUAV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(densityText[i], NULL, &mDensitySP[i].mUAV);
 		if(FAILED(hr)) {
 			return false;
 		}
@@ -216,12 +203,12 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		  return false;
 		}
 		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(temperatureText[i], &srvDesc, &mTemperatureSP[i].mSRV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(temperatureText[i], NULL, &mTemperatureSP[i].mSRV);
 		if(FAILED(hr)) {
 			return false;
 		}
 
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(temperatureText[i], &uavDesc, &mTemperatureSP[i].mUAV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(temperatureText[i], NULL, &mTemperatureSP[i].mUAV);
 		if(FAILED(hr)) {
 			return false;
 		}
@@ -236,12 +223,12 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		  return false;
 		}
 		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(obstaclesText[i], &srvDesc, &mObstacleSP[i].mSRV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(obstaclesText[i], NULL, &mObstacleSP[i].mSRV);
 		if(FAILED(hr)) {
 			return false;
 		}
 
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(obstaclesText[i], &uavDesc, &mObstacleSP[i].mUAV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(obstaclesText[i], NULL, &mObstacleSP[i].mUAV);
 		if(FAILED(hr)) {
 			return false;
 		}
@@ -252,12 +239,12 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	mDivergenceSP = unique_ptr<ShaderParams>(new ShaderParams());
 	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateTexture2D(&textureDesc, NULL, &divergenceText);
 	// Create the SRV and UAV.
-	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(divergenceText, &srvDesc, &mDivergenceSP->mSRV);
+	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(divergenceText, NULL, &mDivergenceSP->mSRV);
 	if(FAILED(hresult)) {
 		return false;
 	}
 
-	hresult = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(divergenceText, &uavDesc, &mDivergenceSP->mUAV);
+	hresult = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(divergenceText, NULL, &mDivergenceSP->mUAV);
 	if(FAILED(hresult)) {
 		return false;
 	}
@@ -276,12 +263,12 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		  return false;
 		}
 		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(pressureText[i], &srvDesc, &mPressureSP[i].mSRV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(pressureText[i], NULL, &mPressureSP[i].mSRV);
 		if(FAILED(hr)) {
 			return false;
 		}
 
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(pressureText[i], &uavDesc, &mPressureSP[i].mUAV);
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(pressureText[i], NULL, &mPressureSP[i].mUAV);
 		if(FAILED(hr)) {
 			return false;
 		}
@@ -471,8 +458,12 @@ bool Fluid2DScene::PerformComputation() {
 
 	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
+	int width,height;
+	pD3dGraphicsObj->GetScreenDimensions(width,height);
+	float halfWidth = width * 0.5f;
+
 	//refresh the impulse of the density and temperature
-	result = SetImpulseBuffer(Vector2(400.0f,600.0f),Vector2(IMPULSE_TEMPERATURE,IMPULSE_TEMPERATURE), IMPULSE_RADIUS);
+	result = SetImpulseBuffer(Vector2(halfWidth,(float)height),Vector2(IMPULSE_TEMPERATURE,IMPULSE_TEMPERATURE), IMPULSE_RADIUS);
 	if (!result) {
 		return false;
 	}
@@ -480,7 +471,7 @@ bool Fluid2DScene::PerformComputation() {
 
 	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 
-	result = SetImpulseBuffer(Vector2(400.0f,600.0f),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS);
+	result = SetImpulseBuffer(Vector2(halfWidth,(float)height),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS);
 	if (!result) {
 		return false;
 	}

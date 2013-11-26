@@ -10,7 +10,7 @@ Version: 1.0
 #define _MATHUTILS_H
 
 #include <time.h>
-#include <WinDef.h>
+#include <windows.h>
 #include "SimpleMath.h"
 
 using namespace DirectX::SimpleMath;

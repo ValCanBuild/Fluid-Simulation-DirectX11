@@ -30,9 +30,11 @@ public:
 	void GetTarget(Vector3& target) const;
 
 	void GetViewMatrix(Matrix& viewMatrix) const;
+	void GetRotationMatrix(Matrix& rotationMatrix) const;
 
 private:
 	Matrix mViewMatrix;
+	Matrix mRotationMatrix;
 	float mYaw,mPitch,mRoll;
 	Vector3 mPosition, mLookAt, mUp, mRight;
 	const Vector3 mDefaultUp, mDefaultLookAt, mDefaultRight;

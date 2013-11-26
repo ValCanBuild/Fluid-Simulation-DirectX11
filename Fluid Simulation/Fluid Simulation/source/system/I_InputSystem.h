@@ -23,6 +23,8 @@ public:
 
 	virtual void GetMousePos(int& xPos, int& yPos) const = 0;
 	virtual void GetMouseDelta(int& xDelta, int& yDelta) const = 0;
+
+	virtual void GetMouseScrollDelta(int &scrollDelta) const = 0;
 };
 
 #endif

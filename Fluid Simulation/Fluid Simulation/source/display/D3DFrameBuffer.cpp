@@ -87,7 +87,7 @@ void D3DFrameBuffer::BeginRender(float clearRed, float clearGreen, float clearBl
 
 	// Clear the back buffer.
 	context->ClearRenderTargetView(mRenderTargetView, color);
-    
+	
 	// Clear the depth buffer.
 	context->ClearDepthStencilView(pD3dGraphicsObject->GetDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }

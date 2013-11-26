@@ -104,15 +104,18 @@
     <ClCompile Include="source\display\D3DRenderer.cpp" />
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp" />
+    <ClCompile Include="source\display\D3DShaders\Fluid3DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
+    <ClCompile Include="source\display\Scenes\RigidBodyScene.cpp" />
     <ClCompile Include="source\display\Scenes\Wave2DScene.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
+    <ClCompile Include="source\objects\RigidCube.cpp" />
     <ClCompile Include="source\system\GraphicsSystem.cpp" />
     <ClCompile Include="source\system\InputSystem.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
@@ -129,6 +132,7 @@
     <ClInclude Include="source\display\D3DRenderer.h" />
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
     <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h" />
+    <ClInclude Include="source\display\D3DShaders\Fluid3DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
@@ -137,10 +141,12 @@
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h" />
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h" />
     <ClInclude Include="source\display\Scenes\IScene.h" />
+    <ClInclude Include="source\display\Scenes\RigidBodyScene.h" />
     <ClInclude Include="source\display\Scenes\Wave2DScene.h" />
     <ClInclude Include="source\objects\D2DColorQuad.h" />
     <ClInclude Include="source\objects\D2DTexQuad.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
+    <ClInclude Include="source\objects\RigidCube.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\system\GraphicsSystem.h" />
     <ClInclude Include="source\system\InputSystem.h" />
@@ -246,6 +252,13 @@
       </AssemblerOutput>
       <AssemblerOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </AssemblerOutputFile>
+    </FxCompile>
+    <FxCompile Include="hlsl\cFluid3D.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RenderComputeShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AdvectComputeShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -17,6 +17,7 @@ Date: 02/09/2013
 #include "../display/Scenes/Wave2DScene.h"
 #include "../display/Scenes/Fluid2DScene.h"
 #include "../display/Scenes/Fluid3DScene.h"
+#include "../display/Scenes/RigidBodyScene.h"
 
 /// ANT TWEAK BAR CALLBACKS ///
 void TW_CALL ResetCallback(void *clientData) {
@@ -68,7 +69,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwWindowSize(screenWidth,screenHeight);
 
 	// Initialize current scene
-	mCurrentScene = unique_ptr<IScene>(new Fluid3DScene());
+	mCurrentScene = unique_ptr<IScene>(new RigidBodyScene());
 	result = mCurrentScene->Initialize(mGraphicsObj.get(),hwnd);
 	if (!result) {
 		MessageBox(hwnd, L"Could not initialize the scene", L"Error", MB_OK);
@@ -94,7 +95,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 }
 
 bool GraphicsSystem::ResetScene() {
-	mCurrentScene.reset(new Fluid3DScene());
+	mCurrentScene.reset(new RigidBodyScene());
 	bool result = mCurrentScene->Initialize(mGraphicsObj.get(),mHwnd);
 	if (!result) {
 		return false;

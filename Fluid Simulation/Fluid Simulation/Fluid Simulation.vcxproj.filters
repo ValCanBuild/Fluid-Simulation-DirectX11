@@ -64,6 +64,12 @@
     <Filter Include="Source Files\Display\Scenes">
       <UniqueIdentifier>{551c5a9e-6413-48ca-8f09-6bc15cb6a9f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Display\Frame Buffer">
+      <UniqueIdentifier>{fd4281ee-169c-4db5-93ec-eaf34405b240}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\Frame Buffer">
+      <UniqueIdentifier>{bfe023b3-5da9-4688-9886-b8ac73f58062}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -79,9 +85,6 @@
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="source\display\D3DGraphicsObject.cpp">
-      <Filter>Source Files\Display</Filter>
-    </ClCompile>
-    <ClCompile Include="source\display\D3DFrameBuffer.cpp">
       <Filter>Source Files\Display</Filter>
     </ClCompile>
     <ClCompile Include="source\display\D3DRenderer.cpp">
@@ -135,6 +138,18 @@
     <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\display\D3DFrameBuffer.cpp">
+      <Filter>Source Files\Display\Frame Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\Fluid3DShaders.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\Scenes\RigidBodyScene.cpp">
+      <Filter>Source Files\Display\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\RigidCube.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\system\InputSystem.h">
@@ -156,12 +171,6 @@
       <Filter>Header Files\Display</Filter>
     </ClInclude>
     <ClInclude Include="source\display\D3DGraphicsObject.h">
-      <Filter>Header Files\Display</Filter>
-    </ClInclude>
-    <ClInclude Include="source\display\IFrameBuffer.h">
-      <Filter>Header Files\Display</Filter>
-    </ClInclude>
-    <ClInclude Include="source\display\D3DFrameBuffer.h">
       <Filter>Header Files\Display</Filter>
     </ClInclude>
     <ClInclude Include="source\display\D3DRenderer.h">
@@ -227,6 +236,21 @@
     <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
+    <ClInclude Include="source\display\IFrameBuffer.h">
+      <Filter>Header Files\Display\Frame Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DFrameBuffer.h">
+      <Filter>Header Files\Display\Frame Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\Fluid3DShaders.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\Scenes\RigidBodyScene.h">
+      <Filter>Header Files\Display\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\RigidCube.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pAdvection.psh">
@@ -274,6 +298,9 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="hlsl\cFluid2D.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\cFluid3D.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

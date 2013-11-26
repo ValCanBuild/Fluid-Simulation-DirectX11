@@ -9,9 +9,8 @@ Version: 1.0
 #include "Camera.h"
 
 Camera::Camera() :
-mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0) {
+mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0) {
 	mYaw = mPitch = mRoll = 0.0f;
-	mPosition = Vector3(0,0,0);
 
 	mHasChanged = true;// set to true so the camera gets updated the first time update loop is called
 }
@@ -29,11 +28,11 @@ void Camera::Update() {
 		return;
 	}
 
-	Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(mYaw, mPitch, 0.0f);
+	mRotationMatrix = Matrix::CreateFromYawPitchRoll(mYaw, mPitch, 0.0f);
 
 	// Transform the lookAt and up vector by the rotation matrix so the view is correctly rotated at the origin.
-	Vector3::TransformNormal(mDefaultLookAt,rotationMatrix,mLookAt);
-	Vector3::TransformNormal(mDefaultUp,rotationMatrix,mUp);
+	Vector3::TransformNormal(mDefaultLookAt,mRotationMatrix,mLookAt);
+	Vector3::TransformNormal(mDefaultUp,mRotationMatrix,mUp);
 
 	// Transform the right vector by the yaw matrix
 	Matrix yawMatrix = Matrix::CreateRotationY(mYaw);
@@ -86,4 +85,8 @@ void Camera::GetTarget(Vector3& target) const {
 
 void Camera::GetViewMatrix(Matrix& viewMatrix) const {
 	viewMatrix = mViewMatrix;
+}
+
+void Camera::GetRotationMatrix(Matrix& rotationMatrix) const {
+	rotationMatrix = mRotationMatrix;
 }
