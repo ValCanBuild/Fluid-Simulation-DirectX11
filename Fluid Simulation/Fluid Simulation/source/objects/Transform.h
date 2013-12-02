@@ -9,16 +9,20 @@ Version: 1.0
 #ifndef _TRANSFORM_H
 #define _TRANSFORM_H
 
+#include "Component.h"
 #include "../utilities/math/MathUtils.h"
 
-class Transform {
+class Transform : public Component {
 public:
-	Transform(): position(0,0,0),rotation(0,0,0),scale(1,1,1){
+	// Default constructor should not be used
+	Transform() : Component(nullptr) {}
+
+	Transform(const GameObject * const gameObject) : Component(gameObject), position(0,0,0),rotation(0,0,0),scale(1,1,1){
 		
 	}
 
-	Transform(Vector3 &position, Vector3 &rotation, Vector3 &scale = Vector3(1,1,1)) 
-		: position(position),rotation(rotation),scale(scale){
+	Transform(const GameObject * const gameObject, Vector3 &position, Vector3 &rotation, Vector3 &scale = Vector3(1,1,1)) 
+		: Component(gameObject), position(position),rotation(rotation),scale(scale){
 		
 	}
 

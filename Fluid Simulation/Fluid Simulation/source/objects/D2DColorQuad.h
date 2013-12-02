@@ -6,7 +6,6 @@ Default color is white
 
 Author: Valentin Hinov
 Date: 04/09/2013
-Version: 1.0
 **************************************************************/
 
 #ifndef _D2DCOLORQUAD_H

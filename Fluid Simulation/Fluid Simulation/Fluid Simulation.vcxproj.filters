@@ -144,11 +144,29 @@
     <ClCompile Include="source\display\D3DShaders\Fluid3DShaders.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\Scenes\RigidBodyScene.cpp">
+    <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="source\objects\RigidCube.cpp">
+    <ClCompile Include="source\display\Scenes\RigidBodyScene2D.cpp">
+      <Filter>Source Files\Display\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\D2DParticle.cpp">
       <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\Screen.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\Physics.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\RigidBody2D.cpp">
+      <Filter>Source Files\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\Bounds.cpp">
+      <Filter>Source Files\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\Component.cpp">
+      <Filter>Source Files\Objects\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,11 +263,35 @@
     <ClInclude Include="source\display\D3DShaders\Fluid3DShaders.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\Scenes\RigidBodyScene.h">
+    <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h">
       <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="source\objects\RigidCube.h">
+    <ClInclude Include="source\display\Scenes\RigidBodyScene2D.h">
+      <Filter>Header Files\Display\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\IGraphicsSystem.h">
+      <Filter>Header Files\System\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\D2DParticle.h">
       <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\Physics.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\Screen.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\RigidBody2D.h">
+      <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\Bounds.h">
+      <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\GameObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\Component.h">
+      <Filter>Header Files\Objects\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

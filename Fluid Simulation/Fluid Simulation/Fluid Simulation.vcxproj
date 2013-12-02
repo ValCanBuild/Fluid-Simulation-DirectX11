@@ -110,12 +110,16 @@
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
-    <ClCompile Include="source\display\Scenes\RigidBodyScene.cpp" />
+    <ClCompile Include="source\display\Scenes\RigidBodyScene2D.cpp" />
+    <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
     <ClCompile Include="source\display\Scenes\Wave2DScene.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\objects\Bounds.cpp" />
+    <ClCompile Include="source\objects\Component.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
+    <ClCompile Include="source\objects\D2DParticle.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
-    <ClCompile Include="source\objects\RigidCube.cpp" />
+    <ClCompile Include="source\objects\RigidBody2D.cpp" />
     <ClCompile Include="source\system\GraphicsSystem.cpp" />
     <ClCompile Include="source\system\InputSystem.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
@@ -125,6 +129,8 @@
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
+    <ClCompile Include="source\utilities\Physics.cpp" />
+    <ClCompile Include="source\utilities\Screen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\display\D3DFrameBuffer.h" />
@@ -141,14 +147,20 @@
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h" />
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h" />
     <ClInclude Include="source\display\Scenes\IScene.h" />
-    <ClInclude Include="source\display\Scenes\RigidBodyScene.h" />
+    <ClInclude Include="source\display\Scenes\RigidBodyScene2D.h" />
+    <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
     <ClInclude Include="source\display\Scenes\Wave2DScene.h" />
+    <ClInclude Include="source\objects\Bounds.h" />
+    <ClInclude Include="source\objects\Component.h" />
     <ClInclude Include="source\objects\D2DColorQuad.h" />
+    <ClInclude Include="source\objects\D2DParticle.h" />
     <ClInclude Include="source\objects\D2DTexQuad.h" />
+    <ClInclude Include="source\objects\GameObject.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
-    <ClInclude Include="source\objects\RigidCube.h" />
+    <ClInclude Include="source\objects\RigidBody2D.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\system\GraphicsSystem.h" />
+    <ClInclude Include="source\system\IGraphicsSystem.h" />
     <ClInclude Include="source\system\InputSystem.h" />
     <ClInclude Include="source\system\I_InputSystem.h" />
     <ClInclude Include="source\system\MainSystem.h" />
@@ -160,6 +172,8 @@
     <ClInclude Include="source\utilities\math\MathUtils.h" />
     <ClInclude Include="source\utilities\D3DTexture.h" />
     <ClInclude Include="source\utilities\PerformanceMonitor.h" />
+    <ClInclude Include="source\utilities\Physics.h" />
+    <ClInclude Include="source\utilities\Screen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pFluid2DTexture.psh" />

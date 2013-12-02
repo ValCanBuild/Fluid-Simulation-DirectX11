@@ -5,12 +5,15 @@ Author: Valentin Hinov
 Date: 02/09/2013
 Version: 1.0
 **************************************************************/
+#include <stdlib.h>     
+#include <time.h>       
 #include <windowsx.h>
 #include <iostream>
 #include <AntTweakBar.h> // include anttweakbar here in order to pass windows messages to it
 #include "MainSystem.h"
+#include "../utilities/Physics.h"
 
-MainSystem::MainSystem() {
+MainSystem::MainSystem() : mTimeLag(0.0f) {
 }
 
 
@@ -29,6 +32,9 @@ bool MainSystem::Initialize() {
 	int screenWidth, screenHeight;
 	bool result;
 
+	// Seed RNG
+	srand(time(NULL));
+
 	// Initialize the width and height of the screen to zero before sending the variables into the function.
 	screenWidth = 0;
 	screenHeight = 0;
@@ -43,7 +49,7 @@ bool MainSystem::Initialize() {
 	mInput = unique_ptr<InputSystem>(new InputSystem());
 
 	// Register all systems with the service provider
-	ServiceProvider::Instance().Initialize(mInput.get());
+	ServiceProvider::Instance().Initialize(mInput.get(),mGraphics.get());
 	
 	if (!mGraphics || !mInput)
 		return false;
@@ -111,10 +117,18 @@ bool MainSystem::Frame() {
 	mPerfMonitor.Tick();
 
 	float deltaTime = mAppTimer.GetDeltaTime();
+	mTimeLag += deltaTime;
 
 	// Check if the user pressed escape and wants to exit the application.
 	if(mInput->IsKeyDown(VK_ESCAPE)) {
 		return false;
+	}
+
+	// Let game physics catch up
+	float fMaxSimTimestep = Physics::fMaxSimulationTimestep;
+	while (mTimeLag >= fMaxSimTimestep) {
+		mGraphics->FixedFrame(fMaxSimTimestep);
+		mTimeLag -= fMaxSimTimestep;
 	}
 
 	// Do the frame processing for the graphics object.

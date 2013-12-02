@@ -22,6 +22,8 @@ public:
 
 	ID3D11ShaderResourceView* GetTexture();
 
+	void GetTextureSize(int &width, int &height);
+
 private:
 	CComPtr<ID3D11ShaderResourceView> mTexture;
 };

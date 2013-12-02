@@ -4,10 +4,9 @@ system
 
 Author: Valentin Hinov
 Date: 02/09/2013
-Version: 1.0
 **************************************************************/
-#ifndef _I_INPUTSYSTEM_H_
-#define _I_INPUTSYSTEM_H_
+#ifndef I_INPUTSYSTEM_H_
+#define I_INPUTSYSTEM_H_
 
 class I_InputSystem {
 public:

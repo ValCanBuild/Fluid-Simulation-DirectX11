@@ -43,6 +43,10 @@ inline float RandF() {
 inline float RandF(float a, float b) {
 	return a + RandF()*(b-a);
 } 
+
+inline Color RandomColor(bool randAlpha = false) {
+	return randAlpha ? Color(RandF(),RandF(),RandF(),RandF()) : Color(RandF(),RandF(),RandF());
+}
  
 template<typename T>
 inline T Min(const T& a, const T& b) {

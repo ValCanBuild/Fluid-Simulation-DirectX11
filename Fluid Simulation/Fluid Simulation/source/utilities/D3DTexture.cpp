@@ -6,8 +6,12 @@ Date: 04/09/2013
 Version: 1.0
 **************************************************************/
 #include <string>
+#include <wrl.h>
+
 #include "D3DTexture.h"
 #include "WICTextureLoader.h"
+
+using namespace Microsoft::WRL;
 
 using namespace DirectX;
 
@@ -35,4 +39,27 @@ bool D3DTexture::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, 
 
 ID3D11ShaderResourceView* D3DTexture::GetTexture() {
 	return mTexture;
+}
+
+void D3DTexture::GetTextureSize(int &width, int &height) {
+	// Convert resource view to underlying resource.
+	ComPtr<ID3D11Resource> resource;
+
+	mTexture->GetResource(&resource);
+	
+	// Cast to texture.
+	ComPtr<ID3D11Texture2D> texture2D;
+	
+	if (FAILED(resource.As(&texture2D))) {
+		throw std::exception("SpriteBatch can only draw Texture2D resources");
+	}
+
+	// Query the texture size.
+	D3D11_TEXTURE2D_DESC desc;
+
+	texture2D->GetDesc(&desc);
+	
+	// Convert to vector format.
+	width = desc.Width;
+	height = desc.Height;
 }

@@ -48,6 +48,8 @@ private:
 	
 	unique_ptr<InputSystem> mInput;
 	unique_ptr<GraphicsSystem> mGraphics;
+
+	float	mTimeLag;
 };
 
 

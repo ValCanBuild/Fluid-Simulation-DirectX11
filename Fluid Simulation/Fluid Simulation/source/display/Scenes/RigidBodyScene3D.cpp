@@ -1,25 +1,25 @@
 /***************************************************************
-RigidBodyScene.cpp: Describes a scene that simulates rigid body
+RigidBodyScene3D.cpp: Describes a scene that simulates rigid body
 dynamics
 
 Author: Valentin Hinov
 Date: 26/11/2013
 ***************************************************************/
 
-#include "RigidBodyScene.h"
+#include "RigidBodyScene3D.h"
 
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/Camera.h"
 #include "../../system/ServiceProvider.h"
 
-RigidBodyScene::RigidBodyScene() : mAngle(0.0f) {
+RigidBodyScene3D::RigidBodyScene3D() : mAngle(0.0f) {
 }
 
-RigidBodyScene::~RigidBodyScene() {
+RigidBodyScene3D::~RigidBodyScene3D() {
 	pD3dGraphicsObj = nullptr;
 }
 
-bool RigidBodyScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
+bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
 	mCamera = unique_ptr<Camera>(new Camera());	
 	mCamera->SetPosition(0,0,-10);
@@ -30,12 +30,12 @@ bool RigidBodyScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd)
 	return true;
 }
 
-void RigidBodyScene::Update(float delta) {
+void RigidBodyScene3D::Update(float delta) {
 	UpdateCamera(delta);
 	mAngle += 0.01f;
 }
 
-bool RigidBodyScene::Render() {
+bool RigidBodyScene3D::Render() {
 	Matrix viewMatrix, projectionMatrix, worldMatrix;
 	pD3dGraphicsObj->GetProjectionMatrix(projectionMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
@@ -51,7 +51,7 @@ bool RigidBodyScene::Render() {
 	return true;
 }
 
-void RigidBodyScene::UpdateCamera(float delta) {
+void RigidBodyScene3D::UpdateCamera(float delta) {
 	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 
 	// Move camera with WASD 

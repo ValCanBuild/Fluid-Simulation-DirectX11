@@ -17,6 +17,7 @@ public:
 
 	virtual bool Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) = 0;
 	virtual void Update(float delta) = 0;
+	virtual void FixedUpdate(float fixedDelta) {}; // update that happens at fixed time step - use for physics simulation
 	virtual bool Render() = 0;
 };
 

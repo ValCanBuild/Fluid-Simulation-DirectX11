@@ -11,13 +11,18 @@ Date: 02/09/2013
 #include "ServiceProvider.h"
 
 #if defined (D3D)
-	#include "../display/D3DGraphicsObject.h"
+#include "SpriteFont.h"
+#include "CommonStates.h"
+#include "../display/D3DGraphicsObject.h"
+using namespace DirectX;
 #endif
 
 #include "../display/Scenes/Wave2DScene.h"
 #include "../display/Scenes/Fluid2DScene.h"
 #include "../display/Scenes/Fluid3DScene.h"
-#include "../display/Scenes/RigidBodyScene.h"
+#include "../display/Scenes/RigidBodyScene3D.h"
+#include "../display/Scenes/RigidBodyScene2D.h"
+#include "../utilities/Screen.h"
 
 /// ANT TWEAK BAR CALLBACKS ///
 void TW_CALL ResetCallback(void *clientData) {
@@ -30,7 +35,7 @@ void TW_CALL ResetCallback(void *clientData) {
 /// ~ANT TWEAK BAR CALLBACKS ///
 
 
-GraphicsSystem::GraphicsSystem() {
+GraphicsSystem::GraphicsSystem() : mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false) {
 	mFps = mCpuUsage = 0;
 }
 
@@ -55,6 +60,9 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	if (!mGraphicsObj)
 		return false;
 
+	Screen::width = screenWidth;
+	Screen::height = screenHeight;
+
 	D3DGraphicsObject *d3dObject = dynamic_cast<D3DGraphicsObject*>(mGraphicsObj.get());
 
 	bool result = mGraphicsObj->Initialize(screenWidth,screenHeight,VSYNC_ENABLED,hwnd,FULL_SCREEN,SCREEN_DEPTH,SCREEN_NEAR);
@@ -69,7 +77,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwWindowSize(screenWidth,screenHeight);
 
 	// Initialize current scene
-	mCurrentScene = unique_ptr<IScene>(new RigidBodyScene());
+	mCurrentScene = unique_ptr<IScene>(new RigidBodyScene2D());
 	result = mCurrentScene->Initialize(mGraphicsObj.get(),hwnd);
 	if (!result) {
 		MessageBox(hwnd, L"Could not initialize the scene", L"Error", MB_OK);
@@ -78,7 +86,8 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
 	// Initialize font
 	mSpriteBatch = unique_ptr<SpriteBatch>(new SpriteBatch(d3dObject->GetDeviceContext()));
-	mSpriteFont = unique_ptr<SpriteFont>(new SpriteFont(d3dObject->GetDevice(), L"data/TBNA.spritefont"));
+	mSpriteFont = shared_ptr<SpriteFont>(new SpriteFont(d3dObject->GetDevice(), L"data/TBNA.spritefont"));
+	mCommonStates = shared_ptr<CommonStates>(new CommonStates(d3dObject->GetDevice()));
 
 	// Initialize the main tweak bar
 	TwBar *twBar;
@@ -90,12 +99,14 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 	TwDefine(" MainControl iconified=true ");
 	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
+	TwAddVarRW(twBar,"Pause Scene Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
+	TwAddVarRW(twBar,"Reverse Timestep", TW_TYPE_BOOLCPP, &mReverseFixedTimestep, " key=z ");
 
 	return true;
 }
 
 bool GraphicsSystem::ResetScene() {
-	mCurrentScene.reset(new RigidBodyScene());
+	mCurrentScene.reset(new RigidBodyScene2D());
 	bool result = mCurrentScene->Initialize(mGraphicsObj.get(),mHwnd);
 	if (!result) {
 		return false;
@@ -106,6 +117,17 @@ bool GraphicsSystem::ResetScene() {
 bool GraphicsSystem::Frame(float delta) const {
 	mCurrentScene->Update(delta);
 	return Render();
+}
+
+void GraphicsSystem::FixedFrame(float fixedDelta) const {
+	if (!mSceneFixedUpdatePaused) {
+		if (mReverseFixedTimestep) {
+			mCurrentScene->FixedUpdate(-fixedDelta);
+		}
+		else {
+			mCurrentScene->FixedUpdate(fixedDelta);
+		}
+	}
 }
 
 bool GraphicsSystem::Render() const {
@@ -161,6 +183,14 @@ bool GraphicsSystem::RenderOverlay() const {
 
 bool GraphicsSystem::TakeScreenshot(LPCWSTR name) const {
 	return mGraphicsObj->Screenshot(name);
+}
+
+shared_ptr<DirectX::CommonStates> GraphicsSystem::GetCommonD3DStates() const {
+	return mCommonStates;
+}
+
+shared_ptr<DirectX::SpriteFont> GraphicsSystem::GetSpriteFont() const {
+	return mSpriteFont;
 }
 
 void GraphicsSystem::SetMonitorData(int fps, int cpuUsage) {
