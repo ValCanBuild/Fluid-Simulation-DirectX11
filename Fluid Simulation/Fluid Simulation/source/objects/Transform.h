@@ -17,11 +17,11 @@ public:
 	// Default constructor should not be used
 	Transform() : Component(nullptr) {}
 
-	Transform(const GameObject * const gameObject) : Component(gameObject), position(0,0,0),rotation(0,0,0),scale(1,1,1){
+	Transform(const GameObject * const gameObject) : Component(gameObject), position(0.0f),rotation(0.0f),scale(1.0f){
 		
 	}
 
-	Transform(const GameObject * const gameObject, Vector3 &position, Vector3 &rotation, Vector3 &scale = Vector3(1,1,1)) 
+	Transform(const GameObject * const gameObject, Vector3 &position, Vector3 &rotation, Vector3 &scale = Vector3(1.0f)) 
 		: Component(gameObject), position(position),rotation(rotation),scale(scale){
 		
 	}

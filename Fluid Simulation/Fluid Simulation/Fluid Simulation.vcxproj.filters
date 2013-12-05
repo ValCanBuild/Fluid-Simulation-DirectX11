@@ -168,6 +168,9 @@
     <ClCompile Include="source\objects\Component.cpp">
       <Filter>Source Files\Objects\Components</Filter>
     </ClCompile>
+    <ClCompile Include="source\objects\D2DSprite.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\system\InputSystem.h">
@@ -292,6 +295,9 @@
     </ClInclude>
     <ClInclude Include="source\objects\Component.h">
       <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\D2DSprite.h">
+      <Filter>Header Files\Objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

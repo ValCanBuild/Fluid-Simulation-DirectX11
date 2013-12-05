@@ -22,6 +22,7 @@ Date: 26/11/2013
 class Camera;
 class D3DGraphicsObject;
 class D2DParticle;
+class D2DSprite;
 
 struct CTwBar;
 typedef CTwBar TwBar;
@@ -44,12 +45,17 @@ public:
 	bool Render();
 
 private:
+	void HandleInput();
+
+private:
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	unique_ptr<DirectX::SpriteBatch> mSpriteBatch;
 	
 	vector<D2DParticle*> mParticleUnits;
 	vector<D2DParticle*> mObstacles;
+
+	unique_ptr<D2DSprite> mHovercraftSprite;
 
 	bool mPaused;
 

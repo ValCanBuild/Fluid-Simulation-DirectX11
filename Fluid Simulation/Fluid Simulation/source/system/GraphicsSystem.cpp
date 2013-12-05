@@ -77,7 +77,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwWindowSize(screenWidth,screenHeight);
 
 	// Initialize current scene
-	mCurrentScene = unique_ptr<IScene>(new RigidBodyScene2D());
+	mCurrentScene = unique_ptr<IScene>(new RigidBodyScene3D());
 	result = mCurrentScene->Initialize(mGraphicsObj.get(),hwnd);
 	if (!result) {
 		MessageBox(hwnd, L"Could not initialize the scene", L"Error", MB_OK);
@@ -106,7 +106,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 }
 
 bool GraphicsSystem::ResetScene() {
-	mCurrentScene.reset(new RigidBodyScene2D());
+	mCurrentScene.reset(new RigidBodyScene3D());
 	bool result = mCurrentScene->Initialize(mGraphicsObj.get(),mHwnd);
 	if (!result) {
 		return false;

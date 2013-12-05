@@ -18,13 +18,16 @@ mBoundsType(boundsType)
 		assert(radius > 0.0f);
 		BoundingSphere *boundingSphere = new BoundingSphere(center,radius);
 		mBoundingShape = boundingSphere;
+		mExtents = Vector3(radius);
 		break;}							 
 	case BOUNDS_TYPE_BOX:{
 		BoundingBox *boundingBox = new BoundingBox(center,extents);
 		mBoundingShape = boundingBox;
+		mExtents = extents;
 		break;}
 	case BOUNDS_TYPE_ORIENTED_BOX:{
 		mBoundingShape = nullptr;
+		mExtents = Vector3(0.0f);
 		break;}
 	}
 }
@@ -49,6 +52,10 @@ void Bounds::UpdateCenter(Vector3 &center) const {
 	case BOUNDS_TYPE_ORIENTED_BOX:{
 		break;}
 	}
+}
+
+const Vector3 &Bounds::GetExtents() const {
+	return mExtents;
 }
 
 const BoundingBox * const Bounds::GetBoundingBox() const {

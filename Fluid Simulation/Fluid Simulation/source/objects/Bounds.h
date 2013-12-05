@@ -25,6 +25,8 @@ public:
 
 	void UpdateCenter(Vector3 &center) const;
 
+	const Vector3 &GetExtents() const;	// The extents of the box. Always half the size
+
 	// Get bounds as bounding box if applicable
 	const DirectX::BoundingBox * const GetBoundingBox() const;
 
@@ -33,6 +35,7 @@ public:
 private:
 	void *			mBoundingShape;
 	BoundsType_t	mBoundsType;
+	Vector3			mExtents;
 };
 
 #endif

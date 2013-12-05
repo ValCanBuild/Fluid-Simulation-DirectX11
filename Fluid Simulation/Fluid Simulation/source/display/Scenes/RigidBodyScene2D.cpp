@@ -6,8 +6,8 @@ Author: Valentin Hinov
 Date: 26/11/2013
 ***************************************************************/
 
-#define MAX_NUM_PARTICLES 30
-#define MAX_NUM_OBSTACLES 7
+#define MAX_NUM_PARTICLES 0
+#define MAX_NUM_OBSTACLES 0
 
 #include "RigidBodyScene2D.h"
 
@@ -21,6 +21,7 @@ Date: 26/11/2013
 #include "../../system/ServiceProvider.h"
 #include "../../utilities/D3DTexture.h"
 #include "../../objects/D2DParticle.h"
+#include "../../objects/D2DSprite.h"
 #include "../../utilities/math/MathUtils.h"
 #include "../../utilities/Physics.h"
 
@@ -96,6 +97,12 @@ bool RigidBodyScene2D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 		mObstacles.push_back(particle);
 	}
 
+	mHovercraftSprite = unique_ptr<D2DSprite>(new D2DSprite(Vector3(400,400,0)));
+	result = mHovercraftSprite->Initialize(pD3dGraphicsObj,hwnd,L"data/hovercraft_sprite2.png");
+	if (!result) {
+		return false;
+	}
+
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar("2D Rigid Bodies");
 	// Position bar
@@ -105,24 +112,27 @@ bool RigidBodyScene2D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 
 	// Add Variables to tweak bar
+	TwAddVarRW(mTwBar,"Timestep", TW_TYPE_FLOAT, &Physics::fMaxSimulationTimestep, "step=0.001");
 	TwAddVarRW(mTwBar,"Gravity", TW_TYPE_FLOAT, &Physics::fGravity, "step=0.1");
 	TwAddVarRW(mTwBar,"Air Density", TW_TYPE_FLOAT, &Physics::fAirDensity, "step=0.01");
 	TwAddVarRW(mTwBar,"Drag Coefficient", TW_TYPE_FLOAT, &Physics::fDragCoefficient, "step=0.05");
 	TwAddVarRW(mTwBar,"Restitution", TW_TYPE_FLOAT, &Physics::fRestitution, "step=0.05");
-	//TwAddVarRW(mTwBar,"MacCormarck Advection", TW_TYPE_BOOLCPP, &mMacCormackEnabled, nullptr);
-	//TwAddVarRW(mTwBar,"Simulation Paused", TW_TYPE_BOOLCPP, &mPaused, nullptr);
+	TwAddVarRW(mTwBar,"Thrust Force", TW_TYPE_FLOAT, &Physics::fThrustForce, "step=0.1");
+	TwAddVarRW(mTwBar,"Linear Drag", TW_TYPE_FLOAT, &Physics::fLinearDragCoefficient, "step=0.1");
 
 	return true;
 }
 
 void RigidBodyScene2D::Update(float delta) {
-
+	mHovercraftSprite->SetThrusters(false, false);
+	HandleInput();
 }
 
 void RigidBodyScene2D::FixedUpdate(float fixedDelta) {
 	for (D2DParticle *particle : mParticleUnits) {
 		particle->FixedUpdate(fixedDelta,mObstacles);
 	}
+	mHovercraftSprite->FixedUpdate(fixedDelta);
 }
 
 bool RigidBodyScene2D::Render() {
@@ -138,8 +148,26 @@ bool RigidBodyScene2D::Render() {
 		for (D2DParticle *obstacle : mObstacles) {
 			obstacle->Render(mSpriteBatch.get());
 		}
+
+		mHovercraftSprite->Render(mSpriteBatch.get());
 	}
 	mSpriteBatch->End();
 
 	return true;
+}
+
+void RigidBodyScene2D::HandleInput() {
+	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	if (inputSystem->IsKeyDown('W')) {
+		mHovercraftSprite->ModulateThrust(true);
+	}
+	else if (inputSystem->IsKeyDown('S')) {
+		mHovercraftSprite->ModulateThrust(false);
+	}
+	if (inputSystem->IsKeyDown('D')) {
+		mHovercraftSprite->SetThrusters(true,false);
+	}
+	else if (inputSystem->IsKeyDown('A')) {
+		mHovercraftSprite->SetThrusters(false,true);
+	}
 }
