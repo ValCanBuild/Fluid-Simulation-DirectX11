@@ -119,6 +119,8 @@ bool MainSystem::Frame() {
 	float deltaTime = mAppTimer.GetDeltaTime();
 	mTimeLag += deltaTime;
 
+	mInput->Update(deltaTime);
+
 	// Check if the user pressed escape and wants to exit the application.
 	if(mInput->IsKeyDown(VK_ESCAPE)) {
 		return false;
@@ -146,9 +148,7 @@ bool MainSystem::Frame() {
 		mInput->KeyUp('P');
 	}
 
-	mInput->Update(deltaTime);
-
-
+	mInput->PostUpdate();
 
 	return true;
 }

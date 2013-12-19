@@ -46,6 +46,8 @@ public:
 
 	bool TakeScreenshot(LPCWSTR name) const;
 
+	const IGraphicsObject * const GetGraphicsObject() const;
+
 	#if defined (D3D)
 	shared_ptr<DirectX::CommonStates> GetCommonD3DStates() const;
 	shared_ptr<DirectX::SpriteFont> GetSpriteFont() const;

@@ -15,20 +15,25 @@ Version: 1.0
 class Transform : public Component {
 public:
 	// Default constructor should not be used
-	Transform() : Component(nullptr) {}
+	Transform() : Component(nullptr) {
+	}
 
 	Transform(const GameObject * const gameObject) : Component(gameObject), position(0.0f),rotation(0.0f),scale(1.0f){
-		
 	}
 
 	Transform(const GameObject * const gameObject, Vector3 &position, Vector3 &rotation, Vector3 &scale = Vector3(1.0f)) 
 		: Component(gameObject), position(position),rotation(rotation),scale(scale){
+	}
+
+	Transform(const GameObject * const gameObject, Vector3 &position, Quaternion &qRotation, Vector3 &scale = Vector3(1.0f)) 
+		: Component(gameObject), position(position),qRotation(qRotation),scale(scale){
 		
 	}
 
 	Vector3 position;
 	Vector3 rotation;
 	Vector3 scale;
+	Quaternion qRotation;
 
 	void GetTransformMatrix(Matrix &matrix) {
 		Matrix m = Matrix::CreateScale(scale);
@@ -38,6 +43,15 @@ public:
 		m = Matrix::CreateRotationY(rotation.y);
 		matrix*=m;
 		m = Matrix::CreateRotationZ(rotation.z);	
+		matrix*=m;
+		m = Matrix::CreateTranslation(position);
+		matrix*=m;
+	}
+
+	void GetTransformMatrixQuaternion(Matrix &matrix) {
+		Matrix m = Matrix::CreateScale(scale);
+		matrix*=m;
+		m = Matrix::CreateFromQuaternion(qRotation);	
 		matrix*=m;
 		m = Matrix::CreateTranslation(position);
 		matrix*=m;

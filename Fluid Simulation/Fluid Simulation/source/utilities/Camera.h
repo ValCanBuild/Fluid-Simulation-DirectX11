@@ -10,6 +10,7 @@ Version: 1.0
 #define _CAMERA_H
 
 #include "../utilities/D3dIncludes.h"
+#include "../utilities/math/MathUtils.h"
 
 class Camera {
 public:
@@ -31,6 +32,8 @@ public:
 
 	void GetViewMatrix(Matrix& viewMatrix) const;
 	void GetRotationMatrix(Matrix& rotationMatrix) const;
+
+	Ray  ScreenPointToRay(Vector2 position) const;
 
 private:
 	Matrix mViewMatrix;

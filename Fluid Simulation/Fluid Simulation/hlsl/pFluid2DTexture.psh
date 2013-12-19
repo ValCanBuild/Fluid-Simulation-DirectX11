@@ -2,8 +2,8 @@
 // TYPEDEFS //
 //////////////
 struct PixelInputType {
-    float4 position : SV_POSITION;
-    float2 texC : TEXCOORD0;
+	float4 position : SV_POSITION;
+	float2 texC : TEXCOORD0;
 };
 
 Texture2D fluidTexture : register (t0);
@@ -14,7 +14,7 @@ SamplerState SampleType : register (s0);
 // Pixel Shader
 ////////////////////////////////////////////////////////////////////////////////
 float4 FluidPixelShader(PixelInputType input) : SV_TARGET {
-    float4 col = fluidTexture.Sample(SampleType, input.texC);
+	float4 col = fluidTexture.Sample(SampleType, input.texC);
 	float4 obs = obstacleTexture.Sample(SampleType, input.texC).r;
 
 	return obs + col;

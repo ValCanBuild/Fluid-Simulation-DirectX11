@@ -66,7 +66,7 @@
       <Optimization>Disabled</Optimization>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <PreprocessorDefinitions>D3D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\DirectXTK\inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Development\Uni Projects\Fluid-Simulation-DirectX11\Fluid Simulation\Dependencies\DirectXTK\Inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -88,7 +88,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>D3D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\DirectXTK\inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Dependencies\DirectXTK\inc;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -114,19 +114,24 @@
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
     <ClCompile Include="source\display\Scenes\Wave2DScene.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\objects\BaseD3DBody.cpp" />
     <ClCompile Include="source\objects\Bounds.cpp" />
+    <ClCompile Include="source\objects\BoxCollider.cpp" />
+    <ClCompile Include="source\objects\Collider.cpp" />
     <ClCompile Include="source\objects\Component.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
     <ClCompile Include="source\objects\D2DParticle.cpp" />
     <ClCompile Include="source\objects\D2DSprite.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
     <ClCompile Include="source\objects\RigidBody2D.cpp" />
+    <ClCompile Include="source\objects\RigidBody3D.cpp" />
     <ClCompile Include="source\system\GraphicsSystem.cpp" />
     <ClCompile Include="source\system\InputSystem.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
     <ClCompile Include="source\system\ServiceProvider.cpp" />
     <ClCompile Include="source\utilities\AppTimer.cpp" />
     <ClCompile Include="source\utilities\Camera.cpp" />
+    <ClCompile Include="source\utilities\CollisionManager.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
@@ -151,7 +156,10 @@
     <ClInclude Include="source\display\Scenes\RigidBodyScene2D.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
     <ClInclude Include="source\display\Scenes\Wave2DScene.h" />
+    <ClInclude Include="source\objects\BaseD3DBody.h" />
     <ClInclude Include="source\objects\Bounds.h" />
+    <ClInclude Include="source\objects\BoxCollider.h" />
+    <ClInclude Include="source\objects\Collider.h" />
     <ClInclude Include="source\objects\Component.h" />
     <ClInclude Include="source\objects\D2DColorQuad.h" />
     <ClInclude Include="source\objects\D2DParticle.h" />
@@ -160,6 +168,7 @@
     <ClInclude Include="source\objects\GameObject.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
     <ClInclude Include="source\objects\RigidBody2D.h" />
+    <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\system\GraphicsSystem.h" />
     <ClInclude Include="source\system\IGraphicsSystem.h" />
@@ -169,6 +178,7 @@
     <ClInclude Include="source\system\ServiceProvider.h" />
     <ClInclude Include="source\utilities\AppTimer.h" />
     <ClInclude Include="source\utilities\Camera.h" />
+    <ClInclude Include="source\utilities\CollisionManager.h" />
     <ClInclude Include="source\utilities\Console.h" />
     <ClInclude Include="source\utilities\D3dIncludes.h" />
     <ClInclude Include="source\utilities\math\MathUtils.h" />
@@ -209,11 +219,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DirectXTK\DirectXTK_Desktop_2010.vcxproj">
-      <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pAdvection.psh">
@@ -276,6 +281,11 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dependencies\DirectXTK\DirectXTK_Desktop_2012.vcxproj">
+      <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

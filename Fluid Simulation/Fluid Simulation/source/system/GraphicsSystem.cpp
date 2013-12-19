@@ -185,6 +185,10 @@ bool GraphicsSystem::TakeScreenshot(LPCWSTR name) const {
 	return mGraphicsObj->Screenshot(name);
 }
 
+const IGraphicsObject * const GraphicsSystem::GetGraphicsObject() const {
+	return mGraphicsObj.get();
+}
+
 shared_ptr<DirectX::CommonStates> GraphicsSystem::GetCommonD3DStates() const {
 	return mCommonStates;
 }

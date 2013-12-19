@@ -47,7 +47,7 @@ bool InputSystem::Initialize(HINSTANCE hInstance, HWND hwnd) {
 		mKeys[i] = false;
 	}
 
-	mMouseLeft = mMouseRight = mMouseMid = false;
+	mMouseLeft = mMouseRight = mMouseMid = mMouseLeftClicked = mMouseRightClicked = mMouseMidClicked = false;
 
 	// Initialize the main direct input interface.
 	HRESULT result = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&mDirectInput, NULL);
@@ -85,10 +85,6 @@ bool InputSystem::Initialize(HINSTANCE hInstance, HWND hwnd) {
 }
 
 void InputSystem::Update(float delta) {
-	if (mLastKeyDown != -1) {
-		mLastKeyDown = -1;
-	}	
-	
 	// Read the mouse 
 	HRESULT result = mMouse->GetDeviceState(sizeof(DIMOUSESTATE), (LPVOID)mMouseState);
 	if(FAILED(result)) {
@@ -100,6 +96,13 @@ void InputSystem::Update(float delta) {
 			// could not reacquire mouse
 		}
 	}
+}
+
+void InputSystem::PostUpdate() {
+	if (mLastKeyDown != -1) {
+		mLastKeyDown = -1;
+	}
+	mMouseLeftClicked = mMouseRightClicked = mMouseMidClicked = false;
 }
 
 void InputSystem::KeyDown(unsigned int input) {
@@ -125,12 +128,15 @@ bool InputSystem::IsKeyClicked(unsigned int key) const {
 void InputSystem::OnMouseButtonAction(int key, bool status) {
 	if (key == 0) {
 		mMouseLeft = status;
+		mMouseLeftClicked = status;
 	}
 	else if (key == 1) {
 		mMouseRight = status;
+		mMouseRightClicked = status;
 	}
 	else if (key == 2) {
 		mMouseMid = status;
+		mMouseMidClicked = status;
 	}
 }
 
@@ -149,6 +155,18 @@ bool InputSystem::IsMouseLeftDown() const {
 
 bool InputSystem::IsMouseRightDown() const {
 	return mMouseRight;
+}
+
+bool InputSystem::IsMouseLeftClicked() const {
+	return mMouseLeftClicked;
+}
+
+bool InputSystem::IsMouseRightClicked() const {
+	return mMouseRightClicked;
+}
+
+bool InputSystem::IsMouseMidClicked() const {
+	return mMouseMidClicked;
 }
 
 void InputSystem::GetMousePos(int& xPos, int& yPos) const {

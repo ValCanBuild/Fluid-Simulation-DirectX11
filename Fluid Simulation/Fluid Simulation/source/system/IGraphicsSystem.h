@@ -11,6 +11,8 @@ Date: 01/12/2013
 #include <windows.h>
 #include <memory>
 
+class IGraphicsObject;
+
 #if defined (D3D)
 namespace DirectX 
 {
@@ -22,6 +24,7 @@ namespace DirectX
 class IGraphicsSystem {
 public:
 	virtual bool TakeScreenshot(LPCWSTR name) const = 0;
+	const virtual IGraphicsObject * const GetGraphicsObject() const = 0;
 
 	#if defined (D3D)
 	virtual std::shared_ptr<DirectX::CommonStates> GetCommonD3DStates() const = 0;

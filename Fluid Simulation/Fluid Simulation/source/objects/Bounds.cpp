@@ -6,28 +6,30 @@ Date: 02/12/2013
 **************************************************************/
 
 #include "Bounds.h"
+#include "GameObject.h"
+#include <memory>
 
 using namespace DirectX;
+using namespace std;
 
-Bounds::Bounds(const GameObject * const gameObject, BoundsType_t boundsType, _In_ Vector3 &center, _In_opt_ Vector3 &extents, _In_opt_ float radius) :
+Bounds::Bounds(const GameObject * const gameObject, BoundsType_t boundsType) :
 Component(gameObject),
 mBoundsType(boundsType) 
 {
+	shared_ptr<Transform> transform = GetGameObject()->transform;
 	switch (boundsType) {
 	case BOUNDS_TYPE_SPHERE: {
-		assert(radius > 0.0f);
-		BoundingSphere *boundingSphere = new BoundingSphere(center,radius);
+		float maxRadius = max(max(transform->scale.x,transform->scale.y),transform->scale.z);
+		BoundingSphere *boundingSphere = new BoundingSphere(transform->position,maxRadius);
 		mBoundingShape = boundingSphere;
-		mExtents = Vector3(radius);
+		mExtents = Vector3(maxRadius);
+		mCenter = transform->position;
 		break;}							 
 	case BOUNDS_TYPE_BOX:{
-		BoundingBox *boundingBox = new BoundingBox(center,extents);
+		BoundingBox *boundingBox = new BoundingBox(transform->position,transform->scale*0.5f);
 		mBoundingShape = boundingBox;
-		mExtents = extents;
-		break;}
-	case BOUNDS_TYPE_ORIENTED_BOX:{
-		mBoundingShape = nullptr;
-		mExtents = Vector3(0.0f);
+		mExtents = transform->scale*0.5f;
+		mCenter = transform->position;
 		break;}
 	}
 }
@@ -39,18 +41,32 @@ Bounds::~Bounds() {
 	}
 }
 
-void Bounds::UpdateCenter(Vector3 &center) const {
+void Bounds::UpdateCenter(Vector3 &center) {
 	switch (mBoundsType) {
 	case BOUNDS_TYPE_SPHERE:{
 		BoundingSphere *sphere = static_cast<BoundingSphere*>(mBoundingShape);
 		sphere->Center = center;
+		mCenter = center;
 		break;}			 
 	case BOUNDS_TYPE_BOX:{
 		BoundingBox *box = static_cast<BoundingBox*>(mBoundingShape);
 		box->Center = center;
+		mCenter = center;
 		break;}
-	case BOUNDS_TYPE_ORIENTED_BOX:{
-		break;}
+	}
+}
+
+void Bounds::UpdateExtents(Vector3 &extents) {
+	if (mBoundsType == BOUNDS_TYPE_BOX) {
+		BoundingBox *box = static_cast<BoundingBox*>(mBoundingShape);
+		box->Extents = extents;
+	}
+}
+
+void Bounds::Update() {
+	shared_ptr<Transform> transform = GetGameObject()->transform;
+	if (mCenter != transform->position) {
+		UpdateCenter(transform->position);
 	}
 }
 

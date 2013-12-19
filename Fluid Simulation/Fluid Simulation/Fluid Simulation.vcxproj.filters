@@ -70,6 +70,12 @@
     <Filter Include="Source Files\Display\Frame Buffer">
       <UniqueIdentifier>{bfe023b3-5da9-4688-9886-b8ac73f58062}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities\Physics">
+      <UniqueIdentifier>{1c39e4e5-8878-49c1-96af-b5ffeb3d9a4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\Physics">
+      <UniqueIdentifier>{defab9d3-c50b-4d21-8ed9-bc7ac8bb2fea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -170,6 +176,21 @@
     </ClCompile>
     <ClCompile Include="source\objects\D2DSprite.cpp">
       <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\RigidBody3D.cpp">
+      <Filter>Source Files\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\BaseD3DBody.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\Collider.cpp">
+      <Filter>Source Files\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\BoxCollider.cpp">
+      <Filter>Source Files\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\CollisionManager.cpp">
+      <Filter>Source Files\Utilities\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -278,9 +299,6 @@
     <ClInclude Include="source\objects\D2DParticle.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
-    <ClInclude Include="source\utilities\Physics.h">
-      <Filter>Header Files\Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="source\utilities\Screen.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
@@ -298,6 +316,24 @@
     </ClInclude>
     <ClInclude Include="source\objects\D2DSprite.h">
       <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\BaseD3DBody.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\RigidBody3D.h">
+      <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\Collider.h">
+      <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\BoxCollider.h">
+      <Filter>Header Files\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\Physics.h">
+      <Filter>Header Files\Utilities\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\CollisionManager.h">
+      <Filter>Header Files\Utilities\Physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

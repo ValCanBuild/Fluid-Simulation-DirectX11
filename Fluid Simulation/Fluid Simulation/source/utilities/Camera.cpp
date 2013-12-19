@@ -7,6 +7,8 @@ Version: 1.0
 **************************************************************/
 
 #include "Camera.h"
+#include "../system/ServiceProvider.h"
+#include "../display/IGraphicsObject.h"
 
 Camera::Camera() :
 mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0) {
@@ -73,6 +75,30 @@ void Camera::AddPosition(float x, float y, float z) {
 void Camera::SetPosition(float x, float y, float z) {
 	mPosition = Vector3(x,y,z);
 	mHasChanged = true;
+}
+
+Ray Camera::ScreenPointToRay(Vector2 position) const {
+	const IGraphicsObject *graphicsObject = ServiceProvider::Instance().GetGraphicsSystem()->GetGraphicsObject();
+	int screenWidth,screenHeight;
+	graphicsObject->GetScreenDimensions(screenWidth,screenHeight);
+
+	Matrix projectionMatrix;
+	graphicsObject->GetProjectionMatrix(projectionMatrix);
+
+	float vx = (+2.0f*position.x/screenWidth  - 1.0f)/projectionMatrix(0,0);
+	float vy = (-2.0f*position.y/screenHeight + 1.0f)/projectionMatrix(1,1);
+
+	Vector3 rayOrigin(0.0f);
+	Vector3 rayDir(vx,vy,-1.0f);
+
+	Matrix viewInverse;
+	mViewMatrix.Invert(viewInverse);
+
+	rayOrigin = Vector3::Transform(rayOrigin,viewInverse);
+	rayDir = Vector3::TransformNormal(rayDir,viewInverse);
+	rayDir.Normalize();
+
+	return Ray(rayOrigin,rayDir);
 }
 
 void Camera::GetPosition(Vector3& pos) const {

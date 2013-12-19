@@ -23,6 +23,7 @@ public:
 
 	bool Initialize(HINSTANCE hInstance, HWND hwnd);
 	void Update(float delta);
+	void PostUpdate();
 
 	void KeyDown(unsigned int);
 	void KeyUp(unsigned int);
@@ -42,6 +43,10 @@ public:
 	bool IsMouseRightDown() const;
 	bool IsMouseMidDown() const;
 
+	bool IsMouseLeftClicked() const;
+	bool IsMouseRightClicked() const;
+	bool IsMouseMidClicked() const;
+
 	void GetMousePos(int& xPos, int& yPos) const;
 	void GetMouseDelta(int& xDelta, int& yDelta) const;
 	void GetMouseScrollDelta(int &scrollDelta) const;
@@ -50,8 +55,10 @@ private:
 	bool mKeys[256];
 	int mLastKeyDown;
 	bool mMouseLeft,mMouseRight, mMouseMid;
+	bool mMouseLeftClicked,mMouseRightClicked,mMouseMidClicked;
 
 	int mMouseX,mMouseY;
+	
 
 	// Need direct input for mouse delta
 	IDirectInput8* mDirectInput;

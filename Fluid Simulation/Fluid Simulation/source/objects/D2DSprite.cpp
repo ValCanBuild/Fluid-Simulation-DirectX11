@@ -66,7 +66,7 @@ bool D2DSprite::Initialize(D3DGraphicsObject *pGraphicsObj, HWND hwnd, WCHAR *te
 
 
 		Vector3 center = Vector3(transform->position.x + mWidth*0.5f, transform->position.y + mHeight*0.5f,0.0f);
-		bounds = shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX,center,Vector3(mWidth*0.5f,mHeight*0.5f,0.0f)));
+		bounds = shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
 	}
 
 	return result;

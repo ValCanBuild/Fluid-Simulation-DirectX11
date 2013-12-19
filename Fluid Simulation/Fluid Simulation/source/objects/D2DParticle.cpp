@@ -46,7 +46,7 @@ bool D2DParticle::Initialize(D3DGraphicsObject *pGraphicsObj, HWND hwnd, WCHAR *
 		mHeight *= transform->scale.y;
 
 		Vector3 center = Vector3(transform->position.x + mWidth*0.5f, transform->position.y + mHeight*0.5f,0.0f);
-		bounds = shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_SPHERE,center,Vector3(),mWidth/2));
+		bounds = shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_SPHERE));
 	}
 
 	return result;

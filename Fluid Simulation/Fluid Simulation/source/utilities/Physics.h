@@ -24,7 +24,7 @@ public:
 };
 
 #define DEFAULT_MAX_SIMULATION_TIMESTEP	0.02f	// 1/50th of a second
-#define DEFAULT_GRAVITY	9.81f
+#define DEFAULT_GRAVITY	-9.81f
 #define DEFAULT_AIR_DENSITY 1.23f // (1.23kg/m^3) standard air at 15 degrees celcius
 #define DEFAULT_DRAG_COEFFICIENT 0.6f
 #define DEFAULT_WIND_SPEED 10.0f // 10m/s, about 20 knots
