@@ -62,8 +62,8 @@ private:
 private:
 	unique_ptr<Camera>					mCamera;
 	
-	unique_ptr<BaseD3DBody>				mBody;
-	unique_ptr<BaseD3DBody>				mPlane;
+	BaseD3DBody*						mBody;
+	BaseD3DBody*						mPlane;
 
 	vector<BaseD3DBody*>				mSceneObjects;
 

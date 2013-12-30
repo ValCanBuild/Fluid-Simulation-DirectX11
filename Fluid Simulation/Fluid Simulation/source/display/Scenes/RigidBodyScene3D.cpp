@@ -13,6 +13,8 @@ Date: 26/11/2013
 #include "../../objects/BaseD3DBody.h"
 #include "../../utilities/Physics.h"
 #include "../../utilities/CollisionManager.h"
+#include "BulletCollision\CollisionShapes\btCollisionShape.h"
+#include "BulletCollision\CollisionDispatch\btCollisionObject.h"
 
 RigidBodyScene3D::RigidBodyScene3D() : mAngle(0.0f), mTwBar(nullptr), mPickedObject(nullptr) {
 }
@@ -25,24 +27,34 @@ RigidBodyScene3D::~RigidBodyScene3D() {
 	}
 	mTwBar = nullptr;
 	mPickedObject = nullptr;
+
+	mCollisionManager.release();
+
+	for (BaseD3DBody *object : mSceneObjects) {
+		if (object) {
+			delete object;
+			object = nullptr;
+		}
+	}
 	mSceneObjects.clear();
 }
 
 bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
 	mCamera = unique_ptr<Camera>(new Camera());	
-	mCamera->SetPosition(0,2,-10);
+	mCamera->SetPosition(5,5,-10);
 
-	mBody = unique_ptr<BaseD3DBody>(new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true)));
-	mPlane = unique_ptr<BaseD3DBody>(new BaseD3DBody(GeometricPrimitive::CreatePlane(pD3dGraphicsObj->GetDeviceContext(), 100.0f, 1, true),false));
-	mPlane->bounds->UpdateExtents(Vector3(50.0f,0.0f,50.0f));
-	mPlane->boxCollider->UpdateExtents(Vector3(50.0f,0.0f,50.0f));
+	mBody = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
+	mBody->rigidBody3D->SetMass(2.0f);
+	//mPlane = new BaseD3DBody(GeometricPrimitive::CreatePlane(pD3dGraphicsObj->GetDeviceContext(), 100.0f, 1, true),false,false);
+	//mPlane->bounds->UpdateExtents(Vector3(50.0f,0.0f,50.0f));
+	//mPlane->collider->GetCollisionObject()->getCollisionShape()->setLocalScaling(btVector3(50.0f,0.0f,50.0f));
 	
-	mBody->transform->position = Vector3(0.0f,8.0f,0.0f);
+	mBody->transform->position = Vector3(5.0f,8.0f,0.0f);
 	//mBody->transform->scale.y = 0.5f;
 
-	mSceneObjects.push_back(mBody.get());
-	mSceneObjects.push_back(mPlane.get());
+	mSceneObjects.push_back(mBody);
+	//mSceneObjects.push_back(mPlane);
 
 	bool result;
 	for (BaseD3DBody *object : mSceneObjects) {
@@ -65,6 +77,7 @@ bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 	// Add Variables to tweak bar
 	TwAddVarRW(mTwBar,"Timestep", TW_TYPE_FLOAT, &Physics::fMaxSimulationTimestep, "step=0.001");
 	TwAddVarRW(mTwBar,"Gravity", TW_TYPE_FLOAT, &Physics::fGravity, "step=0.1");
+	TwAddVarRW(mTwBar,"Restitution", TW_TYPE_FLOAT, &Physics::fRestitution, "step=0.05");
 
 	return true;
 }
@@ -90,9 +103,9 @@ bool RigidBodyScene3D::Render() {
 	mCamera->GetViewMatrix(viewMatrix);
 	pD3dGraphicsObj->GetWorldMatrix(worldMatrix);
 
-	mPlane->Render(&viewMatrix,&projectionMatrix);
-
-	mBody->Render(&viewMatrix,&projectionMatrix);
+	for (BaseD3DBody *object : mSceneObjects) {
+		object->Render(&viewMatrix,&projectionMatrix);
+	}
 
 	return true;
 }
@@ -125,6 +138,20 @@ void RigidBodyScene3D::HandleInput() {
 			}
 		}
 		ObjectPicked(objectToPick);
+	}
+	else if (inputSystem->IsMouseMidClicked()) {
+		int posX,posY;
+		inputSystem->GetMousePos(posX,posY);
+		Ray ray = mCamera->ScreenPointToRay(Vector2((float)posX,(float)posY));
+		// create object and launch it
+		BaseD3DBody* body = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
+		mCamera->GetPosition(body->transform->position);
+		body->transform->scale = Vector3(0.5f);
+		body->rigidBody3D->SetMass(1.0f);
+		body->Initialize(pD3dGraphicsObj,nullptr);
+		body->rigidBody3D->AddForce(ray.direction*60);
+		mSceneObjects.push_back(body);
+		mCollisionManager->AddObject(body);
 	}
 }
 

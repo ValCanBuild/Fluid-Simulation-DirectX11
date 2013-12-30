@@ -12,6 +12,8 @@ Version: 1.0
 #include <time.h>
 #include <windows.h>
 #include "SimpleMath.h"
+#include "LinearMath\btVector3.h"
+#include "LinearMath\btQuaternion.h"
 
 using namespace DirectX::SimpleMath;
 
@@ -44,8 +46,24 @@ inline float RandF(float a, float b) {
 	return a + RandF()*(b-a);
 } 
 
+inline Vector3 AbsVector(Vector3 &vector) {
+	return Vector3(abs(vector.x),abs(vector.y),abs(vector.z));
+}
+
 inline Color RandomColor(bool randAlpha = false) {
 	return randAlpha ? Color(RandF(),RandF(),RandF(),RandF()) : Color(RandF(),RandF(),RandF());
+}
+
+inline Vector3 BtVector3ToVector3(btVector3 &btVector) {
+	return Vector3(btVector[0],btVector[1],btVector[2]);
+}
+
+inline btVector3 Vector3ToBtVector3(Vector3 &vector3) {
+	return btVector3(vector3.x,vector3.y,vector3.z);
+}
+
+inline btQuaternion QuaternionToBtQuaternion(Quaternion &quaternion) {
+	return btQuaternion(quaternion.x,quaternion.y,quaternion.z,quaternion.w);
 }
  
 template<typename T>

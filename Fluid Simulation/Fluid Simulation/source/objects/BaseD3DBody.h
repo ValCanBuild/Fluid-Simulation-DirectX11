@@ -10,8 +10,8 @@ Date: 05/12/2013
 
 #include "GameObject.h"
 #include "RigidBody3D.h"
-#include "BoxCollider.h"
 #include "GeometricPrimitive.h"
+#include "Collider.h"
 
 class D3DTexture;
 class D3DGraphicsObject;
@@ -29,8 +29,8 @@ public:
 
 // Public variables
 public:
-	std::shared_ptr<RigidBody3D> rigidBody3D; 
-	std::shared_ptr<BoxCollider> boxCollider; 
+	std::shared_ptr<RigidBody3D>		rigidBody3D; 
+	std::shared_ptr<Collider>			collider;
 
 // Private Variables
 private:

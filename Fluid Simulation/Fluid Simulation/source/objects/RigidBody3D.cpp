@@ -15,7 +15,7 @@ using namespace std;
 
 RigidBody3D::RigidBody3D(const GameObject * const gameObject) : Component(gameObject), mSpeed(0.0f),
 	mInertiaTensor(0.0f), mProjectedArea(0.0f), mAngularVelocity(0.0f), mVelocityBody(0.0f),
-	mExtraLinearForces(0.0f), mExtraTorque(0.0f), mMass(1.0f), mLinearDrag(0.0f), mAngularDrag(0.05f)
+	mExtraLinearForces(0.0f), mExtraTorque(0.0f), mMass(1.0f), mLinearDrag(0.05f), mAngularDrag(0.05f)
 {
 	
 }
@@ -88,6 +88,10 @@ void RigidBody3D::CalculateLoads() {
 	Mb += mExtraTorque;
 
 	mMoments += Mb;
+
+	// Drag forces
+	mForces -= mLinearDrag * mVelocity;
+	mMoments -= mAngularDrag * mAngularVelocity;
 }
 
 // Integrates one time step using Euler integration
@@ -101,7 +105,7 @@ void RigidBody3D::UpdateBodyEuler(float dt) {
 	// Integrate linear equation of motion:
 	Vector3 a = mForces / mMass;
 	Vector3 dv = a * dt;
-	mVelocity += dv - (dv*mLinearDrag);
+	mVelocity += dv;
 
 	Vector3 ds = mVelocity * dt;
 	transform->position += ds;
@@ -111,7 +115,7 @@ void RigidBody3D::UpdateBodyEuler(float dt) {
 	Vector3 temp = mAngularVelocity.Cross(inertiaTimesVelocity);
 	Vector3 aa = Vector3::Transform(mMoments - temp, mInverseInertiaMatrix);
 	aa *= dt;
-	mAngularVelocity += aa - (aa*mAngularDrag);
+	mAngularVelocity += aa;
 
 	// Calculate the new rotation quaternion
 	Quaternion tempQ = transform->qRotation * Quaternion(mAngularVelocity,0.0f);

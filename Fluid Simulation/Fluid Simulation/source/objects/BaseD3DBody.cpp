@@ -7,6 +7,8 @@ Date: 05/12/2013
 **************************************************************/
 
 #include "BaseD3DBody.h"
+#include "btBulletCollisionCommon.h"
+#include "../utilities/math/MathUtils.h"
 
 using namespace DirectX;
 
@@ -19,7 +21,8 @@ BaseD3DBody::BaseD3DBody(std::unique_ptr<GeometricPrimitive> model, bool hasRigi
 	}	
 	
 	if (hasCollider) {
-		boxCollider = std::shared_ptr<BoxCollider>(new BoxCollider(this));
+		btBoxShape* boxShape = new btBoxShape(Vector3ToBtVector3(transform->scale*0.5f));
+		collider = std::shared_ptr<Collider>(new Collider(this, boxShape));
 	}
 }
 
@@ -44,8 +47,7 @@ void BaseD3DBody::Render(const Matrix* viewMatrix, const Matrix* projMatrix) {
 
 void BaseD3DBody::Update(float dt) {
 	// update bounding box if there has been a change in position
-	bounds->Update();
-	boxCollider->Update();
+	
 }
 
 void BaseD3DBody::FixedUpdate(float fixedDeltaTime) {
@@ -53,7 +55,11 @@ void BaseD3DBody::FixedUpdate(float fixedDeltaTime) {
 	if (rigidBody3D != nullptr) {
 		rigidBody3D->UpdateBodyEuler(fixedDeltaTime);
 	}
-	if (transform->position.y - 0.5f*transform->scale.y < 0.0f) {
+	bounds->Update();
+	if (collider) {
+		collider->Update();
+	}
+	/*if (transform->position.y - 0.5f*transform->scale.y < 0.0f) {
 		transform->position.y = 0.5f*transform->scale.y;
-	}	
+	}*/	
 }

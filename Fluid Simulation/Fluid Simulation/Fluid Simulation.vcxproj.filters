@@ -186,9 +186,6 @@
     <ClCompile Include="source\objects\Collider.cpp">
       <Filter>Source Files\Objects\Components</Filter>
     </ClCompile>
-    <ClCompile Include="source\objects\BoxCollider.cpp">
-      <Filter>Source Files\Objects\Components</Filter>
-    </ClCompile>
     <ClCompile Include="source\utilities\CollisionManager.cpp">
       <Filter>Source Files\Utilities\Physics</Filter>
     </ClCompile>
@@ -324,9 +321,6 @@
       <Filter>Header Files\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="source\objects\Collider.h">
-      <Filter>Header Files\Objects\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="source\objects\BoxCollider.h">
       <Filter>Header Files\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="source\utilities\Physics.h">

@@ -4,9 +4,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fluid Simulation", "Fluid Simulation\Fluid Simulation.vcxproj", "{3103A246-D195-4784-A770-BBBD2ADF7010}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E} = {E0B52AE7-E160-4D32-BF3F-910B785E5A8E}
+		{0C19ABF2-A204-044E-B99E-8F076978CB01} = {0C19ABF2-A204-044E-B99E-8F076978CB01}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK_Desktop_2012", "Dependencies\DirectXTK\DirectXTK_Desktop_2012.vcxproj", "{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BulletCollision", "..\..\..\Useful Libraries\bullet-2.82-r2704\build\vs2010_dx11\BulletCollision.vcxproj", "{0C19ABF2-A204-044E-B99E-8F076978CB01}"
+	ProjectSection(ProjectDependencies) = postProject
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF} = {79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LinearMath", "..\..\..\Useful Libraries\bullet-2.82-r2704\build\vs2010_dx11\LinearMath.vcxproj", "{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +38,22 @@ Global
 		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}.Release|Win32.Build.0 = Release|Win32
 		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}.Release|x64.ActiveCfg = Release|x64
 		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}.Release|x64.Build.0 = Release|x64
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Debug|Win32.Build.0 = Debug|Win32
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Debug|x64.ActiveCfg = Debug|x64
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Debug|x64.Build.0 = Debug|x64
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Release|Win32.ActiveCfg = Release|Win32
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Release|Win32.Build.0 = Release|Win32
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Release|x64.ActiveCfg = Release|x64
+		{0C19ABF2-A204-044E-B99E-8F076978CB01}.Release|x64.Build.0 = Release|x64
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Debug|Win32.Build.0 = Debug|Win32
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Debug|x64.ActiveCfg = Debug|x64
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Debug|x64.Build.0 = Debug|x64
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Release|Win32.ActiveCfg = Release|Win32
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Release|Win32.Build.0 = Release|Win32
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Release|x64.ActiveCfg = Release|x64
+		{79D58F51-8E9D-CC44-8A37-AE1487B2DFCF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
