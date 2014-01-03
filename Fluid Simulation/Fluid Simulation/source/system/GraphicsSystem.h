@@ -57,6 +57,8 @@ public:
 
 	bool ResetScene();
 
+	IScene * const GetCurrentScene() const;
+
 private:
 	bool Render() const;
 	bool RenderOverlay() const;

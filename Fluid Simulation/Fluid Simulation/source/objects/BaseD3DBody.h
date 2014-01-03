@@ -25,7 +25,9 @@ public:
 	bool Initialize(D3DGraphicsObject * pGraphicsObj, HWND hwnd);
 	void Update(float dt);
 	void FixedUpdate(float fixedDeltaTime);
-	void Render(const Matrix* viewMatrix, const Matrix* projMatrix);
+	void Render(const Matrix* viewMatrix, const Matrix* projMatrix, bool wireframe);
+
+	void SetColor(Color &color);
 
 // Public variables
 public:
@@ -37,6 +39,7 @@ private:
 	std::unique_ptr<DirectX::GeometricPrimitive>	mModel;
 
 	Vector3		mPrevPosition;
+	Color		mColor;
 };
 
 #endif

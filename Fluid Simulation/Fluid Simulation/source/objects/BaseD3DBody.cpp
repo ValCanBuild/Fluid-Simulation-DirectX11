@@ -10,6 +10,9 @@ Date: 05/12/2013
 
 using namespace DirectX;
 
+const Color SLEEPING_COLOR = Color(0.0f,0.0f,0.0f);
+const Color COLLISION_COLOR = Color(0.2f,0.9f,0.1f);
+
 BaseD3DBody::BaseD3DBody(std::unique_ptr<GeometricPrimitive> model, bool hasRigidBody, bool hasCollider) : mModel(std::move(model)), mPrevPosition(0.0f) {
 	transform = std::shared_ptr<Transform>(new Transform(this));
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
@@ -21,6 +24,8 @@ BaseD3DBody::BaseD3DBody(std::unique_ptr<GeometricPrimitive> model, bool hasRigi
 	if (hasCollider) {
 		boxCollider = std::shared_ptr<BoxCollider>(new BoxCollider(this));
 	}
+
+	mColor = Color(1.0f,1.0f,1.0f);
 }
 
 BaseD3DBody::~BaseD3DBody() {
@@ -36,24 +41,35 @@ bool BaseD3DBody::Initialize(D3DGraphicsObject * pGraphicsObj, HWND hwnd) {
 	return result;
 }
 
-void BaseD3DBody::Render(const Matrix* viewMatrix, const Matrix* projMatrix) {
+void BaseD3DBody::Render(const Matrix* viewMatrix, const Matrix* projMatrix, bool wireframe) {
 	Matrix objectMatrix;
 	transform->GetTransformMatrixQuaternion(objectMatrix);
-	mModel->Draw(objectMatrix,*viewMatrix,*projMatrix);
+	Color colorToDraw = mColor;
+	if (rigidBody3D && !rigidBody3D->isImmovable) {
+		if (rigidBody3D->isSleeping) {
+			colorToDraw = SLEEPING_COLOR;
+		}
+		else if (rigidBody3D->inContact) {
+			colorToDraw = COLLISION_COLOR;
+		}
+	}
+	mModel->Draw(objectMatrix,*viewMatrix,*projMatrix,colorToDraw,nullptr,wireframe);
 }
 
 void BaseD3DBody::Update(float dt) {
-	// update bounding box if there has been a change in position
-	bounds->Update();
-	boxCollider->Update();
+	
 }
 
 void BaseD3DBody::FixedUpdate(float fixedDeltaTime) {
 	mPrevPosition = transform->position;
 	if (rigidBody3D != nullptr) {
+		//rigidBody3D->ApplyGravity(fixedDeltaTime);
 		rigidBody3D->UpdateBodyEuler(fixedDeltaTime);
 	}
-	if (transform->position.y - 0.5f*transform->scale.y < 0.0f) {
-		transform->position.y = 0.5f*transform->scale.y;
-	}	
+	bounds->Update();
+	boxCollider->Update();
+}
+
+void BaseD3DBody::SetColor(Color &color) {
+	mColor = color;
 }

@@ -68,6 +68,9 @@ void Bounds::Update() {
 	if (mCenter != transform->position) {
 		UpdateCenter(transform->position);
 	}
+	if (mBoundsType == BOUNDS_TYPE_BOX && mExtents != transform->scale*0.5f) {
+		UpdateExtents(transform->scale*0.5f);
+	}
 }
 
 const Vector3 &Bounds::GetExtents() const {

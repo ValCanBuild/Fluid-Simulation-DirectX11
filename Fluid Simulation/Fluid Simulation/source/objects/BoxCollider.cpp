@@ -12,44 +12,60 @@ Date: 07/12/2013
 using namespace DirectX;
 using namespace std;
 
-BoxCollider::BoxCollider(const BaseD3DBody * const d3dBody) : Collider(d3dBody) {
+BoxCollider::BoxCollider(const BaseD3DBody * const d3dBody) : Collider(d3dBody), mRotation(GetGameObject()->transform->qRotation),
+	mCenter(GetGameObject()->transform->position) {
+
 	shared_ptr<Transform> transform = GetGameObject()->transform;
-	mCenter = transform->position;
 	mExtents = transform->scale*0.5f;
-	mRotation = transform->qRotation;
-	mBoundingOrientedBox = shared_ptr<BoundingOrientedBox>(new BoundingOrientedBox(mCenter,mExtents,mRotation));
+
+	mRadius = sqrtf(mExtents.x*mExtents.x + mExtents.y*mExtents.y + mExtents.z*mExtents.z) + 0.1f;
+
+	CalculateLocalRotation();
 }
 
 BoxCollider::~BoxCollider() {
 }
 
-void BoxCollider::UpdateExtents(Vector3 &extents) {
-	mBoundingOrientedBox->Extents = extents;
-}
-
 // automatically update collider information if there has been a change in the parent object
 void BoxCollider::Update() {
 	if (IsEnabled()) {
-		shared_ptr<Transform> transform = GetGameObject()->transform;
-		if (mCenter != transform->position) {
-			mCenter = transform->position;
-			mBoundingOrientedBox->Center = mCenter;
+		// If object has rotated, update local rotation angles
+		if (mPrevRotation != mRotation) {
+			CalculateLocalRotation();
+			mPrevRotation = mRotation;
 		}
-		if (mRotation != transform->qRotation) {
-			mRotation = transform->qRotation;
-			mBoundingOrientedBox->Orientation = mRotation;
+		shared_ptr<Transform> transform = GetGameObject()->transform;
+		if (mExtents != transform->scale*0.5f) {
+			mExtents = transform->scale*0.5f;
+			mRadius = sqrtf(mExtents.x*mExtents.x + mExtents.y*mExtents.y + mExtents.z*mExtents.z) + 0.1f;
 		}
 	}
 }
+
+void BoxCollider::CalculateLocalRotation() {
+	Matrix rotMatrix = Matrix::CreateFromQuaternion(mRotation);
+	mLocalRotation[0] = Vector3(1.0f,0.0f,0.0f);
+	mLocalRotation[1] = Vector3(0.0f,1.0f,0.0f);
+	mLocalRotation[2] = Vector3(0.0f,0.0f,1.0f);
+
+	Vector3::Transform(mLocalRotation,3,rotMatrix,mLocalRotation);
+}
+
 
 const Vector3 &BoxCollider::GetCenter() const {
 	return mCenter;
 }
 
-// get's the oriented bounding box as it was after the last update or reupdates if required
-shared_ptr<BoundingOrientedBox> BoxCollider::GetOrientedBoundingBox(bool forceUpdate) {
-	if (forceUpdate) {
-		Update();
-	}
-	return mBoundingOrientedBox;
+const Vector3 &BoxCollider::GetExtents() const {
+	return mExtents;
+}
+
+const float BoxCollider::GetRadius() const {
+	return mRadius;
+}
+
+const void BoxCollider::GetLocalRotationVectors(Vector3 *localRot) const {
+	localRot[0] = mLocalRotation[0];
+	localRot[1] = mLocalRotation[1];
+	localRot[2] = mLocalRotation[2];
 }

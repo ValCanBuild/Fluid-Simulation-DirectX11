@@ -20,17 +20,24 @@ public:
 
 	void Update(); // automatically update collider information if there has been a change in the parent object
 
-	void UpdateExtents(Vector3 &extents);
-
-	// get's the oriented bounding box as it was after the last update or reupdates if required
-	std::shared_ptr<DirectX::BoundingOrientedBox> GetOrientedBoundingBox(bool forceUpdate = false); 
 	const Vector3 &GetCenter() const;
+	const Vector3 &GetExtents() const;
+	const void	   GetLocalRotationVectors(Vector3 *localRot) const;
+
+	const float   GetRadius() const;
 
 private:
-	std::shared_ptr<DirectX::BoundingOrientedBox> mBoundingOrientedBox;
-	Vector3		mCenter;
-	Vector3		mExtents;
-	Quaternion	mRotation;
+	void CalculateLocalRotation();
+
+private:
+	Vector3		&mCenter;   // Reference to body transform position vector
+	Quaternion	&mRotation;	// Reference to body transform rotation quaternion
+	Vector3		mExtents;	// Positive half-widths along each axis
+	Vector3		mLocalRotation[3];			// Local x-y-z Axes
+	
+	float		mRadius;
+
+	Quaternion	mPrevRotation;
 };
 
 #endif

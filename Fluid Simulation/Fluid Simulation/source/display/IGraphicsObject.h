@@ -43,9 +43,9 @@ public:
 	virtual void SetZBufferState(bool state) const = 0;
 	virtual void SetAlphaBlendState(bool state) const = 0;
 	
-	//virtual void TurnWireframeOn() = 0;
-	//virtual void TurnWireframeOff() = 0;
- 	
+	virtual void TurnWireframeOn() const = 0;
+	virtual void TurnWireframeOff() const = 0;
+	
 	//virtual void TurnCullingOn() = 0;
 	//virtual void TurnCullingOff() = 0;
 	

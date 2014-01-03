@@ -35,9 +35,12 @@ public:
 	Vector3 scale;
 	Quaternion qRotation;
 
-	void GetTransformMatrix(Matrix &matrix) {
-		Matrix m = Matrix::CreateScale(scale);
-		matrix*=m;
+	void GetTransformMatrix(Matrix &matrix, bool scaling = true) {
+		Matrix m;
+		if (scaling) {
+			m = Matrix::CreateScale(scale);
+			matrix*=m;
+		}
 		m = Matrix::CreateRotationX(rotation.x);
 		matrix*=m;
 		m = Matrix::CreateRotationY(rotation.y);
@@ -48,9 +51,12 @@ public:
 		matrix*=m;
 	}
 
-	void GetTransformMatrixQuaternion(Matrix &matrix) {
-		Matrix m = Matrix::CreateScale(scale);
-		matrix*=m;
+	void GetTransformMatrixQuaternion(Matrix &matrix, bool scaling = true) {
+		Matrix m;
+		if (scaling) {
+			m = Matrix::CreateScale(scale);
+			matrix*=m;
+		}
 		m = Matrix::CreateFromQuaternion(qRotation);	
 		matrix*=m;
 		m = Matrix::CreateTranslation(position);

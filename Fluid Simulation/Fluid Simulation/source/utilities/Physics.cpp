@@ -11,3 +11,5 @@ float Physics::fLinearDragCoefficient = DEFAULT_LINEAR_DRAG_COEFFICIENT;
 int   Physics::iSolverIterationCount = DEFAULT_SOLVER_ITERATION_COUNT;
 float Physics::fSleepAngularVelocity = DEFAULT_SLEEP_ANGULAR_VELOCITY;
 float Physics::fSleepVelocity = DEFAULT_SLEEP_VELOCITY;
+float Physics::fAllowedPenetration = DEFAULT_ALLOWED_PENETRATION;
+float Physics::fContactBiasFactor = DEFAULT_CONTACT_BIAS_FACTOR;

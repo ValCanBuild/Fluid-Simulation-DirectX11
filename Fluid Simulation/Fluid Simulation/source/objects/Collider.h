@@ -14,7 +14,7 @@ Date: 07/12/2013
 
 class BaseD3DBody;
 
-class Collider : public Component{
+class Collider : public Component {
 public:
 	Collider(const BaseD3DBody * const d3dBody);
 	~Collider();

@@ -21,6 +21,8 @@ public:
 	static int   iSolverIterationCount;
 	static float fSleepAngularVelocity;
 	static float fSleepVelocity;
+	static float fAllowedPenetration;
+	static float fContactBiasFactor;
 };
 
 #define DEFAULT_MAX_SIMULATION_TIMESTEP	0.02f	// 1/50th of a second
@@ -34,6 +36,8 @@ public:
 #define DEFAULT_SOLVER_ITERATION_COUNT 7
 #define DEFAULT_SLEEP_ANGULAR_VELOCITY 0.14f
 #define DEFAULT_SLEEP_VELOCITY 0.15f
+#define DEFAULT_ALLOWED_PENETRATION 0.01f
+#define DEFAULT_CONTACT_BIAS_FACTOR 0.2f
 
 
 #endif

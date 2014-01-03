@@ -275,6 +275,13 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 		return false;
 	}
 
+	// Create wireframe rasterizer
+	rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+	result = mDevice->CreateRasterizerState(&rasterDesc, &mRasterStateWireframe);
+	if(FAILED(result)) {
+		return false;
+	}
+
 	// Now set the rasterizer state.
 	mDeviceContext->RSSetState(mRasterState);
 
@@ -408,7 +415,7 @@ void D3DGraphicsObject::BeginRender(float red, float green, float blue, float al
 
 	// Clear the back buffer.
 	mDeviceContext->ClearRenderTargetView(mRenderTargetView, color);
-    
+	
 	// Clear the depth buffer.
 	mDeviceContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
@@ -456,6 +463,14 @@ void D3DGraphicsObject::SetZBufferState(bool state) const {
 		mDeviceContext->OMSetDepthStencilState(mDepthStencilState, 1);
 	else
 		mDeviceContext->OMSetDepthStencilState(mDepthDisabledStencilState, 1);
+}
+
+void D3DGraphicsObject::TurnWireframeOn() const {
+	mDeviceContext->RSSetState(mRasterStateWireframe);
+}
+
+void D3DGraphicsObject::TurnWireframeOff() const {
+	mDeviceContext->RSSetState(mRasterState);
 }
 
 ///GETTERS///

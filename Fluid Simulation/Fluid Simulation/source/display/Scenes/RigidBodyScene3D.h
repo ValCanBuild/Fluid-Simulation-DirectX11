@@ -51,19 +51,25 @@ private:
 	static void TW_CALL SetMassCallback(const void* value, void *clientData);
 	static void TW_CALL SetLinearDragCallback(const void* value, void *clientData);
 	static void TW_CALL SetAngularDragCallback(const void* value, void *clientData);
+	static void TW_CALL SetOrientationCallback(const void* value, void *clientData);
+	static void TW_CALL SetScaleCallback(const void* value, void *clientData);
 	
 	// GETTERS
 	static void TW_CALL GetLinearVelocityCallback(void* value, void *clientData);
+	static void TW_CALL GetAngularVelocityCallback(void* value, void *clientData);
 	static void TW_CALL GetMassCallback(void* value, void *clientData);
 	static void TW_CALL GetLinearSpeedCallback(void* value, void *clientData);
 	static void TW_CALL GetLinearDragCallback(void* value, void *clientData);
 	static void TW_CALL GetAngularDragCallback(void* value, void *clientData);
+	static void TW_CALL GetOrientationCallback(void* value, void *clientData);
+	static void TW_CALL GetScaleCallback(void* value, void *clientData);
+	static void TW_CALL GetInertiaTensorCallback(void* value, void *clientData);
+
 
 private:
 	unique_ptr<Camera>					mCamera;
 	
-	unique_ptr<BaseD3DBody>				mBody;
-	unique_ptr<BaseD3DBody>				mPlane;
+	BaseD3DBody	*						mBody;
 
 	vector<BaseD3DBody*>				mSceneObjects;
 
@@ -74,7 +80,7 @@ private:
 	unique_ptr<CollisionManager>		mCollisionManager;
 
 	bool mPaused;
-	float mAngle;
+	bool mWireframe;
 
 private:
 	TwBar *mTwBar;

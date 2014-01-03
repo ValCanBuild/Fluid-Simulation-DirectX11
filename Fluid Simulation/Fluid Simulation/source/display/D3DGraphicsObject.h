@@ -51,9 +51,9 @@ public:
 	void SetZBufferState(bool state) const;
 	void SetAlphaBlendState(bool state) const;
 	
-	//void TurnWireframeOn();
-	//void TurnWireframeOff();
- 	
+	void TurnWireframeOn() const;
+	void TurnWireframeOff() const;
+	
 	//void TurnCullingOn();
 	//void TurnCullingOff();
 	
@@ -92,6 +92,6 @@ private:
 	CComPtr<ID3D11Texture2D> 		mDepthStencilBuffer;
 	CComPtr<ID3D11DepthStencilView>	mDepthStencilView;
 	CComPtr<ID3D11RasterizerState>	mRasterState;
-
+	CComPtr<ID3D11RasterizerState>	mRasterStateWireframe;
 };
 #endif

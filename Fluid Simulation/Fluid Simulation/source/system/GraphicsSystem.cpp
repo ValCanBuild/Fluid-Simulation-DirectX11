@@ -23,6 +23,7 @@ using namespace DirectX;
 #include "../display/Scenes/RigidBodyScene3D.h"
 #include "../display/Scenes/RigidBodyScene2D.h"
 #include "../utilities/Screen.h"
+#include "../utilities/Physics.h"
 
 /// ANT TWEAK BAR CALLBACKS ///
 void TW_CALL ResetCallback(void *clientData) {
@@ -31,6 +32,11 @@ void TW_CALL ResetCallback(void *clientData) {
 	if (!result) {
 		// reset failed
 	}
+}
+
+void TW_CALL SingleStepPhysics(void *clientData) {
+	GraphicsSystem *thisSystem = static_cast<GraphicsSystem*>(clientData);
+	thisSystem->GetCurrentScene()->FixedUpdate(Physics::fMaxSimulationTimestep);
 }
 /// ~ANT TWEAK BAR CALLBACKS ///
 
@@ -93,14 +99,17 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwBar *twBar;
 	twBar = TwNewBar("MainControl");
 	// Position bar
-	int barPos[2] = {1,screenHeight-60};
+	int barPos[2] = {1,screenHeight-100};
 	TwSetParam(twBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
-	int barSize[2] = {60,40};
+	int barSize[2] = {70,100};
 	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
-	TwDefine(" MainControl iconified=true ");
+	TwDefine(" MainControl iconified=false ");
 	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
 	TwAddVarRW(twBar,"Pause Scene Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
 	TwAddVarRW(twBar,"Reverse Timestep", TW_TYPE_BOOLCPP, &mReverseFixedTimestep, " key=z ");
+	TwAddButton(twBar,"Single Physics Step", SingleStepPhysics, this, " key=space ");
+
+	mSceneFixedUpdatePaused = true;
 
 	return true;
 }
@@ -187,6 +196,10 @@ bool GraphicsSystem::TakeScreenshot(LPCWSTR name) const {
 
 const IGraphicsObject * const GraphicsSystem::GetGraphicsObject() const {
 	return mGraphicsObj.get();
+}
+
+IScene * const GraphicsSystem::GetCurrentScene() const {
+	return mCurrentScene.get();
 }
 
 shared_ptr<DirectX::CommonStates> GraphicsSystem::GetCommonD3DStates() const {
