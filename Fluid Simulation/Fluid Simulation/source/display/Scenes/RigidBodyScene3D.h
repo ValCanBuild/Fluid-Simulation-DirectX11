@@ -48,11 +48,14 @@ private:
 // Tweak Bar Methods
 private:
 	// SETTERS
+	static void TW_CALL SetLinearVelocityCallback(const void* value, void *clientData);
+	static void TW_CALL SetAngularVelocityCallback(const void* value, void *clientData);
 	static void TW_CALL SetMassCallback(const void* value, void *clientData);
 	static void TW_CALL SetLinearDragCallback(const void* value, void *clientData);
 	static void TW_CALL SetAngularDragCallback(const void* value, void *clientData);
 	static void TW_CALL SetOrientationCallback(const void* value, void *clientData);
 	static void TW_CALL SetScaleCallback(const void* value, void *clientData);
+	static void TW_CALL SetImmovableCallback(const void* value, void *clientData);
 	
 	// GETTERS
 	static void TW_CALL GetLinearVelocityCallback(void* value, void *clientData);
@@ -64,6 +67,8 @@ private:
 	static void TW_CALL GetOrientationCallback(void* value, void *clientData);
 	static void TW_CALL GetScaleCallback(void* value, void *clientData);
 	static void TW_CALL GetInertiaTensorCallback(void* value, void *clientData);
+	static void TW_CALL GetImmovableCallback(void* value, void *clientData);
+
 
 
 private:

@@ -44,11 +44,6 @@ bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 	Physics::fGravity = -9.8f;
 	Physics::fMaxSimulationTimestep = 0.01f;
 
-	BaseD3DBody * seeSaw = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
-	seeSaw->rigidBody3D->SetMass(1.0f);
-	seeSaw->transform->scale = Vector3(1.0f,1.0f,10.0f);
-	seeSaw->transform->position = Vector3(0.0f,9.0f,0.0f);
-
 	mBody = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
 	mBody->rigidBody3D->SetMass(5.0f);
 	mBody->transform->qRotation = Quaternion::CreateFromAxisAngle(Vector3(0.0f,0.0f,1.0f),0.0f);
@@ -58,15 +53,14 @@ bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 	BaseD3DBody * plane = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f));
 	plane->SetColor(Color(0.78f,0.13f,0.10f));
 	plane->transform->position = Vector3(0.0f,-0.5f,0.0f);
-	plane->transform->scale = Vector3(50.0f,1.0f,50.0f);
-	plane->rigidBody3D->SetMass(100000.0f);
+	plane->transform->scale = Vector3(70.0f,1.0f,70.0f);
+	plane->rigidBody3D->SetImmovable(true);
 
 	mBody->transform->position = Vector3(0.0f,6.0f,0.0f);
 	//mBody->transform->scale.y = 0.5f;
 
 	mSceneObjects.push_back(mBody);
 	mSceneObjects.push_back(plane);
-	mSceneObjects.push_back(seeSaw);
 
 	bool result;
 	for (BaseD3DBody *object : mSceneObjects) {
@@ -185,9 +179,10 @@ void RigidBodyScene3D::HandleInput() {
 		// create object and launch it
 		BaseD3DBody* body = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
 		mCamera->GetPosition(body->transform->position);
-		body->transform->scale = Vector3(1.0f);
+		body->transform->scale = Vector3(2.0f);
+		body->transform->qRotation = Quaternion(Vector3(RandF(),RandF(),RandF()),RandF());
 		body->rigidBody3D->SetMass(1.0f);
-		body->rigidBody3D->UpdateBodyEuler(0.0f);
+		body->FixedUpdate(0.0f);
 		body->Initialize(pD3dGraphicsObj,nullptr);
 		body->rigidBody3D->AddForce(ray.direction*20, true);
 		mSceneObjects.push_back(body);
@@ -236,12 +231,12 @@ void RigidBodyScene3D::ObjectPicked(BaseD3DBody *object) {
 		TwRemoveVar(mTwBar, "Mass");
 		TwRemoveVar(mTwBar, "Linear Drag");
 		TwRemoveVar(mTwBar, "Angular Drag");
-		TwRemoveVar(mTwBar, "Linear Speed");
 		TwRemoveVar(mTwBar, "Linear Velocity");
 		TwRemoveVar(mTwBar, "Angular Velocity");
 		TwRemoveVar(mTwBar, "Orientation");
 		TwRemoveVar(mTwBar, "Scale");
 		TwRemoveVar(mTwBar, "Inertia Tensor");
+		TwRemoveVar(mTwBar, "Immovable");
 	}
 	else if (mPickedObject == object) {
 		return;
@@ -255,15 +250,25 @@ void RigidBodyScene3D::ObjectPicked(BaseD3DBody *object) {
 		TwAddVarCB(mTwBar, "Angular Drag", TW_TYPE_FLOAT, SetAngularDragCallback, GetAngularDragCallback, mPickedObject->rigidBody3D.get(), "step=0.01 max=1.0 min=0.0");
 		TwAddVarCB(mTwBar, "Orientation", TW_TYPE_QUAT4F, SetOrientationCallback, GetOrientationCallback, mPickedObject->transform.get(), "");
 		TwAddVarCB(mTwBar, "Scale", TW_TYPE_DIR3F, SetScaleCallback, GetScaleCallback, mPickedObject->transform.get(), "");
-		TwAddVarCB(mTwBar, "Linear Speed", TW_TYPE_FLOAT, nullptr, GetLinearSpeedCallback, mPickedObject->rigidBody3D.get(), "");
-		TwAddVarCB(mTwBar, "Linear Velocity", TW_TYPE_DIR3F, nullptr, GetLinearVelocityCallback, mPickedObject->rigidBody3D.get(), "");
-		TwAddVarCB(mTwBar, "Angular Velocity", TW_TYPE_DIR3F, nullptr, GetAngularVelocityCallback, mPickedObject->rigidBody3D.get(), "");
+		TwAddVarCB(mTwBar, "Linear Velocity", TW_TYPE_DIR3F, SetLinearVelocityCallback, GetLinearVelocityCallback, mPickedObject->rigidBody3D.get(), "");
+		TwAddVarCB(mTwBar, "Angular Velocity", TW_TYPE_DIR3F, SetAngularVelocityCallback, GetAngularVelocityCallback, mPickedObject->rigidBody3D.get(), "");
 		TwAddVarCB(mTwBar, "Inertia Tensor", TW_TYPE_DIR3F, nullptr, GetInertiaTensorCallback, mPickedObject->rigidBody3D.get(), "");
+		TwAddVarCB(mTwBar, "Immovable", TW_TYPE_BOOLCPP, SetImmovableCallback, GetImmovableCallback, mPickedObject->rigidBody3D.get(), "");
 	}
 }
 
 ///TWEAK BAR METHODS
 // SETTERS
+void TW_CALL RigidBodyScene3D::SetLinearVelocityCallback(const void* value, void *clientData) {
+	Vector3 linVel = *static_cast<const Vector3 *>(value);
+	static_cast<RigidBody3D *>(clientData)->SetLinearVelocity(linVel);
+}
+
+void TW_CALL RigidBodyScene3D::SetAngularVelocityCallback(const void* value, void *clientData) {
+	Vector3 angVel = *static_cast<const Vector3 *>(value);
+	static_cast<RigidBody3D *>(clientData)->SetAngularVelocity(angVel);
+}
+
 void TW_CALL RigidBodyScene3D::SetMassCallback(const void* value, void *clientData) {
 	static_cast<RigidBody3D *>(clientData)->SetMass(*static_cast<const float *>(value));
 }
@@ -286,6 +291,10 @@ void TW_CALL RigidBodyScene3D::SetScaleCallback(const void* value, void *clientD
 	Transform * bodyTransform = static_cast<Transform *>(clientData);
 	const Vector3 scale = *static_cast<const Vector3 *>(value);
 	bodyTransform->scale = scale;
+}
+
+void TW_CALL RigidBodyScene3D::SetImmovableCallback(const void* value, void *clientData) {
+	static_cast<RigidBody3D *>(clientData)->SetImmovable(*static_cast<const bool *>(value));
 }
 
 // GETTERS	 
@@ -325,4 +334,8 @@ void TW_CALL RigidBodyScene3D::GetScaleCallback(void* value, void *clientData) {
 
 void TW_CALL RigidBodyScene3D::GetInertiaTensorCallback(void* value, void *clientData) {
 	*static_cast<Vector3 *>(value) = static_cast<const RigidBody3D *>(clientData)->GetInertiaTensor();
+}
+
+void TW_CALL RigidBodyScene3D::GetImmovableCallback(void* value, void *clientData) {
+	*static_cast<bool *>(value) = static_cast<const RigidBody3D *>(clientData)->GetIsImmovable();
 }

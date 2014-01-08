@@ -37,9 +37,14 @@ public:
 	void AddAngularVelocity(Vector3 &angVel); 
 
 	// SETTERS
-	void  SetMass(float mass);
-	void  SetLinearDrag(float drag);
-	void  SetAngularDrag(float angDrag);
+	void SetLinearVelocity(Vector3 &vel);
+	void SetAngularVelocity(Vector3 &angVel);
+	void SetMass(float mass);
+	void SetLinearDrag(float drag);
+	void SetAngularDrag(float angDrag);
+	void WakeUp();
+	void SetImmovable(bool isImmovable);
+	void InContact();
 
 	// GETTERS
 	void  GetVelocity(Vector3 &velocity) const;
@@ -55,12 +60,12 @@ public:
 	float GetLinearDrag() const;
 	float GetAngularDrag() const;
 
+	bool  GetIsSleeping() const;
+	bool  GetIsInContact() const;
+	bool  GetIsImmovable() const;
+
 // Public variables
 public:
-	bool isSleeping; // is body sleeping
-	bool inContact; // is body in contact
-	bool isImmovable;
-
 	Vector3		mVelocity;			// Linear velocity of body in global coordinates
 	Vector3		mAngularVelocity;	// Angular velocity in local coordinates
 // Private Methods
@@ -89,10 +94,11 @@ private:
 	Vector3		mExtraLinearForces; // Forces added outside of the rigid body private methods
 	Vector3		mExtraTorque;		// Torque added outside of the rigid body private methods
 
-	//Vector3		mExtraLinearVelocity;
-	//Vector3		mExtraAngularVelocity;
-
 	Vector3		mImpulseForces;
+
+	bool		mIsSleeping; // is body sleeping
+	bool		mInContact; // is body in contact
+	bool		mIsImmovable;
 };
 
 #endif

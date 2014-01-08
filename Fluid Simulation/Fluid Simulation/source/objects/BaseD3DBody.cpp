@@ -45,11 +45,11 @@ void BaseD3DBody::Render(const Matrix* viewMatrix, const Matrix* projMatrix, boo
 	Matrix objectMatrix;
 	transform->GetTransformMatrixQuaternion(objectMatrix);
 	Color colorToDraw = mColor;
-	if (rigidBody3D && !rigidBody3D->isImmovable) {
-		if (rigidBody3D->isSleeping) {
+	if (rigidBody3D && !rigidBody3D->GetIsImmovable()) {
+		if (rigidBody3D->GetIsSleeping()) {
 			colorToDraw = SLEEPING_COLOR;
 		}
-		else if (rigidBody3D->inContact) {
+		else if (rigidBody3D->GetIsInContact()) {
 			colorToDraw = COLLISION_COLOR;
 		}
 	}

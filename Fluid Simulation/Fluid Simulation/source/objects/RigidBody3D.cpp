@@ -17,7 +17,7 @@ RigidBody3D::RigidBody3D(const GameObject * const gameObject) : Component(gameOb
 	mInertiaTensor(0.0f), mAngularVelocity(0.0f), mVelocityBody(0.0f),
 	mExtraLinearForces(0.0f), mExtraTorque(0.0f), mMass(1.0f), mLinearDrag(0.01f), mAngularDrag(0.05f),
 	 mImpulseForces(0.0f),
-	isSleeping(false), inContact(false), isImmovable(false)
+	mIsSleeping(false), mInContact(false), mIsImmovable(false)
 {
 }
 
@@ -26,9 +26,6 @@ RigidBody3D::~RigidBody3D() {
 }
 
 bool RigidBody3D::Initialize() {
-	if (mMass > 1000.0f) {
-		isImmovable = true;
-	}
 	CalculateInertiaTensor();
 	mPrevScale = GetGameObject()->transform->scale;
 	return true;
@@ -57,6 +54,9 @@ void RigidBody3D::AddAngularVelocity(Vector3 &angVel) {
 
 // Calculates the the moments and products of inertia of the body
 void RigidBody3D::CalculateInertiaTensor() {
+	if (mIsImmovable) {
+		mMass = 10000000.0f;
+	}
 	// This assumes we have a unit cube (of size 1) and the transform scale properties are used to size it up
 	shared_ptr<Transform> transform = GetGameObject()->transform;
 	float width = transform->scale.x;
@@ -89,7 +89,7 @@ void RigidBody3D::CalculateInverseInertiaTensor() {
 
 // Aggregates forces acting on the particle
 void RigidBody3D::CalculateLoads() {
-	if (isImmovable) {
+	if (mIsImmovable) {
 		return;
 	}
 
@@ -108,7 +108,7 @@ void RigidBody3D::CalculateLoads() {
 }
 
 void RigidBody3D::ApplyGravity(float dt) {
-	if (isImmovable || isSleeping) {
+	if (mIsImmovable || mIsSleeping) {
 		return;
 	}
 
@@ -120,7 +120,7 @@ void RigidBody3D::ApplyGravity(float dt) {
 // Integrates one time step using Euler integration
 void RigidBody3D::UpdateBodyEuler(float dt) {
 	// if immovable object, or sleeping - ignore update
-	if (isImmovable || isSleeping) {
+	if (mIsImmovable || mIsSleeping) {
 		return;
 	}
 
@@ -174,13 +174,13 @@ void RigidBody3D::UpdateBodyEuler(float dt) {
 
 	// Determine if rigid body has to sleep
 	float angularSpeed = mAngularVelocity.Length();
-	if (inContact && mSpeed <= Physics::fSleepVelocity && angularSpeed <= Physics::fSleepAngularVelocity) {
+	if (mInContact && mSpeed <= Physics::fSleepVelocity && angularSpeed <= Physics::fSleepAngularVelocity) {
 		mAngularVelocity = Vector3(0.0f);
 		mVelocity = Vector3(0.0f);
-		isSleeping = true;
+		mIsSleeping = true;
 	}
 
-	inContact = false;
+	mInContact = false;
 
 	CalculateInverseInertiaTensor();
 }
@@ -192,6 +192,13 @@ void RigidBody3D::SetMass(float mass) {
 	}
 }
 
+void RigidBody3D::SetLinearVelocity(Vector3 &vel) {
+	mVelocity = vel;
+}
+
+void RigidBody3D::SetAngularVelocity(Vector3 &angVel) {
+	mAngularVelocity = angVel;
+}
 
 void RigidBody3D::SetLinearDrag(float drag) {
 	if (drag >= 0.0f) {
@@ -203,6 +210,27 @@ void RigidBody3D::SetAngularDrag(float angDrag) {
 	if (angDrag >= 0.0f) {
 		mAngularDrag = angDrag;
 	}
+}
+
+void RigidBody3D::WakeUp() {
+	mIsSleeping = false;
+}
+
+void RigidBody3D::InContact() {
+	mInContact = true;
+}
+
+void RigidBody3D::SetImmovable(bool isImmovable) {
+	// if going to a movable state from an immovable one, reset mass
+	if (mIsImmovable && !isImmovable) {
+		mMass = 1.0f;
+	}
+	if (isImmovable) {
+		mVelocity = Vector3(0.0f);
+		mAngularVelocity = Vector3(0.0f);
+	}
+	mIsImmovable = isImmovable;
+	CalculateInertiaTensor();
 }
 
 void RigidBody3D::GetVelocity(Vector3 &velocity) const {
@@ -253,4 +281,16 @@ float RigidBody3D::GetLinearDrag() const {
 
 float RigidBody3D::GetAngularDrag() const {
 	return mAngularDrag;
+}
+
+bool RigidBody3D::GetIsSleeping() const {
+	return mIsSleeping;
+}
+
+bool RigidBody3D::GetIsInContact() const {
+	return mInContact;
+}
+
+bool RigidBody3D::GetIsImmovable() const {
+	return mIsImmovable;
 }

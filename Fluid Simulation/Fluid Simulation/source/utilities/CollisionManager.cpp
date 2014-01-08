@@ -70,7 +70,7 @@ void CollisionManager::PerformCollisionCheck() {
 		// only check for collision if collider has a rigid body and it is enabled is awake and collider is enabled
 		shared_ptr<RigidBody3D> rigidBody0 = firstCollider->GetAttachedRigidBody();
 		if (firstCollider->IsEnabled() && rigidBody0 != nullptr) {
-			if (rigidBody0->isSleeping || rigidBody0->isImmovable) {
+			if (rigidBody0->GetIsSleeping() || rigidBody0->GetIsImmovable()) {
 				continue;
 			}
 			// check against other enabled colliders - they don't need to have rigid bodies
@@ -117,12 +117,12 @@ void CollisionManager::PerformCollisionResponse(float dt) const {
 			shared_ptr<RigidBody3D> rigidBody1 = collider1->GetAttachedRigidBody();
 
 			if (rigidBody0) {
-				rigidBody0->isSleeping = false;
-				rigidBody0->inContact = true;
+				rigidBody0->WakeUp();
+				rigidBody0->InContact();
 			}
 			if (rigidBody1) {				
-				rigidBody1->isSleeping = false;
-				rigidBody1->inContact = true;
+				rigidBody1->WakeUp();
+				rigidBody1->InContact();
 			}
 
 			shared_ptr<Transform> transform0 = collider0->GetGameObject()->transform;
@@ -234,7 +234,7 @@ void CollisionManager::PerformCollisionResponse(float dt) const {
 				float vt = relVel.Dot(tangent);
 				float dPt = massTangent * (-vt);
 
-				float maxPt = Physics::fRestitution * dPn;
+				float maxPt = (1.0f - Physics::fRestitution) * dPn;
 				dPt = Clamp(dPt, -maxPt, maxPt);
 
 				// Apply contact impulse
@@ -518,6 +518,8 @@ int CollisionManager::GetNumHitPoints(const BoxCollider* pBox, const Vector3& hi
 	pBox->GetGameObject()->transform->GetTransformMatrixQuaternion(boxWorldMat, false);
 	Vector3::Transform(vertex,8,boxWorldMat,vertex);
 
+	// find the farthest vertex in
+	// the polygon along the separation normal
 	float maxDist = vertex[0].Dot(hitNormal);
 	Vector3 planePoint = vertex[0];
 
@@ -533,7 +535,7 @@ int CollisionManager::GetNumHitPoints(const BoxCollider* pBox, const Vector3& hi
 
 	// Plane Equation (A dot N) - d = 0;
 	float d = planePoint.Dot(hitNormal);
-	d -= penetration + 0.01f;
+	d -= penetration + Physics::fAllowedPenetration;
 
 	int numVerts = 0;
 
