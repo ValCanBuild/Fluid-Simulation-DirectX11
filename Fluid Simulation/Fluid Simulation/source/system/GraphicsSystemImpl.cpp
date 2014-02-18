@@ -7,7 +7,7 @@ Author: Valentin Hinov
 Date: 02/09/2013
 **************************************************************/
 #include <AntTweakBar.h>
-#include "GraphicsSystem.h"
+#include "GraphicsSystemImpl.h"
 #include "ServiceProvider.h"
 
 #if defined (D3D)
@@ -27,7 +27,7 @@ using namespace DirectX;
 
 /// ANT TWEAK BAR CALLBACKS ///
 void TW_CALL ResetCallback(void *clientData) {
-	GraphicsSystem *thisSystem = static_cast<GraphicsSystem*>(clientData);
+	GraphicsSystemImpl *thisSystem = static_cast<GraphicsSystemImpl*>(clientData);
 	bool result = thisSystem->ResetScene();
 	if (!result) {
 		// reset failed
@@ -35,20 +35,20 @@ void TW_CALL ResetCallback(void *clientData) {
 }
 
 void TW_CALL SingleStepPhysics(void *clientData) {
-	GraphicsSystem *thisSystem = static_cast<GraphicsSystem*>(clientData);
+	GraphicsSystemImpl *thisSystem = static_cast<GraphicsSystemImpl*>(clientData);
 	thisSystem->GetCurrentScene()->FixedUpdate(Physics::fMaxSimulationTimestep);
 }
 /// ~ANT TWEAK BAR CALLBACKS ///
 
 
-GraphicsSystem::GraphicsSystem() : mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false) {
+GraphicsSystemImpl::GraphicsSystemImpl() : mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false) {
 	mFps = mCpuUsage = 0;
 }
 
-GraphicsSystem::GraphicsSystem(const GraphicsSystem& other) {
+GraphicsSystemImpl::GraphicsSystemImpl(const GraphicsSystemImpl& other) {
 }
 
-GraphicsSystem::~GraphicsSystem() {
+GraphicsSystemImpl::~GraphicsSystemImpl() {
 	// Terminate AntTweakBar
 	int result = TwTerminate();
 	if (result == 0) {
@@ -56,7 +56,7 @@ GraphicsSystem::~GraphicsSystem() {
 	}
 }
 
-bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
+bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	mHwnd = hwnd;
 
 	#if defined (D3D)
@@ -83,12 +83,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwWindowSize(screenWidth,screenHeight);
 
 	// Initialize current scene
-	mCurrentScene = unique_ptr<IScene>(new RigidBodyScene3D());
-	result = mCurrentScene->Initialize(mGraphicsObj.get(),hwnd);
-	if (!result) {
-		MessageBox(hwnd, L"Could not initialize the scene", L"Error", MB_OK);
-		return false;
-	}
+	ResetScene();
 
 	// Initialize font
 	mSpriteBatch = unique_ptr<SpriteBatch>(new SpriteBatch(d3dObject->GetDeviceContext()));
@@ -106,7 +101,7 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	TwDefine(" MainControl iconified=false ");
 	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
 	TwAddVarRW(twBar,"Pause Scene Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
-	TwAddVarRW(twBar,"Reverse Timestep", TW_TYPE_BOOLCPP, &mReverseFixedTimestep, " key=z ");
+	//TwAddVarRW(twBar,"Reverse Timestep", TW_TYPE_BOOLCPP, &mReverseFixedTimestep, " key=z ");
 	TwAddButton(twBar,"Single Physics Step", SingleStepPhysics, this, " key=space ");
 
 	mSceneFixedUpdatePaused = true;
@@ -114,21 +109,22 @@ bool GraphicsSystem::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 	return true;
 }
 
-bool GraphicsSystem::ResetScene() {
-	mCurrentScene.reset(new RigidBodyScene3D());
+bool GraphicsSystemImpl::ResetScene() {
+	mCurrentScene.reset(new Fluid2DScene());
 	bool result = mCurrentScene->Initialize(mGraphicsObj.get(),mHwnd);
 	if (!result) {
+		MessageBox(mHwnd, L"Could not initialize the scene", L"Error", MB_OK);
 		return false;
 	}
 	return true;
 }
 
-bool GraphicsSystem::Frame(float delta) const {
+bool GraphicsSystemImpl::Frame(float delta) const {
 	mCurrentScene->Update(delta);
 	return Render();
 }
 
-void GraphicsSystem::FixedFrame(float fixedDelta) const {
+void GraphicsSystemImpl::FixedFrame(float fixedDelta) const {
 	if (!mSceneFixedUpdatePaused) {
 		if (mReverseFixedTimestep) {
 			mCurrentScene->FixedUpdate(-fixedDelta);
@@ -139,19 +135,21 @@ void GraphicsSystem::FixedFrame(float fixedDelta) const {
 	}
 }
 
-bool GraphicsSystem::Render() const {
+bool GraphicsSystemImpl::Render() const {
 	// first obtain all the needed matrices
 	bool result;
 
 	// Start rendering
-	mGraphicsObj->BeginRender(0.0f,0.0f,0.0f,1.0f);
+	mGraphicsObj->BeginRender(0.32f,0.31f,0.31f,1.0f);
 	{
 		result = mCurrentScene->Render();
-		if (!result)
+		if (!result) {
 			return false;
+		}
 		result = RenderOverlay();
-		if (!result)
+		if (!result) {
 			return false;
+		}
 	}
 	// Finish rendering and display
 	mGraphicsObj->EndRender();
@@ -159,7 +157,7 @@ bool GraphicsSystem::Render() const {
 	return true;
 }
 
-bool GraphicsSystem::RenderOverlay() const {
+bool GraphicsSystemImpl::RenderOverlay() const {
 	// Render overlay information
 	mSpriteBatch->Begin();
 	{
@@ -167,7 +165,7 @@ bool GraphicsSystem::RenderOverlay() const {
 		wstring text = L"FPS: " + std::to_wstring(mFps);
 		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,10));
 
-		// Display CPU uage
+		// Display CPU usage
 		text = L"CPU Usage: " + std::to_wstring(mCpuUsage) + L"%";
 		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,30));
 
@@ -190,27 +188,27 @@ bool GraphicsSystem::RenderOverlay() const {
 	return true;
 }
 
-bool GraphicsSystem::TakeScreenshot(LPCWSTR name) const {
+bool GraphicsSystemImpl::TakeScreenshot(LPCWSTR name) const {
 	return mGraphicsObj->Screenshot(name);
 }
 
-const IGraphicsObject * const GraphicsSystem::GetGraphicsObject() const {
+const IGraphicsObject * const GraphicsSystemImpl::GetGraphicsObject() const {
 	return mGraphicsObj.get();
 }
 
-IScene * const GraphicsSystem::GetCurrentScene() const {
+IScene * const GraphicsSystemImpl::GetCurrentScene() const {
 	return mCurrentScene.get();
 }
 
-shared_ptr<DirectX::CommonStates> GraphicsSystem::GetCommonD3DStates() const {
+shared_ptr<DirectX::CommonStates> GraphicsSystemImpl::GetCommonD3DStates() const {
 	return mCommonStates;
 }
 
-shared_ptr<DirectX::SpriteFont> GraphicsSystem::GetSpriteFont() const {
+shared_ptr<DirectX::SpriteFont> GraphicsSystemImpl::GetSpriteFont() const {
 	return mSpriteFont;
 }
 
-void GraphicsSystem::SetMonitorData(int fps, int cpuUsage) {
+void GraphicsSystemImpl::SetMonitorData(int fps, int cpuUsage) {
 	mFps = fps;
 	mCpuUsage = cpuUsage;
 }

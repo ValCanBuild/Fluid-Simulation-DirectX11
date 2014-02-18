@@ -1,5 +1,5 @@
 /***************************************************************
-IScene.h: The interface implementation for a project scene.
+IScene.h: The interface for a project scene.
 Provides methods for updating and rendering the current scene
 
 Author: Valentin Hinov

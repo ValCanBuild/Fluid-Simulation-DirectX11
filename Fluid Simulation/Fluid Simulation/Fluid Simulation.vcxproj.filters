@@ -76,18 +76,18 @@
     <Filter Include="Source Files\Utilities\Physics">
       <UniqueIdentifier>{defab9d3-c50b-4d21-8ed9-bc7ac8bb2fea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Display\Effects">
+      <UniqueIdentifier>{7db29ae7-3f53-4aca-8cda-cb163d699f27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\Effects">
+      <UniqueIdentifier>{99758131-a269-42fe-9a7b-8e42d437c1cc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\system\MainSystem.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="source\system\InputSystem.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="source\system\GraphicsSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="source\display\D3DGraphicsObject.cpp">
@@ -192,14 +192,17 @@
     <ClCompile Include="source\utilities\CollisionManager.cpp">
       <Filter>Source Files\Utilities\Physics</Filter>
     </ClCompile>
+    <ClCompile Include="source\system\InputSystemImpl.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="source\system\GraphicsSystemImpl.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\effects\Fluid2DEffect.cpp">
+      <Filter>Source Files\Display\Effects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\system\InputSystem.h">
-      <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="source\system\GraphicsSystem.h">
-      <Filter>Header Files\System</Filter>
-    </ClInclude>
     <ClInclude Include="source\utilities\D3dIncludes.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
@@ -223,9 +226,6 @@
     </ClInclude>
     <ClInclude Include="source\utilities\Camera.h">
       <Filter>Header Files\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="source\system\I_InputSystem.h">
-      <Filter>Header Files\System\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="source\system\ServiceProvider.h">
       <Filter>Header Files\System</Filter>
@@ -293,9 +293,6 @@
     <ClInclude Include="source\display\Scenes\RigidBodyScene2D.h">
       <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="source\system\IGraphicsSystem.h">
-      <Filter>Header Files\System\Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="source\objects\D2DParticle.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
@@ -334,6 +331,24 @@
     </ClInclude>
     <ClInclude Include="source\utilities\CollisionManager.h">
       <Filter>Header Files\Utilities\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\InputSystemImpl.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\InputSystem.h">
+      <Filter>Header Files\System\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\GraphicsSystemImpl.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\GraphicsSystem.h">
+      <Filter>Header Files\System\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\ShaderParams.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\effects\Fluid2DEffect.h">
+      <Filter>Header Files\Display\Effects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,8 @@ Date: 11/09/2013
 #include "Fluid2DShaders.h"
 #include "../D3DGraphicsObject.h"
 
+using namespace Fluid2D;
+
 // Thread number defines based on values from cFluid2D.hlsl
 #define NUM_THREADS_X 16.0f
 #define NUM_THREADS_Y 8.0f

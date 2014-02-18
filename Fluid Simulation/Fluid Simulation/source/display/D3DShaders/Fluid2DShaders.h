@@ -9,14 +9,11 @@ Date: 18/09/2013
 #define _FLUID2DSHADERS_H
 
 #include "BaseD3DShader.h"
+#include "ShaderParams.h"
 
 class D3DGraphicsObject;
 
-// Struct to encapsulate the common resources required for the shaders
-struct ShaderParams {
-	CComPtr<ID3D11ShaderResourceView>	mSRV;
-	CComPtr<ID3D11UnorderedAccessView>  mUAV;
-};
+namespace Fluid2D {
 
 struct InputBufferGeneral {
 	float fTimeStep;
@@ -152,4 +149,5 @@ private:
 	CComPtr<ID3D11SamplerState> mSampleState;
 };
 
+}
 #endif

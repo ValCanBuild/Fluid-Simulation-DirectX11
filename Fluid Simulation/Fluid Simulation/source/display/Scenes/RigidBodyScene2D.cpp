@@ -71,7 +71,7 @@ bool RigidBodyScene2D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 		float randMass = RandF(1.0f,10.0f);
 		float randRadius = RandF(0.1f,0.4f);
 		Vector3 randPos;
-		randPos.x = RandF(0,screenWidth);
+		randPos.x = RandF(0,(float)screenWidth);
 		randPos.y = RandF(0,screenHeight*0.25f);
 		
 		D2DParticle *particle = new D2DParticle(randMass,randPos,randRadius);
@@ -86,8 +86,8 @@ bool RigidBodyScene2D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 		float mass = 100.0f;
 		float radius = 1.2f;
 		Vector3 randPos;
-		randPos.x = RandF(0,screenWidth - 40);
-		randPos.y = RandF(screenHeight*0.25f,screenHeight - 40);
+		randPos.x = RandF(0, screenWidth - 40.0f);
+		randPos.y = RandF(screenHeight*0.25f, screenHeight - 40.0f);
 		
 		D2DParticle *particle = new D2DParticle(mass,randPos,radius);
 		result = particle->Initialize(pD3dGraphicsObj,hwnd,L"data/circle_sprite.png");
@@ -136,7 +136,7 @@ void RigidBodyScene2D::FixedUpdate(float fixedDelta) {
 }
 
 bool RigidBodyScene2D::Render() {
-	IGraphicsSystem *pGraphicsSystem = ServiceProvider::Instance().GetGraphicsSystem();
+	GraphicsSystem *pGraphicsSystem = ServiceProvider::Instance().GetGraphicsSystem();
 	mSpriteBatch->Begin(SpriteSortMode_Deferred,pGraphicsSystem->GetCommonD3DStates()->NonPremultiplied());
 	{
 		// Draw particles
@@ -157,7 +157,7 @@ bool RigidBodyScene2D::Render() {
 }
 
 void RigidBodyScene2D::HandleInput() {
-	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 	if (inputSystem->IsKeyDown('W')) {
 		mHovercraftSprite->ModulateThrust(true);
 	}

@@ -15,7 +15,7 @@ using namespace std;
 
 RigidBody3D::RigidBody3D(const GameObject * const gameObject) : Component(gameObject), mSpeed(0.0f),
 	mInertiaTensor(0.0f), mAngularVelocity(0.0f), mVelocityBody(0.0f),
-	mExtraLinearForces(0.0f), mExtraTorque(0.0f), mMass(1.0f), mLinearDrag(0.01f), mAngularDrag(0.05f),
+	mExtraLinearForces(0.0f), mExtraTorque(0.0f), mMass(1.0f), mLinearDamping(0.01f), mAngularDamping(0.05f),
 	 mImpulseForces(0.0f),
 	mIsSleeping(false), mInContact(false), mIsImmovable(false)
 {
@@ -139,7 +139,7 @@ void RigidBody3D::UpdateBodyEuler(float dt) {
 	Vector3 a = (mForces / mMass);
 	Vector3 dv = a * dt;
 	mVelocity += dv;
-	mVelocity *= powf((1.0f - mLinearDrag),dt);
+	mVelocity *= powf((1.0f - mLinearDamping),dt);
 
 	// Add impulse forces
 	mVelocity += mImpulseForces / mMass;
@@ -151,7 +151,7 @@ void RigidBody3D::UpdateBodyEuler(float dt) {
 	Vector3 aa = Vector3::Transform(mMoments, mInverseInertiaMatrix);
 	Vector3 da = aa * dt;
 	mAngularVelocity += da;
-	mAngularVelocity *= powf((1.0f - mAngularDrag),dt);
+	mAngularVelocity *= powf((1.0f - mAngularDamping),dt);
 
 	// Calculate the new rotation quaternion
 	Quaternion tempQ = transform->qRotation * Quaternion(mAngularVelocity,0.0f);
@@ -200,15 +200,15 @@ void RigidBody3D::SetAngularVelocity(Vector3 &angVel) {
 	mAngularVelocity = angVel;
 }
 
-void RigidBody3D::SetLinearDrag(float drag) {
-	if (drag >= 0.0f) {
-		mLinearDrag = drag;
+void RigidBody3D::SetLinearDamping(float damping) {
+	if (damping >= 0.0f) {
+		mLinearDamping = damping;
 	}
 }
 	
-void RigidBody3D::SetAngularDrag(float angDrag) {
-	if (angDrag >= 0.0f) {
-		mAngularDrag = angDrag;
+void RigidBody3D::SetAngularDamping(float angDamping) {
+	if (angDamping >= 0.0f) {
+		mAngularDamping = angDamping;
 	}
 }
 
@@ -275,12 +275,12 @@ float RigidBody3D::GetSpeed() const {
 	return mSpeed;
 }
 
-float RigidBody3D::GetLinearDrag() const {
-	return mLinearDrag;
+float RigidBody3D::GetLinearDamping() const {
+	return mLinearDamping;
 }
 
-float RigidBody3D::GetAngularDrag() const {
-	return mAngularDrag;
+float RigidBody3D::GetAngularDamping() const {
+	return mAngularDamping;
 }
 
 bool RigidBody3D::GetIsSleeping() const {

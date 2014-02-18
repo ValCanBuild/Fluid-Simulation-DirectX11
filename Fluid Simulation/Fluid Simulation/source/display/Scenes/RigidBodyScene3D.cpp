@@ -51,7 +51,6 @@ bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 	mBody->transform->qRotation *= Quaternion::CreateFromAxisAngle(Vector3(1.0f,0.0f,0.0f),0.0f);
 	mBody->transform->scale = Vector3(3.0f,3.0f,3.0f);
 	BaseD3DBody * plane = new BaseD3DBody(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f));
-	plane->SetColor(Color(0.78f,0.13f,0.10f));
 	plane->transform->position = Vector3(0.0f,-0.5f,0.0f);
 	plane->transform->scale = Vector3(70.0f,1.0f,70.0f);
 	plane->rigidBody3D->SetImmovable(true);
@@ -73,18 +72,23 @@ bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 
 	mCollisionManager = unique_ptr<CollisionManager>(new CollisionManager(&mSceneObjects));
 
+	int w,h;
+	pD3dGraphicsObj->GetScreenDimensions(w,h);
+
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar("3D Rigid Bodies");
 	// Position bar
-	int barPos[2] = {580,2};
+	int barPos[2] = {w - 318,2};
 	TwSetParam(mTwBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
-	int barSize[2] = {218,180};
+	int barSize[2] = {318,230};
 	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
+	float barRefresh = 0.2f;
+	TwSetParam(mTwBar,nullptr,"refresh", TW_PARAM_FLOAT, 1, &barRefresh);
 
 	// Add Variables to tweak bar
 	TwAddVarRW(mTwBar,"Timestep", TW_TYPE_FLOAT, &Physics::fMaxSimulationTimestep, "step=0.001");
 	TwAddVarRW(mTwBar,"Gravity", TW_TYPE_FLOAT, &Physics::fGravity, "step=0.1");
-	TwAddVarRW(mTwBar,"Restitution", TW_TYPE_FLOAT, &Physics::fRestitution, "step=0.05");
+	TwAddVarRW(mTwBar,"Friction", TW_TYPE_FLOAT, &Physics::fRestitution, "step=0.05");
 	TwAddVarRW(mTwBar,"Solver Iterations", TW_TYPE_INT16, &Physics::iSolverIterationCount, "step=1");
 	TwAddVarRW(mTwBar,"Allowed Penetration", TW_TYPE_FLOAT, &Physics::fAllowedPenetration, "step=0.001");
 	TwAddVarRW(mTwBar,"Contact Bias Factor", TW_TYPE_FLOAT, &Physics::fContactBiasFactor, "step=0.001");
@@ -133,7 +137,7 @@ bool RigidBodyScene3D::Render() {
 }
 
 void RigidBodyScene3D::HandleInput() {
-	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 	if (inputSystem->IsKeyDown(VK_UP)) {
 		mBody->rigidBody3D->AddTorque(Vector3(2.0f,2.0f,0.0f));
 	}
@@ -172,7 +176,7 @@ void RigidBodyScene3D::HandleInput() {
 	}
 
 	// Spawn a cube that travels forward
-	else if (inputSystem->IsMouseMidClicked()) {
+	else if ( inputSystem->IsMouseMidClicked() || (inputSystem->IsMouseLeftDown() && inputSystem->IsKeyClicked(VK_CONTROL)) ) {
 		int posX,posY;
 		inputSystem->GetMousePos(posX,posY);
 		Ray ray = mCamera->ScreenPointToRay(Vector2((float)posX,(float)posY));
@@ -190,7 +194,7 @@ void RigidBodyScene3D::HandleInput() {
 }
 
 void RigidBodyScene3D::UpdateCamera(float delta) {
-	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 
 	// Move camera with WASD 
 	float forwardAmount = 0.0f;
@@ -229,8 +233,8 @@ void RigidBodyScene3D::ObjectPicked(BaseD3DBody *object) {
 	// if unpicking object or picking a new one - remove var's
 	if (mPickedObject != object) {
 		TwRemoveVar(mTwBar, "Mass");
-		TwRemoveVar(mTwBar, "Linear Drag");
-		TwRemoveVar(mTwBar, "Angular Drag");
+		TwRemoveVar(mTwBar, "Linear Damping");
+		TwRemoveVar(mTwBar, "Angular Damping");
 		TwRemoveVar(mTwBar, "Linear Velocity");
 		TwRemoveVar(mTwBar, "Angular Velocity");
 		TwRemoveVar(mTwBar, "Orientation");
@@ -246,8 +250,8 @@ void RigidBodyScene3D::ObjectPicked(BaseD3DBody *object) {
 
 	if (mPickedObject != nullptr) {
 		TwAddVarCB(mTwBar, "Mass", TW_TYPE_FLOAT, SetMassCallback, GetMassCallback, mPickedObject->rigidBody3D.get(), "step=0.1");
-		TwAddVarCB(mTwBar, "Linear Drag", TW_TYPE_FLOAT, SetLinearDragCallback, GetLinearDragCallback, mPickedObject->rigidBody3D.get(), "step=0.01 max=1.0 min=0.0");
-		TwAddVarCB(mTwBar, "Angular Drag", TW_TYPE_FLOAT, SetAngularDragCallback, GetAngularDragCallback, mPickedObject->rigidBody3D.get(), "step=0.01 max=1.0 min=0.0");
+		TwAddVarCB(mTwBar, "Linear Damping", TW_TYPE_FLOAT, SetLinearDragCallback, GetLinearDragCallback, mPickedObject->rigidBody3D.get(), "step=0.01 max=1.0 min=0.0");
+		TwAddVarCB(mTwBar, "Angular Damping", TW_TYPE_FLOAT, SetAngularDragCallback, GetAngularDragCallback, mPickedObject->rigidBody3D.get(), "step=0.01 max=1.0 min=0.0");
 		TwAddVarCB(mTwBar, "Orientation", TW_TYPE_QUAT4F, SetOrientationCallback, GetOrientationCallback, mPickedObject->transform.get(), "");
 		TwAddVarCB(mTwBar, "Scale", TW_TYPE_DIR3F, SetScaleCallback, GetScaleCallback, mPickedObject->transform.get(), "");
 		TwAddVarCB(mTwBar, "Linear Velocity", TW_TYPE_DIR3F, SetLinearVelocityCallback, GetLinearVelocityCallback, mPickedObject->rigidBody3D.get(), "");
@@ -274,11 +278,11 @@ void TW_CALL RigidBodyScene3D::SetMassCallback(const void* value, void *clientDa
 }
 
 void TW_CALL RigidBodyScene3D::SetLinearDragCallback(const void* value, void *clientData) {
-	static_cast<RigidBody3D *>(clientData)->SetLinearDrag(*static_cast<const float *>(value));
+	static_cast<RigidBody3D *>(clientData)->SetLinearDamping(*static_cast<const float *>(value));
 }
 
 void TW_CALL RigidBodyScene3D::SetAngularDragCallback(const void* value, void *clientData) {
-	static_cast<RigidBody3D *>(clientData)->SetAngularDrag(*static_cast<const float *>(value));
+	static_cast<RigidBody3D *>(clientData)->SetAngularDamping(*static_cast<const float *>(value));
 }
 
 void TW_CALL RigidBodyScene3D::SetOrientationCallback(const void* value, void *clientData) {
@@ -315,11 +319,11 @@ void TW_CALL RigidBodyScene3D::GetLinearSpeedCallback(void* value, void *clientD
 }
 
 void TW_CALL RigidBodyScene3D::GetLinearDragCallback(void* value, void *clientData) {
-	*static_cast<float *>(value) = static_cast<const RigidBody3D *>(clientData)->GetLinearDrag();
+	*static_cast<float *>(value) = static_cast<const RigidBody3D *>(clientData)->GetLinearDamping();
 }
 
 void TW_CALL RigidBodyScene3D::GetAngularDragCallback(void* value, void *clientData) {
-	*static_cast<float *>(value) = static_cast<const RigidBody3D *>(clientData)->GetAngularDrag();
+	*static_cast<float *>(value) = static_cast<const RigidBody3D *>(clientData)->GetAngularDamping();
 }
 
 void TW_CALL RigidBodyScene3D::GetOrientationCallback(void* value, void *clientData) {

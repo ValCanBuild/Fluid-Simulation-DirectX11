@@ -10,17 +10,17 @@ Date: 02/09/2013
 #pragma comment(lib, "dxguid.lib")
 #include <dinput.h>
 
-#include "InputSystem.h"
+#include "InputSystemImpl.h"
 
-InputSystem::InputSystem() {
+InputSystemImpl::InputSystemImpl() {
 }
 
 
-InputSystem::InputSystem(const InputSystem& other) {
+InputSystemImpl::InputSystemImpl(const InputSystemImpl& other) {
 }
 
 
-InputSystem::~InputSystem() {
+InputSystemImpl::~InputSystemImpl() {
 	if (mMouse) {
 		mMouse->Unacquire();
 		mMouse->Release();
@@ -37,7 +37,7 @@ InputSystem::~InputSystem() {
 }
 
 
-bool InputSystem::Initialize(HINSTANCE hInstance, HWND hwnd) {
+bool InputSystemImpl::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	mMouseX = mMouseY = 0;
 	mLastKeyDown = -1;
 
@@ -84,7 +84,7 @@ bool InputSystem::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	return true;
 }
 
-void InputSystem::Update(float delta) {
+void InputSystemImpl::Update(float delta) {
 	// Read the mouse 
 	HRESULT result = mMouse->GetDeviceState(sizeof(DIMOUSESTATE), (LPVOID)mMouseState);
 	if(FAILED(result)) {
@@ -98,34 +98,34 @@ void InputSystem::Update(float delta) {
 	}
 }
 
-void InputSystem::PostUpdate() {
+void InputSystemImpl::PostUpdate() {
 	if (mLastKeyDown != -1) {
 		mLastKeyDown = -1;
 	}
 	mMouseLeftClicked = mMouseRightClicked = mMouseMidClicked = false;
 }
 
-void InputSystem::KeyDown(unsigned int input) {
+void InputSystemImpl::KeyDown(unsigned int input) {
 	// If a key is pressed then save that state in the key array.
 	mKeys[input] = true;
 	mLastKeyDown = input;
 }
 
-void InputSystem::KeyUp(unsigned int input) {
+void InputSystemImpl::KeyUp(unsigned int input) {
 	// If a key is released then clear that state in the key array.
 	mKeys[input] = false;
 }
 
-bool InputSystem::IsKeyDown(unsigned int key) const {
+bool InputSystemImpl::IsKeyDown(unsigned int key) const {
 	// Return what state the key is in (pressed/not pressed).
 	return mKeys[key];
 }
 
-bool InputSystem::IsKeyClicked(unsigned int key) const {
+bool InputSystemImpl::IsKeyClicked(unsigned int key) const {
 	return key == mLastKeyDown;
 }
 
-void InputSystem::OnMouseButtonAction(int key, bool status) {
+void InputSystemImpl::OnMouseButtonAction(int key, bool status) {
 	if (key == 0) {
 		mMouseLeft = status;
 		mMouseLeftClicked = status;
@@ -140,45 +140,45 @@ void InputSystem::OnMouseButtonAction(int key, bool status) {
 	}
 }
 
-void InputSystem::SetMousePos(int x, int y) {
+void InputSystemImpl::SetMousePos(int x, int y) {
 	mMouseX = x;
 	mMouseY = y;
 }
 
-bool InputSystem::IsMouseMidDown() const {
+bool InputSystemImpl::IsMouseMidDown() const {
 	return mMouseMid;
 }
 
-bool InputSystem::IsMouseLeftDown() const {
+bool InputSystemImpl::IsMouseLeftDown() const {
 	return mMouseLeft;
 }
 
-bool InputSystem::IsMouseRightDown() const {
+bool InputSystemImpl::IsMouseRightDown() const {
 	return mMouseRight;
 }
 
-bool InputSystem::IsMouseLeftClicked() const {
+bool InputSystemImpl::IsMouseLeftClicked() const {
 	return mMouseLeftClicked;
 }
 
-bool InputSystem::IsMouseRightClicked() const {
+bool InputSystemImpl::IsMouseRightClicked() const {
 	return mMouseRightClicked;
 }
 
-bool InputSystem::IsMouseMidClicked() const {
+bool InputSystemImpl::IsMouseMidClicked() const {
 	return mMouseMidClicked;
 }
 
-void InputSystem::GetMousePos(int& xPos, int& yPos) const {
+void InputSystemImpl::GetMousePos(int& xPos, int& yPos) const {
 	xPos = mMouseX;
 	yPos = mMouseY;
 }
 
-void InputSystem::GetMouseDelta(int& xDelta, int& yDelta) const {
+void InputSystemImpl::GetMouseDelta(int& xDelta, int& yDelta) const {
 	xDelta = mMouseState->lX;
 	yDelta = mMouseState->lY;
 }
 
-void InputSystem::GetMouseScrollDelta(int &scrollDelta) const {
+void InputSystemImpl::GetMouseScrollDelta(int &scrollDelta) const {
 	scrollDelta = mMouseState->lZ;
 }

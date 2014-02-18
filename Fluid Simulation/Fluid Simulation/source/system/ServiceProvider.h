@@ -9,8 +9,8 @@ Version: 1.0
 #ifndef _SERVICEPROVIDER_H_
 #define _SERVICEPROVIDER_H_
 
-#include "I_InputSystem.h"
-#include "IGraphicsSystem.h"
+#include "InputSystem.h"
+#include "GraphicsSystem.h"
 
 class ServiceProvider {
 public:		
@@ -22,7 +22,7 @@ public:
 		return *mSingleton;
 	}
 
-	void Initialize(I_InputSystem* inputSystem, IGraphicsSystem* graphicsSystem) {
+	void Initialize(InputSystem* inputSystem, GraphicsSystem* graphicsSystem) {
 		if (mInitialized)
 			return;
 
@@ -32,8 +32,8 @@ public:
 		mInitialized = true;
 	}
 
-	I_InputSystem* GetInputSystem() { return pInputSystem; };
-	IGraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; };
+	InputSystem* GetInputSystem() { return pInputSystem; };
+	GraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; };
 
 	~ServiceProvider() {
 		pInputSystem = nullptr;
@@ -46,8 +46,8 @@ private:
 private:
 	static ServiceProvider *mSingleton;
 	bool mInitialized;
-	I_InputSystem* pInputSystem;
-	IGraphicsSystem* pGraphicsSystem;
+	InputSystem* pInputSystem;
+	GraphicsSystem* pGraphicsSystem;
 };
 
 #endif

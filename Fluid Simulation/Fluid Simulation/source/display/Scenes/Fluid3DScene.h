@@ -71,11 +71,11 @@ private:
 	unique_ptr<Fluid3D::BuoyancyShader>			mBuoyancyShader;
 	unique_ptr<Fluid3D::Fluid3DRenderShader>		mFluidRenderShader;
 
-	Fluid3D::ShaderParams* mVelocitySP;
-	Fluid3D::ShaderParams* mDensitySP;
-	Fluid3D::ShaderParams* mTemperatureSP;
-	Fluid3D::ShaderParams* mPressureSP;
-	unique_ptr<Fluid3D::ShaderParams>	mDivergenceSP;
+	ShaderParams* mVelocitySP;
+	ShaderParams* mDensitySP;
+	ShaderParams* mTemperatureSP;
+	ShaderParams* mPressureSP;
+	unique_ptr<ShaderParams>	mDivergenceSP;
 	CComPtr<ID3D11RenderTargetView>		mPressureRenderTargets[2];
 
 	CComPtr<ID3D11Buffer>				mInputBufferGeneral;
@@ -83,7 +83,7 @@ private:
 	CComPtr<ID3D11Buffer>				mInputBufferDissipation;
 	CComPtr<ID3D11SamplerState>			mSampleState;
 
-	unique_ptr<Fluid3D::ShaderParams>	mFluidRenderResult;
+	unique_ptr<ShaderParams>	mFluidRenderResult;
 
 private:
 	float mZoom;

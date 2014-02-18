@@ -11,6 +11,8 @@ Version: 1.0
 #include <iostream>
 #include <AntTweakBar.h> // include anttweakbar here in order to pass windows messages to it
 #include "MainSystem.h"
+#include "GraphicsSystemImpl.h"
+#include "InputSystemImpl.h"
 #include "../utilities/Physics.h"
 
 MainSystem::MainSystem() : mTimeLag(0.0f) {
@@ -33,7 +35,7 @@ bool MainSystem::Initialize() {
 	bool result;
 
 	// Seed RNG
-	srand(time(NULL));
+	srand((UINT)time(NULL));
 
 	// Initialize the width and height of the screen to zero before sending the variables into the function.
 	screenWidth = 0;
@@ -43,10 +45,10 @@ bool MainSystem::Initialize() {
 	InitializeWindows(screenWidth, screenHeight);
 
 	// Create the graphics object.  This object will handle rendering all the graphics for this application.
-	mGraphics = unique_ptr<GraphicsSystem>(new GraphicsSystem());
+	mGraphics = unique_ptr<GraphicsSystemImpl>(new GraphicsSystemImpl());
 
 	// Create the input system object
-	mInput = unique_ptr<InputSystem>(new InputSystem());
+	mInput = unique_ptr<InputSystemImpl>(new InputSystemImpl());
 
 	// Register all systems with the service provider
 	ServiceProvider::Instance().Initialize(mInput.get(),mGraphics.get());
@@ -58,7 +60,7 @@ bool MainSystem::Initialize() {
 	mAppTimer.Reset();
 
 	// Init input
-	result = mInput->Initialize(m_hinstance, m_hwnd);
+	result = mInput->Initialize(mHInstance, mHwnd);
 	if (!result) {
 		return false;
 	}
@@ -70,7 +72,7 @@ bool MainSystem::Initialize() {
 	}
 
 	// Initialize the graphics object.
-	result = mGraphics->Initialize(screenWidth, screenHeight, m_hwnd);
+	result = mGraphics->Initialize(screenWidth, screenHeight, mHwnd);
 	if(!result) {
 		return false;
 	}
@@ -242,23 +244,23 @@ void MainSystem::InitializeWindows(int& screenWidth, int& screenHeight) {
 	ApplicationHandle = this;
 
 	// Get the instance of this application.
-	m_hinstance = GetModuleHandle(NULL);
+	mHInstance = GetModuleHandle(NULL);
 
 	// Give the application a name.
-	m_applicationName = L"Fluid Simulation";
+	mApplicationName = L"Fluid Simulation";
 
 	// Setup the windows class with default settings.
 	wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.lpfnWndProc   = WndProc;
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
-	wc.hInstance     = m_hinstance;
+	wc.hInstance     = mHInstance;
 	wc.hIcon		 = LoadIcon(NULL, IDI_WINLOGO);
 	wc.hIconSm       = wc.hIcon;
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wc.lpszMenuName  = NULL;
-	wc.lpszClassName = m_applicationName;
+	wc.lpszClassName = mApplicationName;
 	wc.cbSize        = sizeof(WNDCLASSEX);
 	
 	// Register the window class.
@@ -297,14 +299,14 @@ void MainSystem::InitializeWindows(int& screenWidth, int& screenHeight) {
 	}
 
 	// Create the window with the screen settings and get the handle to it.
-	m_hwnd = CreateWindowEx(WS_EX_APPWINDOW, m_applicationName, m_applicationName, 
+	mHwnd = CreateWindowEx(WS_EX_APPWINDOW, mApplicationName, mApplicationName, 
 							WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
-						    posX, posY, screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);
+						    posX, posY, screenWidth, screenHeight, NULL, NULL, mHInstance, NULL);
 
 	// Bring the window up on the screen and set it as main focus.
-	ShowWindow(m_hwnd, SW_SHOW);
-	SetForegroundWindow(m_hwnd);
-	SetFocus(m_hwnd);
+	ShowWindow(mHwnd, SW_SHOW);
+	SetForegroundWindow(mHwnd);
+	SetFocus(mHwnd);
 
 	// Show the mouse cursor.
 	ShowCursor(true);
@@ -321,12 +323,12 @@ void MainSystem::ShutdownWindows() {
 	}
 
 	// Remove the window.
-	DestroyWindow(m_hwnd);
-	m_hwnd = NULL;
+	DestroyWindow(mHwnd);
+	mHwnd = NULL;
 
 	// Remove the application instance.
-	UnregisterClass(m_applicationName, m_hinstance);
-	m_hinstance = NULL;
+	UnregisterClass(mApplicationName, mHInstance);
+	mHInstance = NULL;
 
 	// Release the pointer to this class.
 	ApplicationHandle = NULL;

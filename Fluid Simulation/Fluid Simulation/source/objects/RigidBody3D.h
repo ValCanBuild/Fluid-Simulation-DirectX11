@@ -40,8 +40,8 @@ public:
 	void SetLinearVelocity(Vector3 &vel);
 	void SetAngularVelocity(Vector3 &angVel);
 	void SetMass(float mass);
-	void SetLinearDrag(float drag);
-	void SetAngularDrag(float angDrag);
+	void SetLinearDamping(float damping);
+	void SetAngularDamping(float angDamping);
 	void WakeUp();
 	void SetImmovable(bool isImmovable);
 	void InContact();
@@ -57,8 +57,8 @@ public:
 	const Matrix  &GetInverseInertiaMatrix() const;
 	float GetMass() const;
 	float GetSpeed() const;
-	float GetLinearDrag() const;
-	float GetAngularDrag() const;
+	float GetLinearDamping() const;
+	float GetAngularDamping() const;
 
 	bool  GetIsSleeping() const;
 	bool  GetIsInContact() const;
@@ -76,8 +76,8 @@ private:
 private:
 	/// SCALARS	
 	float		mMass;	// Total Mass
-	float		mLinearDrag; // Linear drag coefficient (0 means no damping) [0,1]
-	float		mAngularDrag; // Angular drag coefficient ( 0 means no damping) [0,1]
+	float		mLinearDamping; // Linear damping coefficient (0 means no damping) [0,1]
+	float		mAngularDamping; // Angular damping coefficient (0 means no damping) [0,1]
 	float		mSpeed;	// Magnitude of velocity
 	Vector3		mInertiaTensor; // mass moment of inertia
 	Matrix		mInertiaMatrix;	// Mass moment of inertia in body coordinates

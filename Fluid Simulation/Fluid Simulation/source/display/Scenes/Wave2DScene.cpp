@@ -180,7 +180,7 @@ bool Wave2DScene::Render() {
 
 	mFrameArray[nextStep]->EndRender();*/
 	Vector3 mousePos;
-	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 	int mousePressed = 0;
 	if (inputSystem->IsMouseLeftDown()) {
 		int x,y;

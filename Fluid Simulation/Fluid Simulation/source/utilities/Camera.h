@@ -38,7 +38,7 @@ public:
 private:
 	Matrix mViewMatrix;
 	Matrix mRotationMatrix;
-	float mYaw,mPitch,mRoll;
+	float mYaw, mPitch, mRoll;
 	Vector3 mPosition, mLookAt, mUp, mRight;
 	const Vector3 mDefaultUp, mDefaultLookAt, mDefaultRight;
 	Vector3 mTarget;

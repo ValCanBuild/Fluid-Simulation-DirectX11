@@ -108,6 +108,7 @@
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
+    <ClCompile Include="source\display\effects\Fluid2DEffect.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene2D.cpp" />
@@ -125,8 +126,8 @@
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
     <ClCompile Include="source\objects\RigidBody2D.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
-    <ClCompile Include="source\system\GraphicsSystem.cpp" />
-    <ClCompile Include="source\system\InputSystem.cpp" />
+    <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
+    <ClCompile Include="source\system\InputSystemImpl.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
     <ClCompile Include="source\system\ServiceProvider.cpp" />
     <ClCompile Include="source\utilities\AppTimer.cpp" />
@@ -147,7 +148,9 @@
     <ClInclude Include="source\display\D3DShaders\Fluid3DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
+    <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
+    <ClInclude Include="source\display\effects\Fluid2DEffect.h" />
     <ClInclude Include="source\display\IFrameBuffer.h" />
     <ClInclude Include="source\display\IGraphicsObject.h" />
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h" />
@@ -170,10 +173,10 @@
     <ClInclude Include="source\objects\RigidBody2D.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\Transform.h" />
+    <ClInclude Include="source\system\GraphicsSystemImpl.h" />
     <ClInclude Include="source\system\GraphicsSystem.h" />
-    <ClInclude Include="source\system\IGraphicsSystem.h" />
+    <ClInclude Include="source\system\InputSystemImpl.h" />
     <ClInclude Include="source\system\InputSystem.h" />
-    <ClInclude Include="source\system\I_InputSystem.h" />
     <ClInclude Include="source\system\MainSystem.h" />
     <ClInclude Include="source\system\ServiceProvider.h" />
     <ClInclude Include="source\utilities\AppTimer.h" />

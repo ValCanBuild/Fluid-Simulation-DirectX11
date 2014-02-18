@@ -54,9 +54,9 @@ Version: 1.0
 #include "../utilities/math/MathUtils.h"
 
 struct COMDeleter {
-    template<typename T> void operator()(T* ptr) {
-        ptr->Release();
-    }
+	template<typename T> void operator()(T* ptr) {
+		ptr->Release();
+	}
 };
 
 #endif

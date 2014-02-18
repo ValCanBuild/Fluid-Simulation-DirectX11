@@ -107,8 +107,8 @@ void CollisionManager::PerformCollisionResponse(float dt) const {
 	if (numCollisions < 1) {
 		return;
 	}
-
-	for (int i = 0; i < Physics::iSolverIterationCount; ++i) {
+	int i;
+	for (i = 0; i < Physics::iSolverIterationCount; ++i) {
 		for (ContactManifold cManifold : mContactManifolds) {
 			const Collider *collider0 = cManifold.pBody1;
 			const Collider *collider1 = cManifold.pBody2;
@@ -234,7 +234,7 @@ void CollisionManager::PerformCollisionResponse(float dt) const {
 				float vt = relVel.Dot(tangent);
 				float dPt = massTangent * (-vt);
 
-				float maxPt = (1.0f - Physics::fRestitution) * dPn;
+				float maxPt = (Physics::fRestitution) * dPn;
 				dPt = Clamp(dPt, -maxPt, maxPt);
 
 				// Apply contact impulse

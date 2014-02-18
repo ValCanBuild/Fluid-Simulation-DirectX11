@@ -367,7 +367,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 void Fluid3DScene::Update(float delta) {
 	UpdateCamera(delta);
 	//mAngle += delta;
-	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 	int scrollValue;
 	inputSystem->GetMouseScrollDelta(scrollValue);
 	if (scrollValue > 0) {
@@ -586,7 +586,7 @@ bool Fluid3DScene::SetImpulseBuffer(Vector4& point, Vector4& amount, float radiu
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {
-	I_InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
 
 	// Move camera with WASD 
 	float forwardAmount = 0.0f;

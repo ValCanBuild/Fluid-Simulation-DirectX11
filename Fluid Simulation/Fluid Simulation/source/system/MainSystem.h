@@ -13,13 +13,14 @@ Version: 1.0
 #include <windows.h>
 #include <memory>
 
-#include "GraphicsSystem.h"
-#include "InputSystem.h"
 #include "ServiceProvider.h"
 #include "../utilities/AppTimer.h"
 #include "../utilities/PerformanceMonitor.h"
 
 using namespace std;
+
+class InputSystemImpl;
+class GraphicsSystemImpl;
 
 class MainSystem
 {
@@ -39,15 +40,15 @@ private:
 	void ShutdownWindows();
 
 private:
-	LPCWSTR m_applicationName;
-	HINSTANCE m_hinstance;
-	HWND m_hwnd;
+	LPCWSTR mApplicationName;
+	HINSTANCE mHInstance;
+	HWND mHwnd;
 
 	AppTimer			mAppTimer;
 	PerformanceMonitor	mPerfMonitor;
 	
-	unique_ptr<InputSystem> mInput;
-	unique_ptr<GraphicsSystem> mGraphics;
+	unique_ptr<InputSystemImpl> mInput;
+	unique_ptr<GraphicsSystemImpl> mGraphics;
 
 	float	mTimeLag;
 };

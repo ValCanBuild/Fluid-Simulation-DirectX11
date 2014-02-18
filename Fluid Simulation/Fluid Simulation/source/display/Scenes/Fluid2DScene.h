@@ -16,27 +16,14 @@ Date: 10/09/2013
 #include <vector>
 #include <memory>
 #include "IScene.h"
+#include "../effects/Fluid2DEffect.h"
+
+using namespace std;
+using namespace Fluid2D;
 
 class D2DTexQuad;
 class Camera;
 class D3DGraphicsObject;
-class AdvectionShader;
-class ImpulseShader;
-class JacobiShader;
-class DivergenceShader;
-class SubtractGradientShader;
-class BuoyancyShader;
-class Fluid2DRenderShader;
-struct ShaderParams;
-struct InputBufferGeneral;
-struct InputBufferDissipation;
-struct InputBufferImpulse;
-
-struct ID3D11RenderTargetView;
-struct ID3D11Buffer;
-struct ID3D11SamplerState;
-
-using namespace std;
 
 class Fluid2DScene : public IScene {
 public:
@@ -48,52 +35,19 @@ public:
 	bool Render();
 
 private:
-	bool SetGeneralBuffer();
-	bool SetImpulseBuffer(Vector2& point, Vector2& amount, float radius);
-	bool SetDissipationBuffer(float dissipation);
-
-	bool PerformComputation();
+	void ChangeFluidPropertyView();
+	void HandleInput();
 
 private:
 	TwBar *mTwBar;
 
-private:
+	unique_ptr<Fluid2DEffect>			mFluid2DEffect;
 	unique_ptr<Camera>					mCamera;
-	unique_ptr<D2DTexQuad>				mTexQuad;
-
-	unique_ptr<AdvectionShader>			mForwardAdvectionShader;
-	unique_ptr<AdvectionShader>			mBackwardAdvectionShader;
-	unique_ptr<AdvectionShader>			mMacCormarckAdvectionShader;
-	unique_ptr<ImpulseShader>			mImpulseShader;
-	unique_ptr<JacobiShader>			mJacobiShader;
-	unique_ptr<DivergenceShader>		mDivergenceShader;
-	unique_ptr<SubtractGradientShader>	mSubtractGradientShader;
-	unique_ptr<BuoyancyShader>			mBuoyancyShader;
-	unique_ptr<Fluid2DRenderShader>		mFluidRenderShader;
-
-	ShaderParams* mVelocitySP;
-	ShaderParams* mDensitySP;
-	ShaderParams* mTemperatureSP;
-	ShaderParams* mPressureSP;
-	ShaderParams* mObstacleSP;
-	unique_ptr<ShaderParams>			mDivergenceSP;
-	CComPtr<ID3D11RenderTargetView>		mPressureRenderTargets[2];
-
-	CComPtr<ID3D11Buffer>				mInputBufferGeneral;
-	CComPtr<ID3D11Buffer>				mInputBufferImpulse;
-	CComPtr<ID3D11Buffer>				mInputBufferDissipation;
-	CComPtr<ID3D11SamplerState>			mSampleState;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
-	int textureShowing;
+	FluidPropertyType_t fluidProperty;
 	bool mPaused;
-
-// Simulation Variables
-private:
-	int mJacobiIterations;
-	float mTimeStep;
-	bool mMacCormackEnabled;
 };
 
 #endif

@@ -1,71 +1,33 @@
 /*************************************************************
-InputSystem.h: Specific Implementation of the 
-engine input system. 
+I_InputSystem.h: Interface implementation of the engine input
+system
 
 Author: Valentin Hinov
 Date: 02/09/2013
 **************************************************************/
-#ifndef _INPUTSYSTEM_H_
-#define _INPUTSYSTEM_H_
+#ifndef INPUTSYSTEM_H_
+#define INPUTSYSTEM_H_
 
-struct IDirectInput8;
-struct IDirectInputDevice8;
-struct _DIMOUSESTATE;
-typedef _DIMOUSESTATE DIMOUSESTATE;
-
-#include "I_InputSystem.h"
-
-class InputSystem : public I_InputSystem{
+class InputSystem {
 public:
-	InputSystem();
-	InputSystem(const InputSystem&);
-	~InputSystem();
+	InputSystem(){};
+	virtual ~InputSystem(){};
 
-	bool Initialize(HINSTANCE hInstance, HWND hwnd);
-	void Update(float delta);
-	void PostUpdate();
+	virtual bool IsKeyDown(unsigned int vKey) const = 0;
+	virtual bool IsKeyClicked(unsigned int) const = 0;
 
-	void KeyDown(unsigned int);
-	void KeyUp(unsigned int);
+	virtual bool IsMouseLeftDown() const = 0;
+	virtual bool IsMouseRightDown() const = 0;
+	virtual bool IsMouseMidDown() const = 0;
 
-	void SetMousePos(int x, int y);
+	virtual bool IsMouseLeftClicked() const = 0;
+	virtual bool IsMouseRightClicked() const = 0;
+	virtual bool IsMouseMidClicked() const = 0;
 
-	// change in mouse key status
-	// 0 - Left
-	// 1 - Right
-	// 2 - Mid
-	void OnMouseButtonAction(int key, bool status);
+	virtual void GetMousePos(int& xPos, int& yPos) const = 0;
+	virtual void GetMouseDelta(int& xDelta, int& yDelta) const = 0;
 
-	bool IsKeyDown(unsigned int) const;
-	bool IsKeyClicked(unsigned int) const;
-
-	bool IsMouseLeftDown() const;
-	bool IsMouseRightDown() const;
-	bool IsMouseMidDown() const;
-
-	bool IsMouseLeftClicked() const;
-	bool IsMouseRightClicked() const;
-	bool IsMouseMidClicked() const;
-
-	void GetMousePos(int& xPos, int& yPos) const;
-	void GetMouseDelta(int& xDelta, int& yDelta) const;
-	void GetMouseScrollDelta(int &scrollDelta) const;
-
-private:
-	bool mKeys[256];
-	int mLastKeyDown;
-	bool mMouseLeft,mMouseRight, mMouseMid;
-	bool mMouseLeftClicked,mMouseRightClicked,mMouseMidClicked;
-
-	int mMouseX,mMouseY;
-	
-
-	// Need direct input for mouse delta
-	IDirectInput8* mDirectInput;
-	IDirectInputDevice8* mKeyboard;
-	IDirectInputDevice8* mMouse;
-
-	DIMOUSESTATE* mMouseState;
+	virtual void GetMouseScrollDelta(int &scrollDelta) const = 0;
 };
 
 #endif
