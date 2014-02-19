@@ -15,22 +15,13 @@ Date: 09/11/2013
 
 // Constant buffers
 cbuffer InputBufferGeneral : register (b0) {
-	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader
-	
+	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader	
 	float fBuoyancy;			// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
 	float fAmbientTemperature;  // Used for BuoyancyComputeShader
 
 	float3 vDimensions;
-	float  padding10;
-	
-	float3 vEyePos;	
-	float  fZoom;
-
-	uint2  vViewportDimensions;
-	float2 padding11;
-
-	float4x4 mRotationMatrix;	// 128 bytes
+	float  padding10;			// pad to 32 bytes
 };
 
 cbuffer InputBufferDissipation : register (b1) {
@@ -70,9 +61,6 @@ Texture3D<float>   pressure : register (t1);  // Used for JacobiComputeShader, S
 RWTexture3D<float> pressureResult : register (u0); // Used for JacobiComputeShader
 
 RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader
-
-Texture3D<float>	renderInputTexture : register (t0);
-RWTexture2D<float4> renderResult : register (u0);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Advect the speed by sampling at pos - deltaTime*velocity
@@ -282,53 +270,4 @@ void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 	// replacing the appropriate components of the new velocity with  
 	// obstacle velocities. 
 	velocityResult[i] = newV;
-}
-
-[numthreads(NUM_THREADS_X, NUM_THREADS_Y*2, 1)]
-// Output the result of a 3D texture to a render target by using ray-marching
-void RenderComputeShader( uint3 DTid : SV_DispatchThreadID ) {
-	uint2 j = DTid.xy;
-
-	float3 raydir = float3( (2*j - float2(vViewportDimensions)) / min(vViewportDimensions.x, vViewportDimensions.y) * fZoom , 0) - vEyePos;
-
-	// rotate vuew
-	float3 vEyeProper = mul(float4(vEyePos,1.0f), mRotationMatrix).xyz;
-	raydir	   = mul(float4(raydir,1.0f), mRotationMatrix).xyz;
-
-	float3 t1 = max((-1 - vEyeProper) / raydir, 0);
-	float3 t2 = max(( 1 - vEyeProper) / raydir, 0);
-
-	// Determine the closest and furthest points
-	float3 front = min(t1, t2);
-	float3 back  = max(t1, t2);
-
-	float tfront = max(front.x, max(front.y, front.z));
-	float tback  = min( back.x, min( back.y,  back.z));
-
-	// Calculate texture coordinates of front and back intersection
-	float3 texf  =  (vEyeProper + tfront*raydir + 1) * 0.5f;
-	float3 texb  =  (vEyeProper + tback *raydir + 1) * 0.5f;
-
-	// determine the number of steps necessary to traverse the simulation volume
-	float steps = floor(length(texf - texb)*vDimensions.x + 0.5f);
-	float3 texdir = (texb-texf)/steps;
-
-	steps = (tfront >= tback) ? 0 : steps; // no intersection ?
-
-	 // simple MIP render
-	 float m = 0.0f;
-	 for (float i = 0.5f; i < steps; ++i) {
-		float3 samplingPoint = texf + i*texdir;
-		float s = renderInputTexture.SampleLevel(linearSampler, samplingPoint, 0);      
-		m += s;
-		if (m > 1)
-			break;
-	 }
-
-	 // hot metal color
-	 float whiteSmoke = m*245.0f/250.0f;
-	 float4 col = saturate(float4(whiteSmoke,whiteSmoke,whiteSmoke,m));
-	 //float4 col = saturate(lerp(float4(0,-1.41,-3, -0.4), float4(1.41,1.41,1, 1.41), m/3));
-
-	 renderResult[j] = col;
 }

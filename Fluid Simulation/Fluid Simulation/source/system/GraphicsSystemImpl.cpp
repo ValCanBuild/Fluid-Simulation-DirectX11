@@ -98,10 +98,9 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	TwSetParam(twBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
 	int barSize[2] = {70,100};
 	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
-	TwDefine(" MainControl iconified=false ");
+	TwDefine(" MainControl iconified=true ");
 	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
 	TwAddVarRW(twBar,"Pause Scene Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
-	//TwAddVarRW(twBar,"Reverse Timestep", TW_TYPE_BOOLCPP, &mReverseFixedTimestep, " key=z ");
 	TwAddButton(twBar,"Single Physics Step", SingleStepPhysics, this, " key=space ");
 
 	mSceneFixedUpdatePaused = true;
@@ -110,7 +109,7 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 }
 
 bool GraphicsSystemImpl::ResetScene() {
-	mCurrentScene.reset(new Fluid2DScene());
+	mCurrentScene.reset(new Fluid3DScene());
 	bool result = mCurrentScene->Initialize(mGraphicsObj.get(),mHwnd);
 	if (!result) {
 		MessageBox(mHwnd, L"Could not initialize the scene", L"Error", MB_OK);

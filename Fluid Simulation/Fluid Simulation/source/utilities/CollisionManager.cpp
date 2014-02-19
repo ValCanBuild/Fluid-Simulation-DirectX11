@@ -42,9 +42,11 @@ CollisionManager::~CollisionManager() {
 
 void CollisionManager::DebugRender(const Matrix* viewMatrix, const Matrix* projMatrix) const {
 	int usedSpheres = 0;
-	for (int i = 0; i < mContactManifolds.size() && usedSpheres < MAX_DEBUG_SPHERES; ++i) {
+	int numManifolds = mContactManifolds.size();
+	for (int i = 0; i < numManifolds && usedSpheres < MAX_DEBUG_SPHERES; ++i) {
 		vector<ContactPoint> contactPoints = mContactManifolds[i].contactPoints;
-		for (int j = 0; j < contactPoints.size() && usedSpheres < MAX_DEBUG_SPHERES; ++j) {
+		int numContacts = contactPoints.size();
+		for (int j = 0; j < numContacts && usedSpheres < MAX_DEBUG_SPHERES; ++j) {
 			ContactPoint cPoint = contactPoints[j];
 
 			//Matrix worldMat = Matrix::CreateScale(1.0f);

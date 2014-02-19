@@ -11,6 +11,7 @@ Version: 1.0
 #ifndef _BASED3DSHADER_H
 #define _BASED3DSHADER_H
 
+#include <stdexcept>
 #include <atlbase.h>
 #if defined (_DEBUG)
 #pragma comment(lib,"atlsd.lib")

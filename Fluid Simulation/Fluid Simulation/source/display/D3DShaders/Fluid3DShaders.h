@@ -24,14 +24,6 @@ struct InputBufferGeneral {
 
 	Vector3 vDimensions;
 	float  padding10;
-	
-	Vector3 vEyePos;	
-	float  fZoom;
-
-	UINT    vViewportDimensions[2];
-	Vector2 padding11;
-
-	Matrix	mRotationMatrix;
 };
 
 struct InputBufferDissipation {
@@ -128,18 +120,6 @@ public:
 	~BuoyancyShader();
 
 	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult);
-
-private:
-	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
-};
-
-class Fluid3DRenderShader : public BaseD3DShader {
-public:
-	Fluid3DRenderShader();
-	~Fluid3DRenderShader();
-
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ID3D11ShaderResourceView* targetToRender, _In_ ID3D11UnorderedAccessView* result);
 
 private:
 	ShaderDescription GetShaderDescription();

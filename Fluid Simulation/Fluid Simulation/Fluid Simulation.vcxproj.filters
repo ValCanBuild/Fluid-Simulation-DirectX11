@@ -201,6 +201,15 @@
     <ClCompile Include="source\display\effects\Fluid2DEffect.cpp">
       <Filter>Source Files\Display\Effects</Filter>
     </ClCompile>
+    <ClCompile Include="source\display\effects\Fluid3DEffect.cpp">
+      <Filter>Source Files\Display\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\VolumeRenderer.cpp">
+      <Filter>Source Files\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\utilities\D3dIncludes.h">
@@ -350,42 +359,27 @@
     <ClInclude Include="source\display\effects\Fluid2DEffect.h">
       <Filter>Header Files\Display\Effects</Filter>
     </ClInclude>
+    <ClInclude Include="source\display\effects\Fluid3DEffect.h">
+      <Filter>Header Files\Display\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\VolumeRenderer.h">
+      <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="hlsl\pAdvection.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\pBuoyancy.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\pDivergence.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\pImpulse.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\pJacobisolver.psh">
-      <Filter>HLSL</Filter>
-    </None>
     <None Include="hlsl\pOrthocolor.psh">
       <Filter>HLSL</Filter>
     </None>
     <None Include="hlsl\pOrthotexture.psh">
       <Filter>HLSL</Filter>
     </None>
-    <None Include="hlsl\pSubtractgradient.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\pWave_equation.psh">
-      <Filter>HLSL</Filter>
-    </None>
     <None Include="hlsl\vOrthocolor.vsh">
       <Filter>HLSL</Filter>
     </None>
     <None Include="hlsl\vOrthotexture.vsh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\vWave_equation.vsh">
       <Filter>HLSL</Filter>
     </None>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -400,6 +394,9 @@
       <Filter>HLSL</Filter>
     </FxCompile>
     <FxCompile Include="hlsl\cFluid3D.hlsl">
+      <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\cVolumeRender.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
   </ItemGroup>

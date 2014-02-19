@@ -107,13 +107,16 @@
     <ClCompile Include="source\display\D3DShaders\Fluid3DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
     <ClCompile Include="source\display\effects\Fluid2DEffect.cpp" />
+    <ClCompile Include="source\display\effects\Fluid3DEffect.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene2D.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
     <ClCompile Include="source\display\Scenes\Wave2DScene.cpp" />
+    <ClCompile Include="source\display\VolumeRenderer.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\objects\BaseD3DBody.cpp" />
     <ClCompile Include="source\objects\Bounds.cpp" />
@@ -149,8 +152,10 @@
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />
+    <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
     <ClInclude Include="source\display\effects\Fluid2DEffect.h" />
+    <ClInclude Include="source\display\effects\Fluid3DEffect.h" />
     <ClInclude Include="source\display\IFrameBuffer.h" />
     <ClInclude Include="source\display\IGraphicsObject.h" />
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h" />
@@ -159,6 +164,7 @@
     <ClInclude Include="source\display\Scenes\RigidBodyScene2D.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
     <ClInclude Include="source\display\Scenes\Wave2DScene.h" />
+    <ClInclude Include="source\display\VolumeRenderer.h" />
     <ClInclude Include="source\objects\BaseD3DBody.h" />
     <ClInclude Include="source\objects\Bounds.h" />
     <ClInclude Include="source\objects\BoxCollider.h" />
@@ -212,48 +218,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </None>
-    <None Include="hlsl\pWave_equation.psh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WavePixelShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </None>
-    <None Include="hlsl\vWave_equation.vsh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WaveVertexShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="hlsl\pAdvection.psh">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AdvectionPixelShader</EntryPointName>
-    </None>
-    <None Include="hlsl\pJacobisolver.psh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">JacobiPixelShader</EntryPointName>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-    </None>
-    <None Include="hlsl\pImpulse.psh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ImpulsePixelShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </None>
-    <None Include="hlsl\pDivergence.psh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">DivergencePixelShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </None>
-    <None Include="hlsl\pSubtractgradient.psh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">SubtractGradientPixelShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </None>
-    <None Include="hlsl\pBuoyancy.psh">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">BuoyancyPixelShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -278,11 +242,15 @@
       </AssemblerOutputFile>
     </FxCompile>
     <FxCompile Include="hlsl\cFluid3D.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RenderComputeShader</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AdvectComputeShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AdvectComputeShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="hlsl\cVolumeRender.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RenderComputeShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
