@@ -57,7 +57,7 @@ ShaderDescription VolumeRenderShader::GetShaderDescription() {
 	return shaderDescription;
 }
 
-void VolumeRenderShader::SetDynamicBufferValues(const Camera *pCamera, float zoom, Vector3& dimensions) {
+void VolumeRenderShader::SetDynamicBufferValues(Vector3 &position, const Camera *pCamera, float zoom, Vector3& dimensions) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	InputBuffer* dataPtr;
 
@@ -77,9 +77,10 @@ void VolumeRenderShader::SetDynamicBufferValues(const Camera *pCamera, float zoo
 	dataPtr->vDimensions = dimensions;
 	pCamera->GetPosition(dataPtr->vEyePos);
 	dataPtr->fZoom = zoom;
-	pCamera->GetRotationMatrix(dataPtr->mRotationMatrix);
+	dataPtr->vWorldPos = position;
 	dataPtr->padding0 = 0.0f;
-	dataPtr->padding1 = Vector2(0.0f);
+	dataPtr->padding1 = 0.0f;
+	dataPtr->padding2 = Vector2(0.0f);
 
 	context->Unmap(mInputBuffer,0);
 

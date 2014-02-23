@@ -12,10 +12,12 @@ Date: 19/2/2014
 #include "../objects/D2DTexQuad.h"
 
 using namespace std;
+using namespace DirectX;
 
 VolumeRenderer::VolumeRenderer(Vector3 &volumeSize, Vector3 &position) :
- mVolumeSize(volumeSize), mPosition(position), pD3dGraphicsObj(nullptr) {
-
+ mVolumeSize(volumeSize), pD3dGraphicsObj(nullptr) {
+	 mTransform.position = position;
+	 mTransform.scale = Vector3(1.0f);
 }
 
 VolumeRenderer::~VolumeRenderer() {
@@ -36,10 +38,7 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 		return false;
 	}
 
-	result = InitializeRenderQuad(hwnd);
-	if (!result) {
-		return false;
-	}
+	mVolumeBox = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true);
 
 	return true;
 }
@@ -59,7 +58,7 @@ bool VolumeRenderer::InitRenderResult(HWND hwnd) {
 	renderTextureDesc.SampleDesc.Count = 1;
 	renderTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	renderTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-	renderTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	renderTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET;
 	renderTextureDesc.CPUAccessFlags = 0;
 	renderTextureDesc.MiscFlags = 0;
 
@@ -89,23 +88,28 @@ bool VolumeRenderer::InitRenderResult(HWND hwnd) {
 		MessageBox(hwnd, L"Could not create the fluid render UAV", L"Error", MB_OK);
 		return false;
 	}
+	// Create the render target
+	hresult = pD3dGraphicsObj->GetDevice()->CreateRenderTargetView(renderTexture, NULL, &mRenderTarget);
+	if (FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the volume renderer Render Target", L"Error", MB_OK);
+		return false;
+	}
 
 	return true;
 }
 
-bool VolumeRenderer::InitializeRenderQuad(HWND hwnd) {
-	mTexQuad = unique_ptr<D2DTexQuad>(new D2DTexQuad());
-	return mTexQuad->Initialize(pD3dGraphicsObj, hwnd);
-}
-
-bool VolumeRenderer::Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *camera, float zoom, const Matrix* viewMatrix, const Matrix* projMatrix) {
-	mVolumeRenderShader->SetDynamicBufferValues(camera, zoom, mVolumeSize);
+void VolumeRenderer::Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *camera, float zoom, const Matrix* viewMatrix, const Matrix* projMatrix) {
+	float clearCol[4] = {0.0f,0.0f,0.0f,0.0f};
+	pD3dGraphicsObj->GetDeviceContext()->ClearRenderTargetView(mRenderTarget, clearCol);
+	
+	mVolumeRenderShader->SetDynamicBufferValues(mTransform.position, camera, zoom, mVolumeSize);
 	mVolumeRenderShader->Compute(sourceTexSRV,mRenderResult->mUAV);
 
-	mTexQuad->SetTexture(mRenderResult->mSRV);
-	return mTexQuad->Render(viewMatrix, projMatrix);
+	Matrix objectMatrix;
+	mTransform.GetTransformMatrixQuaternion(objectMatrix);
+	mVolumeBox->Draw(objectMatrix, *viewMatrix, *projMatrix, Colors::White, mRenderResult->mSRV);
 }
 
 void VolumeRenderer::SetPosition(Vector3 &position) {
-	mPosition = position;
+	mTransform.position = position;
 }

@@ -82,6 +82,15 @@
     <Filter Include="Source Files\Display\Effects">
       <UniqueIdentifier>{99758131-a269-42fe-9a7b-8e42d437c1cc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HLSL\OrthoTexture">
+      <UniqueIdentifier>{2463a2cf-8a69-42b9-b614-e5b3b5b34934}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL\OrthoColor">
+      <UniqueIdentifier>{70f1a5a8-586e-462c-a036-c0b0d0cae17f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL\VolumeRender">
+      <UniqueIdentifier>{2bdb7fb1-1b55-463b-a0b3-99d175223698}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -368,25 +377,25 @@
     <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
+    <ClInclude Include="source\utilities\AtlInclude.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="hlsl\pOrthocolor.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\pOrthotexture.psh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\vOrthocolor.vsh">
-      <Filter>HLSL</Filter>
-    </None>
-    <None Include="hlsl\vOrthotexture.vsh">
-      <Filter>HLSL</Filter>
-    </None>
     <None Include="hlsl\cWaveEquation.hlsl">
       <Filter>HLSL</Filter>
     </None>
     <None Include="hlsl\pFluid2DTexture.psh">
       <Filter>HLSL</Filter>
+    </None>
+    <None Include="hlsl\vOrthotexture.vsh">
+      <Filter>HLSL\OrthoTexture</Filter>
+    </None>
+    <None Include="hlsl\pOrthocolor.psh">
+      <Filter>HLSL\OrthoColor</Filter>
+    </None>
+    <None Include="hlsl\vOrthocolor.vsh">
+      <Filter>HLSL\OrthoColor</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -398,6 +407,15 @@
     </FxCompile>
     <FxCompile Include="hlsl\cVolumeRender.hlsl">
       <Filter>HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pOrthotexture.psh">
+      <Filter>HLSL\OrthoTexture</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pVolumeRender.psh">
+      <Filter>HLSL\VolumeRender</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\vVolumeRender.vsh">
+      <Filter>HLSL\VolumeRender</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

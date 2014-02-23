@@ -10,16 +10,14 @@ Date: 19/2/2014
 #define _VOLUMERENDERER_H
 
 #include <memory>
-#include <atlbase.h>
-#if defined (_DEBUG)
-#pragma comment(lib,"atlsd.lib")
-#endif
+#include <GeometricPrimitive.h>
+#include "../utilities/AtlInclude.h"
+#include "../objects/Transform.h"
 
 #include "D3DGraphicsObject.h"
 
 class VolumeRenderShader;
 struct ShaderParams;
-class D2DTexQuad;
 class Camera;
 
 class VolumeRenderer {
@@ -28,21 +26,21 @@ public:
 	~VolumeRenderer();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
-	bool Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *camera, float zoom, const Matrix* viewMatrix, const Matrix* projMatrix);
+	void Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *camera, float zoom, const Matrix* viewMatrix, const Matrix* projMatrix);
 
 	void SetPosition(Vector3 &position);
 
 private:
 	bool InitRenderResult(HWND hwnd);
-	bool InitializeRenderQuad(HWND hwnd);
 
 private:
-	Vector3 mPosition;
+	Transform mTransform;
 	Vector3 mVolumeSize;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
-	std::unique_ptr<D2DTexQuad>	mTexQuad;
+	std::unique_ptr<DirectX::GeometricPrimitive> mVolumeBox;
 
+	CComPtr<ID3D11RenderTargetView>	mRenderTarget;
 	unique_ptr<ShaderParams> mRenderResult;
 	std::unique_ptr<VolumeRenderShader>	mVolumeRenderShader;
 };

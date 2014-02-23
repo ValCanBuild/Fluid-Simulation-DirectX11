@@ -11,10 +11,8 @@ Date: 18/2/2014
 
 #include <vector>
 #include <memory>
-#include <atlbase.h>
-#if defined (_DEBUG)
-#pragma comment(lib,"atlsd.lib")
-#endif
+#include "../../utilities/AtlInclude.h"
+
 
 #include "../D3DGraphicsObject.h"
 

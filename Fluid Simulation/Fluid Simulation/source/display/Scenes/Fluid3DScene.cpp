@@ -56,9 +56,9 @@ Fluid3DScene::~Fluid3DScene() {
 bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
 	mCamera = unique_ptr<Camera>(new Camera());	
-	mCamera->SetPosition(0,0,5);
+	mCamera->SetPosition(0,0,-5);
 
-	mContainmentBox = unique_ptr<GeometricPrimitive>(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true).release());
+	mContainmentBox = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true);
 	mFluid3DEffect = unique_ptr<Fluid3DEffect>(new Fluid3DEffect(Vector3(DIM)));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(DIM), Vector3(0.0f)));
 
@@ -99,12 +99,13 @@ void Fluid3DScene::Update(float delta) {
 }
 
 bool Fluid3DScene::Render() {
-	Matrix viewMatrix, projectionMatrix, orthoMatrix;
+	Matrix viewMatrix, projectionMatrix;
 	pD3dGraphicsObj->GetProjectionMatrix(projectionMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
-	pD3dGraphicsObj->GetOrthoMatrix(orthoMatrix);
+	
+	mVolumeRenderer->Render(mFluid3DEffect->GetVolumeTexture(), mCamera.get(), mZoom, &viewMatrix, &projectionMatrix);
 
-	return mVolumeRenderer->Render(mFluid3DEffect->GetVolumeTexture(), mCamera.get(), mZoom, &viewMatrix, &orthoMatrix);
+	return true;
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {

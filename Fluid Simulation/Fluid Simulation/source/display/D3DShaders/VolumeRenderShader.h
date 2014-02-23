@@ -18,7 +18,7 @@ public:
 	VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject);
 	~VolumeRenderShader();
 
-	void SetDynamicBufferValues(const Camera *pCamera, float zoom, Vector3& dimensions);
+	void SetDynamicBufferValues(Vector3 &position, const Camera *pCamera, float zoom, Vector3& dimensions);
 	void Compute(_In_ ID3D11ShaderResourceView* targetToRender, _In_ ID3D11UnorderedAccessView* result);
 
 private:
@@ -32,15 +32,16 @@ private:
 
 	struct InputBuffer {
 		Vector3 vDimensions;	
-		float fZoom;					// 16 bytes
+		float fZoom;					
 
-		Matrix mRotationMatrix;			// 80 bytes
+		Vector3 vWorldPos;				
+		float  padding0;
 
 		Vector3 vEyePos;	
-		float   padding0;
-		UINT  vViewportDimensions[2];	// 100 bytes
+		float   padding1;
+		UINT  vViewportDimensions[2];	
 
-		Vector2 padding1;				// pad do 112 bytes
+		Vector2 padding2;
 	};
 
 	CComPtr<ID3D11Buffer>		mInputBuffer;

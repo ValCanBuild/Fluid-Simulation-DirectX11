@@ -186,6 +186,7 @@
     <ClInclude Include="source\system\MainSystem.h" />
     <ClInclude Include="source\system\ServiceProvider.h" />
     <ClInclude Include="source\utilities\AppTimer.h" />
+    <ClInclude Include="source\utilities\AtlInclude.h" />
     <ClInclude Include="source\utilities\Camera.h" />
     <ClInclude Include="source\utilities\CollisionManager.h" />
     <ClInclude Include="source\utilities\Console.h" />
@@ -198,6 +199,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pFluid2DTexture.psh" />
+    <FxCompile Include="hlsl\pVolumeRender.psh">
+      <FileType>Document</FileType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VolumeRenderPixelShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+    </FxCompile>
     <None Include="hlsl\vOrthocolor.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ColorVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
@@ -208,16 +214,22 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
     </None>
-    <None Include="hlsl\pOrthotexture.psh">
+    <FxCompile Include="hlsl\pOrthotexture.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TexturePixelShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-    </None>
+      <FileType>Document</FileType>
+    </FxCompile>
     <None Include="hlsl\vOrthotexture.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TextureVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </None>
+    <FxCompile Include="hlsl\vVolumeRender.vsh">
+      <FileType>Document</FileType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VolumeRenderVertexShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">

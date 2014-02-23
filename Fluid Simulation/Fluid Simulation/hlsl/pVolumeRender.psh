@@ -1,0 +1,113 @@
+/***************************************************************
+pVolumeRender.hlsl: Renders a 3D texture using ray-marching
+
+Author: Valentin Hinov
+Date: 23/02/2014
+***************************************************************/
+
+// TODO - set these dynamically
+static const float4 vSmokeColor = float4(0, 0, 0, 1);
+static const float fSmokeAbsorption = 60.0f;
+static const int   iNumSamples = 64;
+
+// TODO - setup blending?
+
+// Constant buffers
+cbuffer InputBuffer : register (b0) {
+	float3 vDimensions;			
+	float  padding0;	// 16 bytes
+
+	float3 vEyePos;	
+	float  padding1;	// 32 bytes		
+
+	float3 vTranslate;  
+	float  padding2;	// 48 bytes
+
+	float3 vScale;
+	float  padding3;	// 64 bytes
+};
+
+Texture3D<float> volumeValues : register (t0);
+SamplerState linearSampler : register (s0);
+
+struct PixelInputType {
+	float4 position : SV_POSITION;
+	float3 worldPosition: TEXCOORD0;
+};
+
+struct Ray {
+	float3 origin;
+	float3 dir;
+};
+			
+struct AABB {
+	float3 Min;
+	float3 Max;
+};
+
+// find intersection points of a ray with a box
+bool IntersectBox(Ray r, AABB aabb, out float t0, out float t1) {
+	float3 invR = 1.0f / r.dir;
+	float3 tbot = invR * (aabb.Min-r.origin);
+	float3 ttop = invR * (aabb.Max-r.origin);
+	float3 tmin = min(ttop, tbot);
+	float3 tmax = max(ttop, tbot);
+	float2 t = max(tmin.xx, tmin.yz);
+	t0 = max(t.x, t.y);
+	t = min(tmax.xx, tmax.yz);
+	t1 = min(t.x, t.y);
+	return t0 <= t1;
+}
+
+// TODO - Add bilinear sampling
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+	float3 pos = vEyePos;
+
+	Ray r;
+	r.origin = pos;
+	r.dir = normalize(input.worldPosition - pos);
+
+	AABB aabb;
+	aabb.Min = float3(-0.5f, -0.5f, -0.5f) * vScale + vTranslate;
+	aabb.Max = float3(0.5f, 0.5f, 0.5f) * vScale + vTranslate;
+
+	//figure out where ray from eye hit front of cube
+	float tnear, tfar;
+	IntersectBox(r, aabb, tnear, tfar);
+
+	//if eye is in cube then start ray at eye
+	if (tnear < 0.0f) {
+		tnear = 0.0f;
+	}
+
+	float3 rayStart = r.origin + r.dir * tnear;
+	float3 rayStop = r.origin + r.dir * tfar;
+
+	//convert to texture space
+	rayStart -= vTranslate;
+	rayStop -= vTranslate;
+	rayStart = (rayStart + 0.5f * vScale) / vScale;
+	rayStop = (rayStop + 0.5f * vScale) / vScale;
+
+	float3 start = rayStart;
+	float dist = distance(rayStop, rayStart);
+	float stepSize = dist / float(iNumSamples);
+	float3 ds = normalize(rayStop - rayStart) * stepSize;
+	float alpha = 1.0f;
+
+	for(int i = 0; i < iNumSamples; i++, start += ds) {	 
+		//float D = SampleBilinear(_Density, start, vDimensions);	
+		float D = volumeValues.SampleLevel(linearSampler, start, 0);	
+		alpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
+
+		if (alpha <= 0.01f) {
+			break;
+		}
+	}
+	
+	return vSmokeColor * (1.0f - alpha);
+}
