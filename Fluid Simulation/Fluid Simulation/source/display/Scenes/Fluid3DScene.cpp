@@ -13,31 +13,14 @@ Date: 24/10/2013
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/Camera.h"
 #include "../../system/ServiceProvider.h"
-#include "../../objects/D2DTexQuad.h"
-#include "../../utilities/D3DTexture.h"
 #include "../VolumeRenderer.h"
+#include "../D3DShaders/TextureShader.h"
+#include "../../utilities/D3DTexture.h"
+#include "../simulators/Fluid3DSimulator.h"
+
+using namespace Fluid3D;
 
 #define DIM 80
-
-#define READ 0
-#define WRITE 1
-#define WRITE2 2
-#define WRITE3 3
-
-// Simulation parameters
-#define TIME_STEP 0.125f
-#define IMPULSE_RADIUS 3.0f
-#define INTERACTION_IMPULSE_RADIUS 7.0f
-#define OBSTACLES_IMPULSE_RADIUS 5.0f
-#define JACOBI_ITERATIONS 40
-#define VEL_DISSIPATION 0.999f
-#define DENSITY_DISSIPATION 0.999f
-#define TEMPERATURE_DISSIPATION 0.99f
-#define SMOKE_BUOYANCY 1.0f
-#define SMOKE_WEIGHT 0.05f
-#define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 1.5f
-#define IMPULSE_DENSITY 1.0f
 
 Fluid3DScene::Fluid3DScene() : mPaused(false), mZoom(2.0f) {
 	
@@ -56,10 +39,10 @@ Fluid3DScene::~Fluid3DScene() {
 bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
 	mCamera = unique_ptr<Camera>(new Camera());	
-	mCamera->SetPosition(0,0,-5);
+	mCamera->SetPosition(0,0,-10);
 
 	mContainmentBox = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true);
-	mFluid3DEffect = unique_ptr<Fluid3DEffect>(new Fluid3DEffect(Vector3(DIM)));
+	mFluid3DEffect = unique_ptr<Fluid3DSimulator>(new Fluid3DSimulator(Vector3(DIM)));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(DIM), Vector3(0.0f)));
 
 	bool result = mFluid3DEffect->Initialize(pD3dGraphicsObj, hwnd);
@@ -68,6 +51,18 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	}
 	
 	result = mVolumeRenderer->Initialize(pD3dGraphicsObj, hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mTexture = unique_ptr<D3DTexture>(new D3DTexture());
+	result = mTexture->Initialize(pD3dGraphicsObj->GetDevice(), pD3dGraphicsObj->GetDeviceContext(), L"data/cobbles.jpg", hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mTextureShader = unique_ptr<TextureShader>(new TextureShader());
+	result = mTextureShader->Initialize(pD3dGraphicsObj->GetDevice(), hwnd);
 	if (!result) {
 		return false;
 	}
@@ -102,8 +97,11 @@ bool Fluid3DScene::Render() {
 	Matrix viewMatrix, projectionMatrix;
 	pD3dGraphicsObj->GetProjectionMatrix(projectionMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
+
+	//Matrix worldMatrix = Matrix::Identity();
+	//mContainmentBox->Draw(worldMatrix, viewMatrix, projectionMatrix);
 	
-	mVolumeRenderer->Render(mFluid3DEffect->GetVolumeTexture(), mCamera.get(), mZoom, &viewMatrix, &projectionMatrix);
+	mVolumeRenderer->Render(mFluid3DEffect->GetVolumeTexture(), mCamera.get(), &viewMatrix, &projectionMatrix);
 
 	return true;
 }

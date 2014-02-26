@@ -103,7 +103,7 @@ void MainSystem::Run() {
 		else {			
 			result = Frame();
 
-			if(!result){
+			if(!result) {
 				done = true;
 			}	
 		}

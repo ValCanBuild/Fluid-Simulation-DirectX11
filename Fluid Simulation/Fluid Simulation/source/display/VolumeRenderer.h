@@ -16,6 +16,7 @@ Date: 19/2/2014
 
 #include "D3DGraphicsObject.h"
 
+//class VolumeRenderShader;
 class VolumeRenderShader;
 struct ShaderParams;
 class Camera;
@@ -26,12 +27,9 @@ public:
 	~VolumeRenderer();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
-	void Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *camera, float zoom, const Matrix* viewMatrix, const Matrix* projMatrix);
+	void Render(ID3D11ShaderResourceView *sourceTexSRV, Camera *camera, const Matrix* viewMatrix, const Matrix* projMatrix);
 
 	void SetPosition(Vector3 &position);
-
-private:
-	bool InitRenderResult(HWND hwnd);
 
 private:
 	Transform mTransform;
@@ -40,8 +38,6 @@ private:
 	D3DGraphicsObject* pD3dGraphicsObj;
 	std::unique_ptr<DirectX::GeometricPrimitive> mVolumeBox;
 
-	CComPtr<ID3D11RenderTargetView>	mRenderTarget;
-	unique_ptr<ShaderParams> mRenderResult;
 	std::unique_ptr<VolumeRenderShader>	mVolumeRenderShader;
 };
 

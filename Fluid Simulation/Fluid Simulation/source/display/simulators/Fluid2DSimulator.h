@@ -1,13 +1,14 @@
 /********************************************************************
-Fluid2DEffect.h: Encapsulates a 2D fluid effect being calculated on the
-GPU. Allows for interaction and choosing what fluid property to render.
+Fluid2DSimulator.h: Encapsulates a 2D fluid simulation
+being calculated on the GPU. Allows for interaction and choosing what
+fluid property to render.
 
 Author:	Valentin Hinov
 Date: 18/2/2014
 *********************************************************************/
 
-#ifndef _FLUID2DEFFECT_H
-#define _FLUID2DEFFECT_H
+#ifndef _FLUID2DSIMULATOR_H
+#define _FLUID2DSIMULATOR_H
 
 #include <vector>
 #include <memory>
@@ -36,10 +37,10 @@ class SubtractGradientShader;
 class BuoyancyShader;
 class Fluid2DRenderShader; 
 
-class Fluid2DEffect {
+class Fluid2DSimulator {
 public:
-	Fluid2DEffect();
-	~Fluid2DEffect();
+	Fluid2DSimulator();
+	~Fluid2DSimulator();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
 	void ProcessEffect();

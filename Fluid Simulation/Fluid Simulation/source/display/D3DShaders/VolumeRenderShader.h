@@ -1,6 +1,6 @@
 /*************************************************************
-VolumeRenderShader.h: Implementation of the volume render
-shader
+VolumeRenderShader.h: Implementation of a shader that renders
+a 3d volume texture using raymarching
 
 Author: Valentin Hinov
 Date: 19/02/2014
@@ -11,15 +11,15 @@ Date: 19/02/2014
 #include "BaseD3DShader.h"
 
 class D3DGraphicsObject;
-class Camera;
+class Transform;
 
 class VolumeRenderShader : public BaseD3DShader {
 public:
 	VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject);
 	~VolumeRenderShader();
 
-	void SetDynamicBufferValues(Vector3 &position, const Camera *pCamera, float zoom, Vector3& dimensions);
-	void Compute(_In_ ID3D11ShaderResourceView* targetToRender, _In_ ID3D11UnorderedAccessView* result);
+	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
+	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions, ID3D11ShaderResourceView* volumeValues) const;
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -30,21 +30,27 @@ private:
 
 	CComPtr<ID3D11SamplerState> mSampleState;
 
-	struct InputBuffer {
-		Vector3 vDimensions;	
-		float fZoom;					
-
-		Vector3 vWorldPos;				
-		float  padding0;
-
-		Vector3 vEyePos;	
-		float   padding1;
-		UINT  vViewportDimensions[2];	
-
-		Vector2 padding2;
+	struct VertexInputBuffer {
+		Matrix wvpMatrix;
+		Matrix worldMatrix;
 	};
 
-	CComPtr<ID3D11Buffer>		mInputBuffer;
+	struct PixelInputBuffer {
+		Vector3 vDimensions;			
+		float  padding0;	
+
+		Vector3 vEyePos;	
+		float  padding1;	
+
+		Vector3 vTranslate; 
+		float  padding2;	
+
+		Vector3 vScale;
+		float  padding3;	
+	};
+
+	CComPtr<ID3D11Buffer>		mVertexInputBuffer;
+	CComPtr<ID3D11Buffer>		mPixelInputBuffer;
 };
 
 #endif

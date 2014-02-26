@@ -8,15 +8,11 @@ Date: 24/10/2013
 #ifndef _FLUID3DSCENE_H
 #define _FLUID3DSCENE_H
 
-#include <atlbase.h>
-#if defined (_DEBUG)
-#pragma comment(lib,"atlsd.lib")
-#endif
+#include "../../utilities/AtlInclude.h"
 
 #include <vector>
 #include <memory>
 #include "IScene.h"
-#include "../effects/Fluid3DEffect.h"
 
 #include "GeometricPrimitive.h"
 
@@ -25,8 +21,12 @@ class D3DTexture;
 class Camera;
 class D3DGraphicsObject;
 class VolumeRenderer;
+class TextureShader;
 
-using namespace Fluid3D;
+namespace Fluid3D {
+	class Fluid3DSimulator;
+}
+
 using namespace std;
 using namespace DirectX;
 
@@ -38,7 +38,6 @@ public:
 	bool Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd);
 	void Update(float delta);
 
-
 	bool Render();
 
 private:
@@ -46,11 +45,13 @@ private:
 	void HandleInput();
 
 private:
-	unique_ptr<Fluid3DEffect>			mFluid3DEffect;
+	unique_ptr<Fluid3D::Fluid3DSimulator>			mFluid3DEffect;
 	unique_ptr<VolumeRenderer>			mVolumeRenderer;
 	unique_ptr<Camera>					mCamera;
 	
 	unique_ptr<GeometricPrimitive>		mContainmentBox;
+	unique_ptr<TextureShader>			mTextureShader;
+	unique_ptr<D3DTexture>				mTexture;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 

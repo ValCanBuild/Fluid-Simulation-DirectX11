@@ -13,7 +13,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
 	std::unique_ptr<MainSystem> mainSystem(new MainSystem());
 	
-	ShowWin32Console();
+	//ShowWin32Console();
 
 	if (!mainSystem)
 		return 0;

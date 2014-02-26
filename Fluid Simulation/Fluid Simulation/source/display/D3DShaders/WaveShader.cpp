@@ -73,8 +73,8 @@ void WaveShader::Compute(_In_ D3DGraphicsObject* graphicsObject, const Vector3 &
 
 	int width,height;
 	graphicsObject->GetScreenDimensions(width,height);
-	UINT numThreadX = ceil(width/32.0f);
-	UINT numThreadY = ceil(height/32.0f);
+	UINT numThreadX = (UINT)ceil(width/32.0f);
+	UINT numThreadY = (UINT)ceil(height/32.0f);
 	SetComputeShader(context);
 	context->Dispatch(numThreadX,numThreadY,1);
 

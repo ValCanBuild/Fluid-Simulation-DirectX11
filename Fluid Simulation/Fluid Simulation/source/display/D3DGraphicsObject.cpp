@@ -303,7 +303,7 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 
 	// Create the projection matrix for 3D rendering.
 	mProjectionMatrix = Matrix::CreatePerspectiveFieldOfView(fieldOfView, screenAspect, screenNear, screenDepth);
-
+	
 	// Create an orthographic projection matrix for 2D rendering.
 	mOrthoMatrix = Matrix::CreateOrthographic((float)screenWidth, (float)screenHeight, screenNear, screenDepth);
 

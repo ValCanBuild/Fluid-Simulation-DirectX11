@@ -14,6 +14,7 @@ Version: 1.0
 #pragma comment(lib, "D3DCompiler.lib")
 
 using namespace std;
+using namespace DirectX;
 
 bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	ShaderDescription shaderDesc = GetShaderDescription();	
@@ -91,12 +92,12 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	// Create compute shader if one exists
 	if (shaderDesc.computeShaderDesc.shaderFilename) {
 		CComPtr<ID3D10Blob> computeShaderBuffer;
-
+		
 		result = D3DCompileFromFile(shaderDesc.computeShaderDesc.shaderFilename,nullptr,nullptr,shaderDesc.computeShaderDesc.shaderFunctionName, "cs_5_0",
 											flags, 0, &computeShaderBuffer, &errorMessage);
 
 		if(FAILED(result)) {
-			// If the shader failed to compile it should have writen something to the error message.
+			// If the shader failed to compile it should have written something to the error message.
 			if(errorMessage) {
 				OutputShaderErrorMessage(errorMessage, hwnd, shaderDesc.computeShaderDesc.shaderFilename);
 			}
@@ -120,16 +121,20 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	return true;
 }
 
-void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) const {
+void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) {
 	// Set the vertex input layout.
 	context->IASetInputLayout(mLayout);
 
-	// Set the vertex and pixel shaders that will be used to render this triangle.
-	context->VSSetShader(mVertexShader, NULL, 0);
-	context->PSSetShader(mPixelShader, NULL, 0);
+	Apply(context);
 
 	// Render the triangle.
 	context->DrawIndexed(indexCount, 0, 0);
+}
+
+void BaseD3DShader::Apply(_In_ ID3D11DeviceContext* deviceContext) {
+	// Set the vertex and pixel shaders that will be used to render
+	deviceContext->VSSetShader(mVertexShader, NULL, 0);
+	deviceContext->PSSetShader(mPixelShader, NULL, 0);
 }
 
 void BaseD3DShader::SetComputeShader(ID3D11DeviceContext* context) const {
@@ -164,4 +169,12 @@ void BaseD3DShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd
 
 	// Pop a message up on the screen to notify the user to check the text file for compile errors.
 	MessageBox(hwnd, L"Error compiling shader.  Check shader-error.txt for message.", shaderFilename, MB_OK);
+}
+
+void BaseD3DShader::GetVertexShaderBytecode(_Out_ void const** pShaderByteCode, _Out_ size_t* pByteCodeLength) {
+
+}
+
+ID3D11InputLayout* BaseD3DShader::GetInputLayout() const {
+	return mLayout;
 }

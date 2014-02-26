@@ -1,13 +1,13 @@
 /********************************************************************
-Fluid3DEffect.h: Encapsulates a 3D fluid effect being calculated on the
-GPU.
+Fluid3DSimulator.h: Encapsulates a 3D fluid simulation
+being calculated on the GPU.
 
 Author:	Valentin Hinov
 Date: 18/2/2014
 *********************************************************************/
 
-#ifndef _FLUID3DEFFECT_H
-#define _FLUID3DEFFECT_H
+#ifndef _FLUID3DSIMULATOR_H
+#define _FLUID3DSIMULATOR_H
 
 #include <vector>
 #include <memory>
@@ -30,10 +30,10 @@ class DivergenceShader;
 class SubtractGradientShader;
 class BuoyancyShader;
 
-class Fluid3DEffect {
+class Fluid3DSimulator {
 public:
-	Fluid3DEffect(Vector3 dimensions);
-	~Fluid3DEffect();
+	Fluid3DSimulator(Vector3 dimensions);
+	~Fluid3DSimulator();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
 	void ProcessEffect();

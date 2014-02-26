@@ -13,9 +13,13 @@ Date: 10/09/2013
 #include "../D3DShaders/Fluid2DShaders.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
+#include "../simulators/Fluid2DSimulator.h"
+
 
 #define INTERACTION_IMPULSE_RADIUS 7.0f
 #define OBSTACLES_IMPULSE_RADIUS 5.0f
+
+using namespace Fluid2D;
 
 Fluid2DScene::Fluid2DScene() : 
 	fluidProperty(DENSITY), 
@@ -38,7 +42,7 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	mCamera = unique_ptr<Camera>(new Camera());	
 	mCamera->SetPosition(0,0,0);
 
-	mFluid2DEffect = unique_ptr<Fluid2DEffect>(new Fluid2DEffect());
+	mFluid2DEffect = unique_ptr<Fluid2DSimulator>(new Fluid2DSimulator());
 	bool result = mFluid2DEffect->Initialize(pD3dGraphicsObj, hwnd);
 	if (!result) {
 		return false;

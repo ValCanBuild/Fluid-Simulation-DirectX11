@@ -12,10 +12,8 @@ Version: 1.0
 #define _BASED3DSHADER_H
 
 #include <stdexcept>
-#include <atlbase.h>
-#if defined (_DEBUG)
-#pragma comment(lib,"atlsd.lib")
-#endif
+#include <Effects.h>
+#include "../../utilities/AtlInclude.h"
 
 #include "../../utilities/D3dIncludes.h"
 
@@ -24,7 +22,6 @@ ShaderDescription is a struct every shader must provide in order to be
 properly initialized.
 **/
 struct ShaderDescription {
-
 	struct ShaderFileDescription {
 		WCHAR* shaderFilename;
 		char* shaderFunctionName;
@@ -53,19 +50,26 @@ struct ShaderDescription {
 	}
 };
 
-class BaseD3DShader {
+class BaseD3DShader : public DirectX::IEffect {
 public:
 	BaseD3DShader(){}
 	~BaseD3DShader(){}
 
 	bool Initialize (ID3D11Device* device, HWND hwnd);	
 
+	// IEffect methods.
+	void Apply(_In_ ID3D11DeviceContext* deviceContext) override;
+
+	void GetVertexShaderBytecode(_Out_ void const** pShaderByteCode, _Out_ size_t* pByteCodeLength) override;
+
+	ID3D11InputLayout* GetInputLayout() const;
+
 private:
 	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) const;
 
 protected:
 	// This renders an object using the provided Pixel and Vertex Shaders given the index count
-	void RenderShader(ID3D11DeviceContext* context, int indexCount) const;
+	void RenderShader(ID3D11DeviceContext* context, int indexCount);
 
 	void SetComputeShader(ID3D11DeviceContext* context) const;
 

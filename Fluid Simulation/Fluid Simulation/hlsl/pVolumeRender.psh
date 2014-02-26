@@ -32,7 +32,7 @@ SamplerState linearSampler : register (s0);
 
 struct PixelInputType {
 	float4 position : SV_POSITION;
-	float3 worldPosition: TEXCOORD0;
+	float3 worldPosition : TEXCOORD0;
 };
 
 struct Ray {

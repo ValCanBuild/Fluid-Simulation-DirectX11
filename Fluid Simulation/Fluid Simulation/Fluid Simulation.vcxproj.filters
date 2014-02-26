@@ -76,12 +76,6 @@
     <Filter Include="Source Files\Utilities\Physics">
       <UniqueIdentifier>{defab9d3-c50b-4d21-8ed9-bc7ac8bb2fea}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Display\Effects">
-      <UniqueIdentifier>{7db29ae7-3f53-4aca-8cda-cb163d699f27}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Display\Effects">
-      <UniqueIdentifier>{99758131-a269-42fe-9a7b-8e42d437c1cc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HLSL\OrthoTexture">
       <UniqueIdentifier>{2463a2cf-8a69-42b9-b614-e5b3b5b34934}</UniqueIdentifier>
     </Filter>
@@ -90,6 +84,15 @@
     </Filter>
     <Filter Include="HLSL\VolumeRender">
       <UniqueIdentifier>{2bdb7fb1-1b55-463b-a0b3-99d175223698}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\Simulators">
+      <UniqueIdentifier>{99758131-a269-42fe-9a7b-8e42d437c1cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Display\Simulators">
+      <UniqueIdentifier>{7db29ae7-3f53-4aca-8cda-cb163d699f27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL\Texture">
+      <UniqueIdentifier>{fb801e2d-b96f-4b8b-bbf9-6e1ff76ab865}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -207,17 +210,23 @@
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\effects\Fluid2DEffect.cpp">
-      <Filter>Source Files\Display\Effects</Filter>
-    </ClCompile>
-    <ClCompile Include="source\display\effects\Fluid3DEffect.cpp">
-      <Filter>Source Files\Display\Effects</Filter>
-    </ClCompile>
     <ClCompile Include="source\display\VolumeRenderer.cpp">
       <Filter>Source Files\Display</Filter>
     </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\TextureShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\GeometryBuilder.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
     <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\simulators\Fluid2DSimulator.cpp">
+      <Filter>Source Files\Display\Simulators</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\simulators\Fluid3DSimulator.cpp">
+      <Filter>Source Files\Display\Simulators</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -365,20 +374,26 @@
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\effects\Fluid2DEffect.h">
-      <Filter>Header Files\Display\Effects</Filter>
-    </ClInclude>
-    <ClInclude Include="source\display\effects\Fluid3DEffect.h">
-      <Filter>Header Files\Display\Effects</Filter>
-    </ClInclude>
     <ClInclude Include="source\display\VolumeRenderer.h">
       <Filter>Header Files\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AtlInclude.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\TextureShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\GeometryBuilder.h">
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\utilities\AtlInclude.h">
-      <Filter>Header Files\Utilities</Filter>
+    <ClInclude Include="source\display\simulators\Fluid2DSimulator.h">
+      <Filter>Header Files\Display\Simulators</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\simulators\Fluid3DSimulator.h">
+      <Filter>Header Files\Display\Simulators</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -416,6 +431,12 @@
     </FxCompile>
     <FxCompile Include="hlsl\vVolumeRender.vsh">
       <Filter>HLSL\VolumeRender</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\pTexture.psh">
+      <Filter>HLSL\Texture</Filter>
+    </FxCompile>
+    <FxCompile Include="hlsl\vTexture.vsh">
+      <Filter>HLSL\Texture</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

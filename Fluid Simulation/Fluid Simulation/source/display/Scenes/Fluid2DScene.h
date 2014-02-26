@@ -8,19 +8,20 @@ Date: 10/09/2013
 #ifndef _FLUID2DSCENE_H
 #define _FLUID2DSCENE_H
 
-#include <atlbase.h>
-#if defined (_DEBUG)
-#pragma comment(lib,"atlsd.lib")
-#endif
+#include "../../utilities/AtlInclude.h"
 
 #include <vector>
 #include <memory>
 #include "IScene.h"
-#include "../effects/Fluid2DEffect.h"
 
 using namespace std;
-using namespace Fluid2D;
 
+namespace Fluid2D
+{
+	class Fluid2DSimulator;
+}
+
+enum FluidPropertyType_t;
 class D2DTexQuad;
 class Camera;
 class D3DGraphicsObject;
@@ -41,7 +42,7 @@ private:
 private:
 	TwBar *mTwBar;
 
-	unique_ptr<Fluid2DEffect>			mFluid2DEffect;
+	unique_ptr<Fluid2D::Fluid2DSimulator>			mFluid2DEffect;
 	unique_ptr<Camera>					mCamera;
 
 	D3DGraphicsObject* pD3dGraphicsObj;

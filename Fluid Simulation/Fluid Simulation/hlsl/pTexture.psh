@@ -1,0 +1,17 @@
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+	float4 position : SV_POSITION;
+	float2 texC : TEXCOORD0;
+};
+
+Texture2D shaderTexture;
+SamplerState SampleType;
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 TexturePixelShader(PixelInputType input) : SV_TARGET {
+	return shaderTexture.Sample(SampleType, input.texC);
+}

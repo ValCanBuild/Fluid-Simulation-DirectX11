@@ -45,6 +45,7 @@ void Camera::Update() {
 
 	// Finally create the view matrix from the three updated vectors.
 	mViewMatrix = Matrix::CreateLookAt(mPosition, mTarget, mUp);
+
 }
 
 void Camera::MoveFacing(float forwardAmount, float rightAmount) {
