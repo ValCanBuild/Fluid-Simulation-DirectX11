@@ -13,13 +13,11 @@ Date: 02/12/2013
 
 #include "Transform.h"
 #include "Bounds.h"
-#include "RigidBody2D.h"
 
 class GameObject {
 public:
 	std::shared_ptr<Transform>		transform;
 	std::shared_ptr<Bounds>			bounds;
-	std::shared_ptr<RigidBody2D>	rigidBody2D;
 
 	GameObject() {
 	}

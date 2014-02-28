@@ -112,7 +112,6 @@
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
-    <ClCompile Include="source\display\Scenes\RigidBodyScene2D.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
     <ClCompile Include="source\display\Scenes\Wave2DScene.cpp" />
     <ClCompile Include="source\display\simulators\Fluid2DSimulator.cpp" />
@@ -125,10 +124,7 @@
     <ClCompile Include="source\objects\Collider.cpp" />
     <ClCompile Include="source\objects\Component.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
-    <ClCompile Include="source\objects\D2DParticle.cpp" />
-    <ClCompile Include="source\objects\D2DSprite.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
-    <ClCompile Include="source\objects\RigidBody2D.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
@@ -162,7 +158,6 @@
     <ClInclude Include="source\display\Scenes\Fluid2DScene.h" />
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h" />
     <ClInclude Include="source\display\Scenes\IScene.h" />
-    <ClInclude Include="source\display\Scenes\RigidBodyScene2D.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
     <ClInclude Include="source\display\Scenes\Wave2DScene.h" />
     <ClInclude Include="source\display\simulators\Fluid2DSimulator.h" />
@@ -174,12 +169,9 @@
     <ClInclude Include="source\objects\Collider.h" />
     <ClInclude Include="source\objects\Component.h" />
     <ClInclude Include="source\objects\D2DColorQuad.h" />
-    <ClInclude Include="source\objects\D2DParticle.h" />
-    <ClInclude Include="source\objects\D2DSprite.h" />
     <ClInclude Include="source\objects\D2DTexQuad.h" />
     <ClInclude Include="source\objects\GameObject.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
-    <ClInclude Include="source\objects\RigidBody2D.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\system\GraphicsSystemImpl.h" />
