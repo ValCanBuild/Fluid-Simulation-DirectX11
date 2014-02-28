@@ -7,6 +7,8 @@ Date: 19/2/2014
 *********************************************************************/
 
 #include "VolumeRenderer.h"
+#include <CommonStates.h>
+#include "../system/ServiceProvider.h"
 #include "D3DShaders/VolumeRenderShader.h"
 #include "D3DShaders/ShaderParams.h"
 #include "../utilities/Camera.h"
@@ -35,6 +37,8 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 
 	mVolumeBox = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true);
 
+	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
+
 	return true;
 }
 
@@ -49,7 +53,17 @@ void VolumeRenderer::Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *cam
 	mVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
 	mVolumeRenderShader->SetPixelBufferValues(mTransform, camPos, mVolumeSize, sourceTexSRV);
 
-	mVolumeBox->Draw(mVolumeRenderShader.get(), mVolumeRenderShader->GetInputLayout(), true);
+	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+
+	mVolumeBox->Draw(mVolumeRenderShader.get(), mVolumeRenderShader->GetInputLayout(), false, false, [=] 
+		{
+			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
+			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
+
+			context->OMSetBlendState(blendState, nullptr, 0xFFFFFFFF);
+			context->RSSetState(rasterizeState);
+		}
+	);
 }
 
 void VolumeRenderer::SetPosition(Vector3 &position) {

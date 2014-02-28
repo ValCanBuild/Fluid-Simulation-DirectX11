@@ -16,12 +16,10 @@ Date: 24/10/2013
 
 #include "GeometricPrimitive.h"
 
-class D2DTexQuad;
-class D3DTexture;
 class Camera;
 class D3DGraphicsObject;
 class VolumeRenderer;
-class TextureShader;
+class InputSystem;
 
 namespace Fluid3D {
 	class Fluid3DSimulator;
@@ -45,20 +43,18 @@ private:
 	void HandleInput();
 
 private:
-	unique_ptr<Fluid3D::Fluid3DSimulator>			mFluid3DEffect;
+	unique_ptr<Fluid3D::Fluid3DSimulator>	mFluid3DEffect;
 	unique_ptr<VolumeRenderer>			mVolumeRenderer;
 	unique_ptr<Camera>					mCamera;
 	
-	unique_ptr<GeometricPrimitive>		mContainmentBox;
-	unique_ptr<TextureShader>			mTextureShader;
-	unique_ptr<D3DTexture>				mTexture;
+	unique_ptr<GeometricPrimitive>		mPlane;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	TwBar *mTwBar;
+	InputSystem *pInputSystem;
 
 	bool mPaused;
-	float mZoom;
 };
 
 #endif

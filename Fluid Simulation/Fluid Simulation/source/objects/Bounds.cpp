@@ -78,15 +78,11 @@ const Vector3 &Bounds::GetExtents() const {
 }
 
 const BoundingBox * const Bounds::GetBoundingBox() const {
-	if (mBoundsType != BOUNDS_TYPE_BOX) {
-		return nullptr;
-	}
+	assert (mBoundsType == BOUNDS_TYPE_BOX);
 	return static_cast<BoundingBox*>(mBoundingShape);
 }
 
 const BoundingSphere * const Bounds::GetBoundingSphere() const {
-	if (mBoundsType != BOUNDS_TYPE_SPHERE) {
-		return nullptr;
-	}
+	assert (mBoundsType == BOUNDS_TYPE_SPHERE);
 	return static_cast<BoundingSphere*>(mBoundingShape);
 }

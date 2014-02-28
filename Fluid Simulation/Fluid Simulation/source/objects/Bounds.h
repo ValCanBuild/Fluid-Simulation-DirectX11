@@ -17,7 +17,7 @@ enum BoundsType_t {
 	BOUNDS_TYPE_BOX
 };
 
-class Bounds : public Component{
+class Bounds : public Component {
 public:
 	// Bounds information is automatically taken from game object unless provided
 	Bounds(const GameObject * const gameObject, BoundsType_t boundsType);

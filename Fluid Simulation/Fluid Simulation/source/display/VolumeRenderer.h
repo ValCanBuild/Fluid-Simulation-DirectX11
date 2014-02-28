@@ -16,10 +16,14 @@ Date: 19/2/2014
 
 #include "D3DGraphicsObject.h"
 
-//class VolumeRenderShader;
 class VolumeRenderShader;
 struct ShaderParams;
 class Camera;
+
+namespace DirectX 
+{
+	class CommonStates;
+}
 
 class VolumeRenderer {
 public:
@@ -31,6 +35,7 @@ public:
 
 	void SetPosition(Vector3 &position);
 
+
 private:
 	Transform mTransform;
 	Vector3 mVolumeSize;
@@ -38,6 +43,7 @@ private:
 	D3DGraphicsObject* pD3dGraphicsObj;
 	std::unique_ptr<DirectX::GeometricPrimitive> mVolumeBox;
 
+	std::shared_ptr<DirectX::CommonStates>	pCommonStates;
 	std::unique_ptr<VolumeRenderShader>	mVolumeRenderShader;
 };
 

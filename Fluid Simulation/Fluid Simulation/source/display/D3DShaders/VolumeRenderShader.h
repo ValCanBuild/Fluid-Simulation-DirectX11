@@ -28,8 +28,6 @@ private:
 private:
 	const D3DGraphicsObject * pD3dGraphicsObject;
 
-	CComPtr<ID3D11SamplerState> mSampleState;
-
 	struct VertexInputBuffer {
 		Matrix wvpMatrix;
 		Matrix worldMatrix;

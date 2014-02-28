@@ -82,13 +82,13 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	TwInit(TW_DIRECT3D11, d3dObject->GetDevice());
 	TwWindowSize(screenWidth,screenHeight);
 
-	// Initialize current scene
-	ResetScene();
-
 	// Initialize font
 	mSpriteBatch = unique_ptr<SpriteBatch>(new SpriteBatch(d3dObject->GetDeviceContext()));
 	mSpriteFont = shared_ptr<SpriteFont>(new SpriteFont(d3dObject->GetDevice(), L"data/TBNA.spritefont"));
 	mCommonStates = shared_ptr<CommonStates>(new CommonStates(d3dObject->GetDevice()));
+
+	// Initialize current scene
+	ResetScene();
 
 	// Initialize the main tweak bar
 	TwBar *twBar;
