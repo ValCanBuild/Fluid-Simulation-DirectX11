@@ -83,7 +83,7 @@ bool D2DColorQuad::Initialize(IGraphicsObject* graphicsObject, HWND hwnd) {
 bool D2DColorQuad::Render(const Matrix* viewMatrix, const Matrix* projMatrix) {
 	mRenderer->RenderBuffers(pD3dGraphicsObj->GetDeviceContext());
 	Matrix transformMatrix;
-	mTransform.GetTransformMatrix(transformMatrix);
+	mTransform.GetTransformMatrixQuaternion(transformMatrix);
 	return mShader->Render(pD3dGraphicsObj->GetDeviceContext(),mRenderer->GetIndexCount(), &transformMatrix);
 }
 

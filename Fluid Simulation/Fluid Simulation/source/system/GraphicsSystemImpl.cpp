@@ -62,8 +62,9 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 		mGraphicsObj = unique_ptr<IGraphicsObject>(new D3DGraphicsObject());
 	#endif
 
-	if (!mGraphicsObj)
+	if (!mGraphicsObj) {
 		return false;
+	}
 
 	Screen::width = screenWidth;
 	Screen::height = screenHeight;

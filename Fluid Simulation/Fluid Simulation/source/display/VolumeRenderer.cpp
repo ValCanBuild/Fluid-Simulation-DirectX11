@@ -9,17 +9,21 @@ Date: 19/2/2014
 #include "VolumeRenderer.h"
 #include <CommonStates.h>
 #include "../system/ServiceProvider.h"
-#include "D3DShaders/VolumeRenderShader.h"
 #include "D3DShaders/ShaderParams.h"
 #include "../utilities/Camera.h"
+#include "D3DShaders/VolumeRenderShader.h"
 
 using namespace std;
 using namespace DirectX;
 
-VolumeRenderer::VolumeRenderer(Vector3 &volumeSize, Vector3 &position) :
- mVolumeSize(volumeSize), pD3dGraphicsObj(nullptr) {
-	 mTransform.position = position;
-	 mTransform.scale = Vector3(1.0f);
+static std::unique_ptr<VolumeRenderShader>	sharedVolumeRenderShader;
+
+VolumeRenderer::VolumeRenderer(ID3D11DeviceContext *pContext, Vector3 &volumeSize) :
+	PrimitiveGameObject(GeometricPrimitive::CreateCube(pContext, 1.0f, true)),
+	mVolumeSize(volumeSize), 
+	pD3dGraphicsObj(nullptr) 
+{
+	 
 }
 
 VolumeRenderer::~VolumeRenderer() {
@@ -29,33 +33,33 @@ VolumeRenderer::~VolumeRenderer() {
 bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
 	pD3dGraphicsObj = d3dGraphicsObj;
 
-	mVolumeRenderShader = unique_ptr<VolumeRenderShader>(new VolumeRenderShader(d3dGraphicsObj));
-	bool result = mVolumeRenderShader->Initialize(d3dGraphicsObj->GetDevice(), hwnd);
-	if (!result) {
-		return false;
+	if (sharedVolumeRenderShader == nullptr) {
+		sharedVolumeRenderShader = unique_ptr<VolumeRenderShader>(new VolumeRenderShader(d3dGraphicsObj));
+		bool result = sharedVolumeRenderShader->Initialize(d3dGraphicsObj->GetDevice(), hwnd);
+		if (!result) {
+			return false;
+		}
 	}
-
-	mVolumeBox = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true);
 
 	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
 
 	return true;
 }
 
-void VolumeRenderer::Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *camera, const Matrix* viewMatrix, const Matrix* projMatrix) {
+void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) {
 	Matrix objectMatrix;
-	mTransform.GetTransformMatrixQuaternion(objectMatrix);
+	transform->GetTransformMatrixQuaternion(objectMatrix);
 
 	Vector3 camPos;
-	camera->GetPosition(camPos);
+	pCamera->GetPosition(camPos);
 
-	Matrix wvpMatrix = objectMatrix*(*viewMatrix)*(*projMatrix);
-	mVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
-	mVolumeRenderShader->SetPixelBufferValues(mTransform, camPos, mVolumeSize, sourceTexSRV);
+	Matrix wvpMatrix = objectMatrix*viewMatrix*projectionMatrix;
+	sharedVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
+	sharedVolumeRenderShader->SetPixelBufferValues(*transform, camPos, mVolumeSize, pSourceTexSRV);
 
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
-	mVolumeBox->Draw(mVolumeRenderShader.get(), mVolumeRenderShader->GetInputLayout(), false, false, [=] 
+	primitive->Draw(sharedVolumeRenderShader.get(), sharedVolumeRenderShader->GetInputLayout(), false, false, [=] 
 		{
 			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
 			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
@@ -66,6 +70,10 @@ void VolumeRenderer::Render(ID3D11ShaderResourceView * sourceTexSRV, Camera *cam
 	);
 }
 
-void VolumeRenderer::SetPosition(Vector3 &position) {
-	mTransform.position = position;
+void VolumeRenderer::SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV) {
+	pSourceTexSRV = sourceTexSRV;
+}
+
+void VolumeRenderer::SetCamera(Camera *camera) {
+	pCamera = camera;
 }

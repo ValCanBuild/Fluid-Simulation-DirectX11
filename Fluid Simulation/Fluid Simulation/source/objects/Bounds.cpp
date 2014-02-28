@@ -64,7 +64,8 @@ void Bounds::UpdateExtents(Vector3 &extents) {
 }
 
 void Bounds::Update() {
-	shared_ptr<Transform> transform = GetGameObject()->transform;
+	const GameObject *gameObject = GetGameObject();
+	shared_ptr<Transform> transform = gameObject->transform;
 	if (mCenter != transform->position) {
 		UpdateCenter(transform->position);
 	}

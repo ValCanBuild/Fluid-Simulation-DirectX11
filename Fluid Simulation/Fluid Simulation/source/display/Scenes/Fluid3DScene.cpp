@@ -33,23 +33,29 @@ Fluid3DScene::~Fluid3DScene() {
 
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
+
+	mPrimitiveObjects.clear();
 }
 
 bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
 	mCamera = unique_ptr<Camera>(new Camera());	
-	mCamera->SetPosition(0,0,-10);
+	mCamera->SetPosition(0,0.5f,-6);
 
-	mPlane = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true);
 	mFluid3DEffect = unique_ptr<Fluid3DSimulator>(new Fluid3DSimulator(Vector3(DIM)));
-	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(DIM), Vector3(0.0f)));
+
+	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
+	planeObject.transform->position = Vector3(0.0f,0.0f,0.0f);
+	planeObject.transform->scale = Vector3(70.0f,0.1f,70.0f);
+
+	mPrimitiveObjects.push_back(planeObject);
 
 	bool result = mFluid3DEffect->Initialize(pD3dGraphicsObj, hwnd);
 	if (!result) {
 		return false;
 	}
 	
-	result = mVolumeRenderer->Initialize(pD3dGraphicsObj, hwnd);
+	result = InitVolumeRenderers(hwnd);
 	if (!result) {
 		return false;
 	}
@@ -78,6 +84,10 @@ void Fluid3DScene::Update(float delta) {
 	UpdateCamera(delta);
 	HandleInput();
 
+	for (PrimitiveGameObject &object : mPrimitiveObjects) {
+		object.Update();
+	}
+
 	if (!mPaused) {
 		mFluid3DEffect->ProcessEffect();
 	}
@@ -87,8 +97,12 @@ bool Fluid3DScene::Render() {
 	Matrix viewMatrix, projectionMatrix;
 	pD3dGraphicsObj->GetProjectionMatrix(projectionMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
+
+	for (PrimitiveGameObject &object : mPrimitiveObjects) {
+		object.Render(viewMatrix, projectionMatrix);
+	}
 	
-	mVolumeRenderer->Render(mFluid3DEffect->GetVolumeTexture(), mCamera.get(), &viewMatrix, &projectionMatrix);
+	mVolumeRenderer->Render(viewMatrix, projectionMatrix);
 
 	return true;
 }
@@ -130,4 +144,19 @@ void Fluid3DScene::UpdateCamera(float delta) {
 
 void Fluid3DScene::HandleInput() {
 
+}
+
+bool Fluid3DScene::InitVolumeRenderers(HWND hwnd) {
+	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(pD3dGraphicsObj->GetDeviceContext(), Vector3(DIM)));
+	mVolumeRenderer->transform->position.y = 0.57f;
+
+	bool result = mVolumeRenderer->Initialize(pD3dGraphicsObj, hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mVolumeRenderer->SetCamera(mCamera.get());
+	mVolumeRenderer->SetSourceTexture(mFluid3DEffect->GetVolumeTexture());
+
+	return true;
 }

@@ -125,6 +125,7 @@
     <ClCompile Include="source\objects\Component.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
+    <ClCompile Include="source\objects\PrimitiveGameObject.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="source\objects\D2DTexQuad.h" />
     <ClInclude Include="source\objects\GameObject.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
+    <ClInclude Include="source\objects\PrimitiveGameObject.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\system\GraphicsSystemImpl.h" />

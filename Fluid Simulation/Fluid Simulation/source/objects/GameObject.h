@@ -1,6 +1,6 @@
 /***************************************************************
 GameObject.h: A base game object class that is a container of
-components
+basic components
 
 Author: Valentin Hinov
 Date: 02/12/2013
@@ -22,7 +22,7 @@ public:
 	GameObject() {
 	}
 
-	~GameObject() {
+	virtual ~GameObject() {
 	}
 };
 

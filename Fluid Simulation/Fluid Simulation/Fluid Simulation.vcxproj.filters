@@ -216,6 +216,9 @@
     <ClCompile Include="source\display\simulators\Fluid3DSimulator.cpp">
       <Filter>Source Files\Display\Simulators</Filter>
     </ClCompile>
+    <ClCompile Include="source\objects\PrimitiveGameObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\utilities\D3dIncludes.h">
@@ -370,6 +373,9 @@
     </ClInclude>
     <ClInclude Include="source\display\simulators\Fluid3DSimulator.h">
       <Filter>Header Files\Display\Simulators</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\PrimitiveGameObject.h">
+      <Filter>Header Files\Objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

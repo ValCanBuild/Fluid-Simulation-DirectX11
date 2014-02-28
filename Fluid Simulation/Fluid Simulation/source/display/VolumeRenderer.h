@@ -9,14 +9,12 @@ Date: 19/2/2014
 #ifndef _VOLUMERENDERER_H
 #define _VOLUMERENDERER_H
 
-#include <memory>
-#include <GeometricPrimitive.h>
-#include "../utilities/AtlInclude.h"
-#include "../objects/Transform.h"
+#include "../objects/PrimitiveGameObject.h"
 
+#include <memory>
+#include "../utilities/AtlInclude.h"
 #include "D3DGraphicsObject.h"
 
-class VolumeRenderShader;
 struct ShaderParams;
 class Camera;
 
@@ -25,26 +23,25 @@ namespace DirectX
 	class CommonStates;
 }
 
-class VolumeRenderer {
+class VolumeRenderer : public PrimitiveGameObject {
 public:
-	VolumeRenderer(Vector3 &volumeSize, Vector3 &position);
 	~VolumeRenderer();
+	VolumeRenderer(ID3D11DeviceContext *pContext, Vector3 &volumeSize);
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
-	void Render(ID3D11ShaderResourceView *sourceTexSRV, Camera *camera, const Matrix* viewMatrix, const Matrix* projMatrix);
+	void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix);
 
-	void SetPosition(Vector3 &position);
+	void SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV);
+	void SetCamera(Camera *camera);
 
-
-private:
-	Transform mTransform;
+private:	
 	Vector3 mVolumeSize;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
-	std::unique_ptr<DirectX::GeometricPrimitive> mVolumeBox;
+	ID3D11ShaderResourceView *pSourceTexSRV;
+	Camera *pCamera;
 
-	std::shared_ptr<DirectX::CommonStates>	pCommonStates;
-	std::unique_ptr<VolumeRenderShader>	mVolumeRenderShader;
+	std::shared_ptr<DirectX::CommonStates>	pCommonStates;	
 };
 
 #endif

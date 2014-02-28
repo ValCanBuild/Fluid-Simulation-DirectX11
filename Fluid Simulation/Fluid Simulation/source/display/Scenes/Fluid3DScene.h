@@ -13,8 +13,7 @@ Date: 24/10/2013
 #include <vector>
 #include <memory>
 #include "IScene.h"
-
-#include "GeometricPrimitive.h"
+#include "../../objects/PrimitiveGameObject.h"
 
 class Camera;
 class D3DGraphicsObject;
@@ -34,11 +33,12 @@ public:
 	~Fluid3DScene();
 
 	bool Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd);
-	void Update(float delta);
 
+	void Update(float delta);
 	bool Render();
 
 private:
+	bool InitVolumeRenderers(HWND hwnd);
 	void UpdateCamera(float delta);
 	void HandleInput();
 
@@ -47,7 +47,7 @@ private:
 	unique_ptr<VolumeRenderer>			mVolumeRenderer;
 	unique_ptr<Camera>					mCamera;
 	
-	unique_ptr<GeometricPrimitive>		mPlane;
+	vector<PrimitiveGameObject>			mPrimitiveObjects;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
