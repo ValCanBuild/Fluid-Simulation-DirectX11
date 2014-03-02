@@ -20,7 +20,7 @@ using namespace Fluid3D;
 
 #define DIM 80
 
-Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr) {
+Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), pBoundingFrustum(nullptr) {
 	
 }
 
@@ -33,18 +33,21 @@ Fluid3DScene::~Fluid3DScene() {
 
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
-
+	pBoundingFrustum = nullptr;
 	mPrimitiveObjects.clear();
+	mVolumeRenderers.clear();
 }
 
 bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
-	mCamera = unique_ptr<Camera>(new Camera());	
-	mCamera->SetPosition(0,0.5f,-6);
+
+	InitCamera();
+
+	pBoundingFrustum = mCamera->GetBoundingFrustum();
 
 	mFluid3DEffect = unique_ptr<Fluid3DSimulator>(new Fluid3DSimulator(Vector3(DIM)));
 
-	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, true));
+	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false));
 	planeObject.transform->position = Vector3(0.0f,0.0f,0.0f);
 	planeObject.transform->scale = Vector3(70.0f,0.1f,70.0f);
 
@@ -61,7 +64,6 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	}
 
 	pInputSystem = ServiceProvider::Instance().GetInputSystem();
-
 
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar("3D Fluid Simulation");
@@ -84,27 +86,50 @@ void Fluid3DScene::Update(float delta) {
 	UpdateCamera(delta);
 	HandleInput();
 
+	mNumFluidsUpdating = 0;
+
 	for (PrimitiveGameObject &object : mPrimitiveObjects) {
 		object.Update();
 	}
 
+	for (shared_ptr<VolumeRenderer> volumeRenderer : mVolumeRenderers) {
+		volumeRenderer->Update();
+	}
+
 	if (!mPaused) {
 		mFluid3DEffect->ProcessEffect();
+		++mNumFluidsUpdating;
 	}
 }
 
 bool Fluid3DScene::Render() {
+	mNumRenderedFluids = 0;
 	Matrix viewMatrix, projectionMatrix;
-	pD3dGraphicsObj->GetProjectionMatrix(projectionMatrix);
+	mCamera->GetProjectionMatrix(projectionMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
 
 	for (PrimitiveGameObject &object : mPrimitiveObjects) {
 		object.Render(viewMatrix, projectionMatrix);
 	}
-	
-	mVolumeRenderer->Render(viewMatrix, projectionMatrix);
+
+	for (shared_ptr<VolumeRenderer> volumeRenderer : mVolumeRenderers) {
+		const BoundingBox *boundingBox = volumeRenderer->bounds->GetBoundingBox();
+		ContainmentType cType = pBoundingFrustum->Contains(*boundingBox);
+		if (cType != DISJOINT) {
+			volumeRenderer->Render(viewMatrix, projectionMatrix);
+			++mNumRenderedFluids;
+		}
+	}	
 
 	return true;
+}
+
+void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont) {
+	wstring text = L"Fluids Rendered: " + std::to_wstring(mNumRenderedFluids);
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
+
+	text = L"Fluids Updating: " + std::to_wstring(mNumFluidsUpdating);
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {
@@ -121,10 +146,10 @@ void Fluid3DScene::UpdateCamera(float delta) {
 		forwardAmount -= delta;
 	}
 	if (pInputSystem->IsKeyDown('A')) {
-		rightAmount += delta;
+		rightAmount -= delta;
 	}
 	else if (pInputSystem->IsKeyDown('D')) {
-		rightAmount -= delta;
+		rightAmount += delta;
 	}
 
 	if (forwardAmount != 0.0f || rightAmount != 0.0f) {
@@ -136,7 +161,7 @@ void Fluid3DScene::UpdateCamera(float delta) {
 		int xDelta,yDelta;
 		float mouseSensitivity = 0.003f;
 		pInputSystem->GetMouseDelta(xDelta,yDelta);
-		mCamera->AddYawPitchRoll(-xDelta*mouseSensitivity,yDelta*mouseSensitivity,0.0f);
+		mCamera->AddYawPitchRoll(xDelta*mouseSensitivity,yDelta*mouseSensitivity,0.0f);
 	}
 
 	mCamera->Update();
@@ -147,16 +172,32 @@ void Fluid3DScene::HandleInput() {
 }
 
 bool Fluid3DScene::InitVolumeRenderers(HWND hwnd) {
-	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(pD3dGraphicsObj->GetDeviceContext(), Vector3(DIM)));
-	mVolumeRenderer->transform->position.y = 0.57f;
+	shared_ptr<VolumeRenderer> volumeRenderer(new VolumeRenderer(pD3dGraphicsObj->GetDeviceContext(), Vector3(DIM)));
+	volumeRenderer->transform->position.y = 0.57f;
 
-	bool result = mVolumeRenderer->Initialize(pD3dGraphicsObj, hwnd);
-	if (!result) {
-		return false;
+	volumeRenderer->SetCamera(mCamera.get());
+	volumeRenderer->SetSourceTexture(mFluid3DEffect->GetVolumeTexture());
+
+	mVolumeRenderers.push_back(volumeRenderer);
+
+	for (shared_ptr<VolumeRenderer> volRenderer : mVolumeRenderers) {
+		bool result = volRenderer->Initialize(pD3dGraphicsObj, hwnd);
+		if (!result) {
+			return false;
+		}
 	}
 
-	mVolumeRenderer->SetCamera(mCamera.get());
-	mVolumeRenderer->SetSourceTexture(mFluid3DEffect->GetVolumeTexture());
-
 	return true;
+}
+
+void Fluid3DScene::InitCamera() {
+	float nearVal, farVal;
+	pD3dGraphicsObj->GetScreenDepthInfo(nearVal, farVal);
+	int screenWidth, screenHeight;
+	pD3dGraphicsObj->GetScreenDimensions(screenWidth, screenHeight);
+	float fieldOfView = (float)PI / 4.0f;
+	float screenAspect = (float)screenWidth / (float)screenHeight;
+
+	mCamera = Camera::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
+	mCamera->SetPosition(0,0.5f,-6);
 }

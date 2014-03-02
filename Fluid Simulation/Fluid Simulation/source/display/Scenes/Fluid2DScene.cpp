@@ -9,7 +9,6 @@ Date: 10/09/2013
 #include "Fluid2DScene.h"
 
 #include "../D3DGraphicsObject.h"
-#include "../../utilities/Camera.h"
 #include "../D3DShaders/Fluid2DShaders.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
@@ -39,8 +38,6 @@ Fluid2DScene::~Fluid2DScene() {
 
 bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
-	mCamera = unique_ptr<Camera>(new Camera());	
-	mCamera->SetPosition(0,0,0);
 
 	mFluid2DEffect = unique_ptr<Fluid2DSimulator>(new Fluid2DSimulator());
 	bool result = mFluid2DEffect->Initialize(pD3dGraphicsObj, hwnd);
@@ -66,8 +63,6 @@ bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 void Fluid2DScene::Update(float delta) {
-	mCamera->Update();
-
 	HandleInput();
 
 	if (!mPaused) {
@@ -76,9 +71,8 @@ void Fluid2DScene::Update(float delta) {
 }
 
 bool Fluid2DScene::Render() {
-	Matrix viewMatrix, orthoMatrix;
+	Matrix orthoMatrix;
 	pD3dGraphicsObj->GetOrthoMatrix(orthoMatrix);
-	mCamera->GetViewMatrix(viewMatrix);
 	
 	bool result = mFluid2DEffect->Render(fluidProperty);
 

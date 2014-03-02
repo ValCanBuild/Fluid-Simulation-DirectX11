@@ -70,7 +70,7 @@ private:
 	unique_ptr<IGraphicsObject> mGraphicsObj;
 	unique_ptr<IScene> mCurrentScene;
 
-	unique_ptr<DirectX::SpriteBatch> mSpriteBatch;
+	shared_ptr<DirectX::SpriteBatch> mSpriteBatch;
 
 	shared_ptr<DirectX::SpriteFont>  mSpriteFont;
 	shared_ptr<DirectX::CommonStates>  mCommonStates;

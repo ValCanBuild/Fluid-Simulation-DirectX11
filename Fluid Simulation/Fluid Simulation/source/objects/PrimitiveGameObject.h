@@ -16,7 +16,7 @@ class PrimitiveGameObject : public GameObject {
 public:
 	PrimitiveGameObject(std::unique_ptr<DirectX::GeometricPrimitive> primitiveModel);
 	PrimitiveGameObject(const PrimitiveGameObject &other);
-	~PrimitiveGameObject();
+	virtual ~PrimitiveGameObject();
 
 	void Update();
 	virtual void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix);

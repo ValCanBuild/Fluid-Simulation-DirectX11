@@ -141,9 +141,6 @@
     <ClCompile Include="source\utilities\AppTimer.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\Scenes\Wave2DScene.cpp">
-      <Filter>Source Files\Display\Scenes</Filter>
-    </ClCompile>
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
     </ClCompile>
@@ -277,9 +274,6 @@
     </ClInclude>
     <ClInclude Include="source\utilities\AppTimer.h">
       <Filter>Header Files\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="source\display\Scenes\Wave2DScene.h">
-      <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="source\display\Scenes\IScene.h">
       <Filter>Header Files\Display\Scenes</Filter>

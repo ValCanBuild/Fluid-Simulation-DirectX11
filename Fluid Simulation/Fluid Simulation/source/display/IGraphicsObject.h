@@ -30,7 +30,6 @@ public:
 
 	virtual void GetVideoCardInfo(char *cardName, int& memory) const = 0;
 
-	virtual void GetProjectionMatrix(Matrix&) const = 0;
 	virtual void GetWorldMatrix(Matrix&) const = 0;
 	virtual void GetOrthoMatrix(Matrix&) const = 0;
 
@@ -38,16 +37,12 @@ public:
 	virtual void GetScreenDepthInfo(float &nearVal, float &farVal) const = 0;
 
 	virtual void SetBackBufferRenderTarget() const = 0;
-	//virtual void ResetViewport() = 0;
 	
 	virtual void SetZBufferState(bool state) const = 0;
 	virtual void SetAlphaBlendState(bool state) const = 0;
 	
 	virtual void TurnWireframeOn() const = 0;
 	virtual void TurnWireframeOff() const = 0;
-	
-	//virtual void TurnCullingOn() = 0;
-	//virtual void TurnCullingOff() = 0;
 	
 	virtual bool Screenshot(LPCWSTR name) const = 0;	
 };

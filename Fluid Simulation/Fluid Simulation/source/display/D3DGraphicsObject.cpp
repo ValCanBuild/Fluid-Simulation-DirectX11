@@ -301,9 +301,6 @@ bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync
 	float fieldOfView = (float)PI / 4.0f;
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
-	// Create the projection matrix for 3D rendering.
-	mProjectionMatrix = Matrix::CreatePerspectiveFieldOfView(fieldOfView, screenAspect, screenNear, screenDepth);
-	
 	// Create an orthographic projection matrix for 2D rendering.
 	mOrthoMatrix = Matrix::CreateOrthographic((float)screenWidth, (float)screenHeight, screenNear, screenDepth);
 
@@ -484,10 +481,6 @@ ID3D11DeviceContext* D3DGraphicsObject::GetDeviceContext()const {
 
 ID3D11DepthStencilView* D3DGraphicsObject::GetDepthStencilView() const {
 	return mDepthStencilView;
-}
-
-void D3DGraphicsObject::GetProjectionMatrix(Matrix& projectionMatrix)const {
-	projectionMatrix = mProjectionMatrix;
 }
 
 void D3DGraphicsObject::GetWorldMatrix(Matrix& worldMatrix)const {

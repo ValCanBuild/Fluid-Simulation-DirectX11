@@ -23,7 +23,6 @@ namespace Fluid2D
 
 enum FluidPropertyType_t;
 class D2DTexQuad;
-class Camera;
 class D3DGraphicsObject;
 
 class Fluid2DScene : public IScene {
@@ -42,8 +41,7 @@ private:
 private:
 	TwBar *mTwBar;
 
-	unique_ptr<Fluid2D::Fluid2DSimulator>			mFluid2DEffect;
-	unique_ptr<Camera>					mCamera;
+	unique_ptr<Fluid2D::Fluid2DSimulator>	mFluid2DEffect;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 

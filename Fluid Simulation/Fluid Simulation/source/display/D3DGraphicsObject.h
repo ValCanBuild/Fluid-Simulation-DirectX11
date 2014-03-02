@@ -11,13 +11,10 @@ Version: 1.0
 #define _D3DGRAPHICSOBJECT_H
 
 #define WIN32_LEAN_AND_MEAN
-
-#include <atlbase.h>
-#if defined (_DEBUG)
-#pragma comment(lib,"atlsd.lib")
-#endif
-
 #include "IGraphicsObject.h"
+
+#include "../utilities/AtlInclude.h"
+
 #include "../utilities/D3dIncludes.h"
 
 
@@ -39,7 +36,6 @@ public:
 
 	void GetVideoCardInfo(char *cardName, int& memory) const;
 
-	void GetProjectionMatrix(Matrix&) const;
 	void GetWorldMatrix(Matrix&) const;
 	void GetOrthoMatrix(Matrix&) const;
 
@@ -47,20 +43,15 @@ public:
 	void GetScreenDepthInfo(float &nearVal, float &farVal) const;
 	
 	void SetBackBufferRenderTarget() const;
-	//void ResetViewport();
 	void SetZBufferState(bool state) const;
 	void SetAlphaBlendState(bool state) const;
 	
 	void TurnWireframeOn() const;
-	void TurnWireframeOff() const;
-	
-	//void TurnCullingOn();
-	//void TurnCullingOff();
+	void TurnWireframeOff() const;	
 	
 	bool Screenshot(LPCWSTR name) const;
 
 private:
-	//bool BuildRasterizers();
 	bool BuildBlendStates();
 	bool BuildDepthStencilStates();
 
@@ -70,9 +61,8 @@ private:
 	float	mScreenNear;
 	float	mScreenDepth;
 
-	Matrix mProjectionMatrix;
-	Matrix mWorldMatrix;
-	Matrix mOrthoMatrix;
+	Matrix  mWorldMatrix;
+	Matrix  mOrthoMatrix;
 
 	bool	mVsyncEnabled;
 	int		mVideoCardMemoryMB;

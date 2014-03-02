@@ -29,7 +29,7 @@ public:
 	VolumeRenderer(ID3D11DeviceContext *pContext, Vector3 &volumeSize);
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
-	void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix);
+	virtual void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) override;
 
 	void SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV);
 	void SetCamera(Camera *camera);

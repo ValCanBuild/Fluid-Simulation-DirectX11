@@ -9,16 +9,42 @@ Version: 1.0
 #include "Camera.h"
 #include "../system/ServiceProvider.h"
 #include "../display/IGraphicsObject.h"
+#include <DirectXMath.h>
 
-Camera::Camera() :
-mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0) {
+using namespace DirectX;
+
+Camera::Camera(float fieldOfView, float screenAspect, float screenNear, float screenFar, bool rightHand) :
+mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0), mRightHanded(rightHand) {
 	mYaw = mPitch = mRoll = 0.0f;
 
-	mHasChanged = true;// set to true so the camera gets updated the first time update loop is called
+	mHasChanged = true; // set to true so the camera gets updated the first time update loop is called
+
+	// Create the RH projection matrix for 3D rendering.
+	if (mRightHanded) {
+		mProjectionMatrix = Matrix::CreatePerspectiveFieldOfView(fieldOfView, screenAspect, screenNear, screenFar);
+	}
+	else {
+		// Create the LH projection matrix for 3D Rendering.
+		mProjectionMatrix = XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, screenNear, screenFar);
+	}
+
+	BoundingFrustum::CreateFromMatrix(mUntransformedFrustum, mProjectionMatrix);
 }
 
 Camera::~Camera() {
 
+}
+
+std::unique_ptr<Camera> Camera::CreateCameraLH(float fieldOfView, float screenAspect, float screenNear, float screenFar) {
+	std::unique_ptr<Camera> camera(new Camera(fieldOfView, screenAspect, screenNear, screenFar, false));
+
+	return camera;
+}
+
+std::unique_ptr<Camera> Camera::CreateCameraRH(float fieldOfView, float screenAspect, float screenNear, float screenFar) {
+	std::unique_ptr<Camera> camera(new Camera(fieldOfView, screenAspect, screenNear, screenFar, true));
+
+	return camera;
 }
 
 void Camera::Update() {
@@ -44,8 +70,9 @@ void Camera::Update() {
 	mTarget = mPosition + mLookAt;
 
 	// Finally create the view matrix from the three updated vectors.
-	mViewMatrix = Matrix::CreateLookAt(mPosition, mTarget, mUp);
+	mViewMatrix = mRightHanded ? Matrix::CreateLookAt(mPosition, mTarget, mUp) : XMMatrixLookAtLH(mPosition, mTarget, mUp);
 
+	mUntransformedFrustum.Transform(mBoundingFrustum, mViewMatrix.Invert());
 }
 
 void Camera::MoveFacing(float forwardAmount, float rightAmount) {
@@ -83,11 +110,8 @@ Ray Camera::ScreenPointToRay(Vector2 position) const {
 	int screenWidth,screenHeight;
 	graphicsObject->GetScreenDimensions(screenWidth,screenHeight);
 
-	Matrix projectionMatrix;
-	graphicsObject->GetProjectionMatrix(projectionMatrix);
-
-	float vx = (+2.0f*position.x/screenWidth  - 1.0f)/projectionMatrix(0,0);
-	float vy = (-2.0f*position.y/screenHeight + 1.0f)/projectionMatrix(1,1);
+	float vx = (+2.0f*position.x/screenWidth  - 1.0f)/mProjectionMatrix(0,0);
+	float vy = (-2.0f*position.y/screenHeight + 1.0f)/mProjectionMatrix(1,1);
 
 	Vector3 rayOrigin(0.0f);
 	Vector3 rayDir(vx,vy,-1.0f);
@@ -117,3 +141,12 @@ void Camera::GetViewMatrix(Matrix& viewMatrix) const {
 void Camera::GetRotationMatrix(Matrix& rotationMatrix) const {
 	rotationMatrix = mRotationMatrix;
 }
+
+void Camera::GetProjectionMatrix(Matrix& projMatrix) const {
+	projMatrix = mProjectionMatrix;
+}
+
+DirectX::BoundingFrustum * Camera::GetBoundingFrustum() {
+	return &mBoundingFrustum;
+}
+

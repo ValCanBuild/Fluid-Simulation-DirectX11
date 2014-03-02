@@ -113,7 +113,6 @@
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
-    <ClCompile Include="source\display\Scenes\Wave2DScene.cpp" />
     <ClCompile Include="source\display\simulators\Fluid2DSimulator.cpp" />
     <ClCompile Include="source\display\simulators\Fluid3DSimulator.cpp" />
     <ClCompile Include="source\display\VolumeRenderer.cpp" />
@@ -160,7 +159,6 @@
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h" />
     <ClInclude Include="source\display\Scenes\IScene.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
-    <ClInclude Include="source\display\Scenes\Wave2DScene.h" />
     <ClInclude Include="source\display\simulators\Fluid2DSimulator.h" />
     <ClInclude Include="source\display\simulators\Fluid3DSimulator.h" />
     <ClInclude Include="source\display\VolumeRenderer.h" />

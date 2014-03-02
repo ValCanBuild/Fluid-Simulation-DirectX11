@@ -17,7 +17,6 @@ Date: 02/09/2013
 using namespace DirectX;
 #endif
 
-#include "../display/Scenes/Wave2DScene.h"
 #include "../display/Scenes/Fluid2DScene.h"
 #include "../display/Scenes/Fluid3DScene.h"
 #include "../display/Scenes/RigidBodyScene3D.h"
@@ -83,7 +82,7 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	TwWindowSize(screenWidth,screenHeight);
 
 	// Initialize font
-	mSpriteBatch = unique_ptr<SpriteBatch>(new SpriteBatch(d3dObject->GetDeviceContext()));
+	mSpriteBatch = shared_ptr<SpriteBatch>(new SpriteBatch(d3dObject->GetDeviceContext()));
 	mSpriteFont = shared_ptr<SpriteFont>(new SpriteFont(d3dObject->GetDevice(), L"data/TBNA.spritefont"));
 	mCommonStates = shared_ptr<CommonStates>(new CommonStates(d3dObject->GetDevice()));
 
@@ -166,13 +165,10 @@ bool GraphicsSystemImpl::RenderOverlay() const {
 
 		// Display CPU usage
 		text = L"CPU Usage: " + std::to_wstring(mCpuUsage) + L"%";
-		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,30));
+		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,35));
 
-		// Display Mouse Coords
-		int x,y;
-		ServiceProvider::Instance().GetInputSystem()->GetMousePos(x,y);
-		text = L"Mouse X: " + std::to_wstring(x) + L" Y: " +  std::to_wstring(y);
-		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,50));
+		// Allow the current scene to render any additional overlay items
+		mCurrentScene->RenderOverlay(mSpriteBatch, mSpriteFont);
 	}
 	mSpriteBatch->End();
 

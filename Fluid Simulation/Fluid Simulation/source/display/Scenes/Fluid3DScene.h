@@ -34,8 +34,11 @@ public:
 
 	bool Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd);
 
+	void InitCamera();
+
 	void Update(float delta);
 	bool Render();
+	void RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont);
 
 private:
 	bool InitVolumeRenderers(HWND hwnd);
@@ -44,16 +47,22 @@ private:
 
 private:
 	unique_ptr<Fluid3D::Fluid3DSimulator>	mFluid3DEffect;
-	unique_ptr<VolumeRenderer>			mVolumeRenderer;
-	unique_ptr<Camera>					mCamera;
+	//unique_ptr<VolumeRenderer>	mVolumeRenderer;
+	unique_ptr<Camera>	mCamera;
 	
-	vector<PrimitiveGameObject>			mPrimitiveObjects;
+	vector<PrimitiveGameObject>	mPrimitiveObjects;
+	vector<shared_ptr<VolumeRenderer>> mVolumeRenderers;
+
+	BoundingFrustum *pBoundingFrustum;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	TwBar *mTwBar;
 	InputSystem *pInputSystem;
 
+private:
+	int  mNumRenderedFluids;
+	int  mNumFluidsUpdating;
 	bool mPaused;
 };
 

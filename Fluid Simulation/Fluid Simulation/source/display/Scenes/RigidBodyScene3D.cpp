@@ -38,7 +38,14 @@ RigidBodyScene3D::~RigidBodyScene3D() {
 
 bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
-	mCamera = unique_ptr<Camera>(new Camera());	
+	float nearVal, farVal;
+	graphicsObject->GetScreenDepthInfo(nearVal, farVal);
+	int screenWidth, screenHeight;
+	graphicsObject->GetScreenDimensions(screenWidth, screenHeight);
+	float fieldOfView = (float)PI / 4.0f;
+	float screenAspect = (float)screenWidth / (float)screenHeight;
+
+	mCamera = Camera::CreateCameraRH(fieldOfView, screenAspect, nearVal, farVal);
 	mCamera->SetPosition(0,5,-12);
 
 	Physics::fGravity = -9.8f;
@@ -122,10 +129,9 @@ void RigidBodyScene3D::FixedUpdate(float fixedDelta) {
 }
 
 bool RigidBodyScene3D::Render() {
-	Matrix viewMatrix, projectionMatrix, worldMatrix;
-	pD3dGraphicsObj->GetProjectionMatrix(projectionMatrix);
+	Matrix viewMatrix, projectionMatrix;
+	mCamera->GetProjectionMatrix(projectionMatrix);
 	mCamera->GetViewMatrix(viewMatrix);
-	pD3dGraphicsObj->GetWorldMatrix(worldMatrix);
 
 	for (BaseD3DBody *object : mSceneObjects) {
 		object->Render(&viewMatrix,&projectionMatrix, mWireframe);

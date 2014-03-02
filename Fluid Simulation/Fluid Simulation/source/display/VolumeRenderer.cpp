@@ -19,7 +19,7 @@ using namespace DirectX;
 static std::unique_ptr<VolumeRenderShader>	sharedVolumeRenderShader;
 
 VolumeRenderer::VolumeRenderer(ID3D11DeviceContext *pContext, Vector3 &volumeSize) :
-	PrimitiveGameObject(GeometricPrimitive::CreateCube(pContext, 1.0f, true)),
+	PrimitiveGameObject(GeometricPrimitive::CreateCube(pContext, 1.0f, false)),
 	mVolumeSize(volumeSize), 
 	pD3dGraphicsObj(nullptr) 
 {
@@ -63,7 +63,7 @@ void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMa
 		{
 			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
 			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
-
+			
 			context->OMSetBlendState(blendState, nullptr, 0xFFFFFFFF);
 			context->RSSetState(rasterizeState);
 		}
