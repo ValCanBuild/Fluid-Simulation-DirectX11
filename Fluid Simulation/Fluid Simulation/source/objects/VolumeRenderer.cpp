@@ -9,17 +9,16 @@ Date: 19/2/2014
 #include "VolumeRenderer.h"
 #include <CommonStates.h>
 #include "../system/ServiceProvider.h"
-#include "D3DShaders/ShaderParams.h"
+#include "../display/D3DShaders/ShaderParams.h"
 #include "../utilities/Camera.h"
-#include "D3DShaders/VolumeRenderShader.h"
+#include "../display/D3DShaders/VolumeRenderShader.h"
 
 using namespace std;
 using namespace DirectX;
 
 static std::unique_ptr<VolumeRenderShader>	sharedVolumeRenderShader;
 
-VolumeRenderer::VolumeRenderer(ID3D11DeviceContext *pContext, Vector3 &volumeSize) :
-	PrimitiveGameObject(GeometricPrimitive::CreateCube(pContext, 1.0f, false)),
+VolumeRenderer::VolumeRenderer(Vector3 &volumeSize) :
 	mVolumeSize(volumeSize), 
 	pD3dGraphicsObj(nullptr) 
 {
@@ -32,6 +31,8 @@ VolumeRenderer::~VolumeRenderer() {
 
 bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
 	pD3dGraphicsObj = d3dGraphicsObj;
+
+	primitive = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false);
 
 	if (sharedVolumeRenderShader == nullptr) {
 		sharedVolumeRenderShader = unique_ptr<VolumeRenderShader>(new VolumeRenderShader(d3dGraphicsObj));

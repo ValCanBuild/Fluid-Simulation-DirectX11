@@ -12,7 +12,7 @@ Date: 10/09/2013
 #include "../D3DShaders/Fluid2DShaders.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
-#include "../simulators/Fluid2DSimulator.h"
+#include "../../utilities/FluidCalculation/Fluid2DCalculator.h"
 
 
 #define INTERACTION_IMPULSE_RADIUS 7.0f
@@ -39,7 +39,7 @@ Fluid2DScene::~Fluid2DScene() {
 bool Fluid2DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pD3dGraphicsObj = dynamic_cast<D3DGraphicsObject*>(graphicsObject);
 
-	mFluid2DEffect = unique_ptr<Fluid2DSimulator>(new Fluid2DSimulator());
+	mFluid2DEffect = unique_ptr<Fluid2DCalculator>(new Fluid2DCalculator());
 	bool result = mFluid2DEffect->Initialize(pD3dGraphicsObj, hwnd);
 	if (!result) {
 		return false;

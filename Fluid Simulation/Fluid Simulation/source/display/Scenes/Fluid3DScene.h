@@ -17,15 +17,11 @@ Date: 24/10/2013
 
 class Camera;
 class D3DGraphicsObject;
-class VolumeRenderer;
 class InputSystem;
-
-namespace Fluid3D {
-	class Fluid3DSimulator;
-}
+class FluidSimulation;
+struct CTwBar;
 
 using namespace std;
-using namespace DirectX;
 
 class Fluid3DScene : public IScene {
 public:
@@ -41,23 +37,20 @@ public:
 	void RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont);
 
 private:
-	bool InitVolumeRenderers(HWND hwnd);
+	bool InitSimulations(HWND hwnd);
+	void InitGameObjects();
 	void UpdateCamera(float delta);
 	void HandleInput();
 
 private:
-	unique_ptr<Fluid3D::Fluid3DSimulator>	mFluid3DEffect;
-	//unique_ptr<VolumeRenderer>	mVolumeRenderer;
 	unique_ptr<Camera>	mCamera;
 	
+	vector<shared_ptr<FluidSimulation>> mSimulations;
 	vector<PrimitiveGameObject>	mPrimitiveObjects;
-	vector<shared_ptr<VolumeRenderer>> mVolumeRenderers;
-
-	BoundingFrustum *pBoundingFrustum;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
-	TwBar *mTwBar;
+	CTwBar *mTwBar;
 	InputSystem *pInputSystem;
 
 private:

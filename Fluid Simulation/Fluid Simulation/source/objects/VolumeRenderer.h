@@ -13,7 +13,7 @@ Date: 19/2/2014
 
 #include <memory>
 #include "../utilities/AtlInclude.h"
-#include "D3DGraphicsObject.h"
+#include "../display/D3DGraphicsObject.h"
 
 struct ShaderParams;
 class Camera;
@@ -26,7 +26,7 @@ namespace DirectX
 class VolumeRenderer : public PrimitiveGameObject {
 public:
 	~VolumeRenderer();
-	VolumeRenderer(ID3D11DeviceContext *pContext, Vector3 &volumeSize);
+	VolumeRenderer(Vector3 &volumeSize);
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
 	virtual void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) override;

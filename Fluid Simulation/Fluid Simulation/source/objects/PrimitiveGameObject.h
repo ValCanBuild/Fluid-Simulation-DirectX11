@@ -14,6 +14,7 @@ Date: 28/2/2014
 
 class PrimitiveGameObject : public GameObject {
 public:
+	PrimitiveGameObject();
 	PrimitiveGameObject(std::unique_ptr<DirectX::GeometricPrimitive> primitiveModel);
 	PrimitiveGameObject(const PrimitiveGameObject &other);
 	virtual ~PrimitiveGameObject();

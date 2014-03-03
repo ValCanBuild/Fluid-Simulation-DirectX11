@@ -1,5 +1,5 @@
 /********************************************************************
-Fluid2DSimulator.h: Encapsulates a 2D fluid simulation
+Fluid2DCalculator.h: Encapsulates a 2D fluid simulation
 being calculated on the GPU. Allows for interaction and choosing what
 fluid property to render.
 
@@ -7,15 +7,15 @@ Author:	Valentin Hinov
 Date: 18/2/2014
 *********************************************************************/
 
-#ifndef _FLUID2DSIMULATOR_H
-#define _FLUID2DSIMULATOR_H
+#ifndef _FLUID2DCALCULATOR_H
+#define _FLUID2DCALCULATOR_H
 
 #include <vector>
 #include <memory>
-#include "../../utilities/AtlInclude.h"
+#include "../AtlInclude.h"
 
 
-#include "../D3DGraphicsObject.h"
+#include "../../display/D3DGraphicsObject.h"
 #include "../../objects/D2DTexQuad.h"
 
 struct ShaderParams;
@@ -37,10 +37,10 @@ class SubtractGradientShader;
 class BuoyancyShader;
 class Fluid2DRenderShader; 
 
-class Fluid2DSimulator {
+class Fluid2DCalculator {
 public:
-	Fluid2DSimulator();
-	~Fluid2DSimulator();
+	Fluid2DCalculator();
+	~Fluid2DCalculator();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
 	void ProcessEffect();

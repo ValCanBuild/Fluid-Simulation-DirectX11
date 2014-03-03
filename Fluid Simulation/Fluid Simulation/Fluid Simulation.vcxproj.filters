@@ -85,14 +85,20 @@
     <Filter Include="HLSL\VolumeRender">
       <UniqueIdentifier>{2bdb7fb1-1b55-463b-a0b3-99d175223698}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Display\Simulators">
-      <UniqueIdentifier>{99758131-a269-42fe-9a7b-8e42d437c1cc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Display\Simulators">
-      <UniqueIdentifier>{7db29ae7-3f53-4aca-8cda-cb163d699f27}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HLSL\Texture">
       <UniqueIdentifier>{fb801e2d-b96f-4b8b-bbf9-6e1ff76ab865}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities\FluidCalculation">
+      <UniqueIdentifier>{85c4ba44-41c7-4354-b93b-641837eeddb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\FluidCalculation">
+      <UniqueIdentifier>{b2d9fcbd-a6bd-4548-818e-fb1e62a56563}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Display\Simulations">
+      <UniqueIdentifier>{0aaa631d-561a-48e6-91cd-093a1e98e379}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\Simulations">
+      <UniqueIdentifier>{fd6be55c-0226-46db-b1cb-df7dde383485}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -195,9 +201,6 @@
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\VolumeRenderer.cpp">
-      <Filter>Source Files\Display</Filter>
-    </ClCompile>
     <ClCompile Include="source\display\D3DShaders\TextureShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
@@ -207,14 +210,20 @@
     <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\simulators\Fluid2DSimulator.cpp">
-      <Filter>Source Files\Display\Simulators</Filter>
-    </ClCompile>
-    <ClCompile Include="source\display\simulators\Fluid3DSimulator.cpp">
-      <Filter>Source Files\Display\Simulators</Filter>
-    </ClCompile>
     <ClCompile Include="source\objects\PrimitiveGameObject.cpp">
       <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\VolumeRenderer.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\simulations\FluidSimulation.cpp">
+      <Filter>Source Files\Display\Simulations</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -347,9 +356,6 @@
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\VolumeRenderer.h">
-      <Filter>Header Files\Display</Filter>
-    </ClInclude>
     <ClInclude Include="source\utilities\AtlInclude.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
@@ -362,14 +368,20 @@
     <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\simulators\Fluid2DSimulator.h">
-      <Filter>Header Files\Display\Simulators</Filter>
-    </ClInclude>
-    <ClInclude Include="source\display\simulators\Fluid3DSimulator.h">
-      <Filter>Header Files\Display\Simulators</Filter>
-    </ClInclude>
     <ClInclude Include="source\objects\PrimitiveGameObject.h">
       <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\VolumeRenderer.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DCalculator.h">
+      <Filter>Header Files\Utilities\FluidCalculation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DCalculator.h">
+      <Filter>Header Files\Utilities\FluidCalculation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\simulations\FluidSimulation.h">
+      <Filter>Header Files\Display\Simulations</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

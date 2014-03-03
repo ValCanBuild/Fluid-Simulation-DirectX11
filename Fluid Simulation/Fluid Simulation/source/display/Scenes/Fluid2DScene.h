@@ -18,7 +18,7 @@ using namespace std;
 
 namespace Fluid2D
 {
-	class Fluid2DSimulator;
+	class Fluid2DCalculator;
 }
 
 enum FluidPropertyType_t;
@@ -41,7 +41,7 @@ private:
 private:
 	TwBar *mTwBar;
 
-	unique_ptr<Fluid2D::Fluid2DSimulator>	mFluid2DEffect;
+	unique_ptr<Fluid2D::Fluid2DCalculator>	mFluid2DEffect;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 

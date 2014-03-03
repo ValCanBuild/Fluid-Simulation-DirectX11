@@ -1,20 +1,20 @@
 /********************************************************************
-Fluid3DSimulator.h: Encapsulates a 3D fluid simulation
+Fluid3DCalculator.h: Encapsulates a 3D fluid simulation
 being calculated on the GPU.
 
 Author:	Valentin Hinov
 Date: 18/2/2014
 *********************************************************************/
 
-#ifndef _FLUID3DSIMULATOR_H
-#define _FLUID3DSIMULATOR_H
+#ifndef _FLUID3DCALCULATOR_H
+#define _FLUID3DCALCULATOR_H
 
 #include <vector>
 #include <memory>
-#include "../../utilities/AtlInclude.h"
+#include "../AtlInclude.h"
 
 
-#include "../D3DGraphicsObject.h"
+#include "../../display/D3DGraphicsObject.h"
 
 struct ShaderParams;
 struct InputBufferGeneral;
@@ -30,13 +30,13 @@ class DivergenceShader;
 class SubtractGradientShader;
 class BuoyancyShader;
 
-class Fluid3DSimulator {
+class Fluid3DCalculator {
 public:
-	Fluid3DSimulator(Vector3 dimensions);
-	~Fluid3DSimulator();
+	Fluid3DCalculator(Vector3 dimensions);
+	~Fluid3DCalculator();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
-	void ProcessEffect();
+	void Process();
 
 	ID3D11ShaderResourceView * GetVolumeTexture() const;
 

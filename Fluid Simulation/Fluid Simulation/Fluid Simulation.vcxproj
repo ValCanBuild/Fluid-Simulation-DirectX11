@@ -113,9 +113,7 @@
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
-    <ClCompile Include="source\display\simulators\Fluid2DSimulator.cpp" />
-    <ClCompile Include="source\display\simulators\Fluid3DSimulator.cpp" />
-    <ClCompile Include="source\display\VolumeRenderer.cpp" />
+    <ClCompile Include="source\display\simulations\FluidSimulation.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\objects\BaseD3DBody.cpp" />
     <ClCompile Include="source\objects\Bounds.cpp" />
@@ -126,6 +124,7 @@
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
     <ClCompile Include="source\objects\PrimitiveGameObject.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
+    <ClCompile Include="source\objects\VolumeRenderer.cpp" />
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
@@ -135,6 +134,8 @@
     <ClCompile Include="source\utilities\CollisionManager.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp" />
     <ClCompile Include="source\utilities\GeometryBuilder.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
     <ClCompile Include="source\utilities\Physics.cpp" />
@@ -159,9 +160,7 @@
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h" />
     <ClInclude Include="source\display\Scenes\IScene.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
-    <ClInclude Include="source\display\simulators\Fluid2DSimulator.h" />
-    <ClInclude Include="source\display\simulators\Fluid3DSimulator.h" />
-    <ClInclude Include="source\display\VolumeRenderer.h" />
+    <ClInclude Include="source\display\simulations\FluidSimulation.h" />
     <ClInclude Include="source\objects\BaseD3DBody.h" />
     <ClInclude Include="source\objects\Bounds.h" />
     <ClInclude Include="source\objects\BoxCollider.h" />
@@ -174,6 +173,7 @@
     <ClInclude Include="source\objects\PrimitiveGameObject.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\Transform.h" />
+    <ClInclude Include="source\objects\VolumeRenderer.h" />
     <ClInclude Include="source\system\GraphicsSystemImpl.h" />
     <ClInclude Include="source\system\GraphicsSystem.h" />
     <ClInclude Include="source\system\InputSystemImpl.h" />
@@ -186,6 +186,8 @@
     <ClInclude Include="source\utilities\CollisionManager.h" />
     <ClInclude Include="source\utilities\Console.h" />
     <ClInclude Include="source\utilities\D3dIncludes.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DCalculator.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DCalculator.h" />
     <ClInclude Include="source\utilities\GeometryBuilder.h" />
     <ClInclude Include="source\utilities\math\MathUtils.h" />
     <ClInclude Include="source\utilities\D3DTexture.h" />
