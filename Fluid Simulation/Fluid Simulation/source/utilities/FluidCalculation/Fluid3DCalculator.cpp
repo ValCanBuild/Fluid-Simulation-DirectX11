@@ -14,33 +14,19 @@ Date: 18/2/2014
 #define WRITE2 2
 #define WRITE3 3
 
-// Simulation parameters
-#define TIME_STEP 0.125f
-#define IMPULSE_RADIUS 3.0f
 #define INTERACTION_IMPULSE_RADIUS 7.0f
 #define OBSTACLES_IMPULSE_RADIUS 5.0f
-#define JACOBI_ITERATIONS 15
-#define VEL_DISSIPATION 0.999f
-#define DENSITY_DISSIPATION 0.999f
-#define TEMPERATURE_DISSIPATION 0.99f
-#define SMOKE_BUOYANCY 1.0f
-#define SMOKE_WEIGHT 0.05f
 #define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 1.5f
-#define IMPULSE_DENSITY 1.0f
 
 using namespace Fluid3D;
 
-Fluid3DCalculator::Fluid3DCalculator(Vector3 dimensions) : pD3dGraphicsObj(nullptr), 
-	timeStep(TIME_STEP),
-	macCormackEnabled(true),
-	jacobiIterations(JACOBI_ITERATIONS),
+Fluid3DCalculator::Fluid3DCalculator(FluidSettings fluidSettings) : pD3dGraphicsObj(nullptr), 
+	fluidSettings(fluidSettings),
 	mVelocitySP(nullptr),
 	mDensitySP(nullptr),
 	mTemperatureSP(nullptr),
 	mPressureSP(nullptr),
-	mObstacleSP(nullptr),
-	mDimensions(dimensions) {
+	mObstacleSP(nullptr) {
 
 }
 
@@ -125,9 +111,9 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 	mVelocitySP = new ShaderParams[4];
 	D3D11_TEXTURE3D_DESC textureDesc;
 	ZeroMemory(&textureDesc, sizeof(D3D11_TEXTURE3D_DESC));
-	textureDesc.Width = (UINT) mDimensions.x;
-	textureDesc.Height = (UINT) mDimensions.y;
-	textureDesc.Depth = (UINT) mDimensions.z;
+	textureDesc.Width = (UINT) fluidSettings.dimensions.x;
+	textureDesc.Height = (UINT) fluidSettings.dimensions.y;
+	textureDesc.Depth = (UINT) fluidSettings.dimensions.z;
 	textureDesc.MipLevels = 1;
 	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;	// 3 components for velocity in 3D + alpha
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -304,18 +290,18 @@ void Fluid3DCalculator::Process() {
 	SetGeneralBuffer();
 
 	// Advect velocity against itself
-	SetDissipationBuffer(VEL_DISSIPATION);
+	SetDissipationBuffer(fluidSettings.velocityDissipation);
 	Advect(mVelocitySP);
 
 	//Advect temperature against velocity
-	SetDissipationBuffer(TEMPERATURE_DISSIPATION);
+	SetDissipationBuffer(fluidSettings.temperatureDissipation);
 	Advect(mTemperatureSP);
 
 	// Advect density against velocity
-	SetDissipationBuffer(DENSITY_DISSIPATION);
+	SetDissipationBuffer(fluidSettings.densityDissipation);
 	Advect(mDensitySP);
 
-	int resultBuffer = macCormackEnabled ? WRITE : WRITE2;
+	int resultBuffer = fluidSettings.macCormackEnabled ? WRITE : WRITE2;
 	swap(mVelocitySP[READ],mVelocitySP[resultBuffer]);
 	swap(mTemperatureSP[READ],mTemperatureSP[resultBuffer]);
 	swap(mDensitySP[READ],mDensitySP[resultBuffer]);
@@ -338,7 +324,7 @@ void Fluid3DCalculator::Process() {
 
 void Fluid3DCalculator::Advect(ShaderParams *target) {
 	mForwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
-	if (macCormackEnabled) {
+	if (fluidSettings.macCormackEnabled) {
 		mBackwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
 		ShaderParams advectArrayDens[3] = {target[WRITE2], target[WRITE3], target[READ]};
 		mMacCormarckAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],advectArrayDens,&target[WRITE]);
@@ -347,11 +333,13 @@ void Fluid3DCalculator::Advect(ShaderParams *target) {
 
 void Fluid3DCalculator::RefreshConstantImpulse() {
 	//refresh the impulse of the density and temperature
-	SetImpulseBuffer(Vector4(mDimensions.x*0.5f,mDimensions.y,mDimensions.z*0.5f,0),Vector4(IMPULSE_TEMPERATURE,IMPULSE_TEMPERATURE,IMPULSE_TEMPERATURE,0), IMPULSE_RADIUS);
+	Vector4 impulsePos = Vector4(fluidSettings.dimensions * fluidSettings.constantInputPosition);
+
+	SetImpulseBuffer(impulsePos,Vector4(fluidSettings.constantTemperature,fluidSettings.constantTemperature,fluidSettings.constantTemperature,0), fluidSettings.constantInputRadius);
 	mImpulseShader->Compute(pD3dGraphicsObj,&mTemperatureSP[READ],&mTemperatureSP[WRITE]);
 	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 
-	SetImpulseBuffer(Vector4(mDimensions.x*0.5f,mDimensions.y,mDimensions.z*0.5f,0),Vector4(IMPULSE_DENSITY,IMPULSE_DENSITY,IMPULSE_DENSITY,0), IMPULSE_RADIUS);
+	SetImpulseBuffer(impulsePos,Vector4(fluidSettings.constantDensityAmount,fluidSettings.constantDensityAmount,fluidSettings.constantDensityAmount,0), fluidSettings.constantInputRadius);
 	mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
 	swap(mDensitySP[READ],mDensitySP[WRITE]);
 }
@@ -365,7 +353,7 @@ void Fluid3DCalculator::CalculatePressureGradient() {
 
 	// perform Jacobi on pressure field
 	int i;
-	for (i = 0; i < jacobiIterations; ++i) {		
+	for (i = 0; i < fluidSettings.jacobiIterations; ++i) {		
 		mJacobiShader->Compute(pD3dGraphicsObj,
 			&mPressureSP[READ],
 			mDivergenceSP.get(),
@@ -388,11 +376,11 @@ void Fluid3DCalculator::SetGeneralBuffer() {
 	}
 
 	dataPtr = (InputBufferGeneral*)mappedResource.pData;
-	dataPtr->fTimeStep = TIME_STEP;
-	dataPtr->fBuoyancy = SMOKE_BUOYANCY;
-	dataPtr->fDensityWeight	= SMOKE_WEIGHT;
+	dataPtr->fTimeStep = fluidSettings.timeStep;
+	dataPtr->fBuoyancy = fluidSettings.densityBuoyancy;
+	dataPtr->fDensityWeight	= fluidSettings.densityWeight;
 	dataPtr->fAmbientTemperature = AMBIENT_TEMPERATURE;
-	dataPtr->vDimensions = mDimensions;
+	dataPtr->vDimensions = fluidSettings.dimensions;
 	dataPtr->padding10 = 0.0f;
 
 	context->Unmap(mInputBufferGeneral,0);

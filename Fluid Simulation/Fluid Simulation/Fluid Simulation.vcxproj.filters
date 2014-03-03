@@ -383,6 +383,9 @@
     <ClInclude Include="source\display\simulations\FluidSimulation.h">
       <Filter>Header Files\Display\Simulations</Filter>
     </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\FluidSettings.h">
+      <Filter>Header Files\Utilities\FluidCalculation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">

@@ -132,6 +132,8 @@ void BaseD3DShader::RenderShader(ID3D11DeviceContext* context, int indexCount) {
 }
 
 void BaseD3DShader::Apply(_In_ ID3D11DeviceContext* deviceContext) {
+	// Allow the shader to bind any buffers it may need
+	BindShaderResources(deviceContext);
 	// Set the vertex and pixel shaders that will be used to render
 	deviceContext->VSSetShader(mVertexShader, NULL, 0);
 	deviceContext->PSSetShader(mPixelShader, NULL, 0);

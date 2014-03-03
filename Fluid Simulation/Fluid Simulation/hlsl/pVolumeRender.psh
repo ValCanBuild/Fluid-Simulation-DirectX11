@@ -5,13 +5,6 @@ Author: Valentin Hinov
 Date: 23/02/2014
 ***************************************************************/
 
-// TODO - set these dynamically
-static const float4 vSmokeColor = float4(0.74f, 0.0f, 0.99f, 1);
-static const float fSmokeAbsorption = 60.0f;
-static const int   iNumSamples = 64;
-
-// TODO - setup blending?
-
 // Constant buffers
 cbuffer InputBuffer : register (b0) {
 	float3 vDimensions;			
@@ -27,7 +20,17 @@ cbuffer InputBuffer : register (b0) {
 	float  padding3;	// 64 bytes
 };
 
+cbuffer SmokePropertiesBuffer : register (b1) {
+	float4 vSmokeColor;
+	float fSmokeAbsorption;
+	int iNumSamples;
+
+	float2 padding;
+};
+
 Texture3D<float> volumeValues : register (t0);
+
+// TODO - replace with point sampler?
 SamplerState linearSampler : register (s0);
 
 struct PixelInputType {
@@ -59,7 +62,52 @@ bool IntersectBox(Ray r, AABB aabb, out float t0, out float t1) {
 	return t0 <= t1;
 }
 
+float SampleDensity(float3 uv) {
+	return volumeValues.SampleLevel(linearSampler, uv, 0);
+}
+
 // TODO - Add bilinear sampling
+float SampleBilinear(float3 uv) {
+	//uv = saturate(uv);
+	//uv = uv * (vDimensions - 1.0f);
+
+	int x = uv.x;
+	int y = uv.y;
+	int z = uv.z;
+	
+	//int X = vDimensions.x;
+	//int XY = vDimensions.x * vDimensions.y;
+	
+	float fx = uv.x - x;
+	float fy = uv.y - y;
+	float fz = uv.z - z;
+	
+	int xp1 = min(vDimensions.x - 1, x + 1);
+	int yp1 = min(vDimensions.y - 1, y + 1);
+	int zp1 = min(vDimensions.z - 1, z + 1);
+
+	float x0 = ( SampleDensity(uv) * (1.0f - fx) ) + ( SampleDensity(uv + float3(xp1,0,0)) * fx );
+	float x1 = ( SampleDensity(uv + float3(0,0,zp1)) * (1.0f-fx) ) + ( SampleDensity(uv + float3(xp1,0,zp1)) * fx );
+	
+	float x2 = ( SampleDensity(uv + float3(0,yp1,0)) * (1.0f-fx) ) + ( SampleDensity(uv + float3(xp1,yp1,0)) * fx );
+	float x3 = ( SampleDensity(uv + float3(0,yp1,zp1)) * (1.0f-fx) ) + ( SampleDensity(uv + float3(xp1,yp1,zp1)) * fx );
+
+	float z0 = x0 * (1.0f-fz) + x1 * fz;
+	float z1 = x2 * (1.0f-fz) + x3 * fz;
+
+	return z0 * (1.0f-fy) + z1 * fy;
+
+	//float x0 = buffer[x+y*X+z*XY] * (1.0f-fx) + buffer[xp1+y*X+z*XY] * fx;
+	//float x1 = buffer[x+y*X+zp1*XY] * (1.0f-fx) + buffer[xp1+y*X+zp1*XY] * fx;
+	//
+	//float x2 = buffer[x+yp1*X+z*XY] * (1.0f-fx) + buffer[xp1+yp1*X+z*XY] * fx;
+	//float x3 = buffer[x+yp1*X+zp1*XY] * (1.0f-fx) + buffer[xp1+yp1*X+zp1*XY] * fx;
+	//
+	//float z0 = x0 * (1.0f-fz) + x1 * fz;
+	//float z1 = x2 * (1.0f-fz) + x3 * fz;
+	//
+	//return z0 * (1.0f-fy) + z1 * fy;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Pixel Shader
@@ -100,8 +148,8 @@ float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	float alpha = 1.0f;
 
 	for(int i = 0; i < iNumSamples; i++, start += ds) {	 
-		//float D = SampleBilinear(volumeValues, start, vDimensions);	
-		float D = volumeValues.SampleLevel(linearSampler, start, 0);	
+		float D = SampleDensity(start);	
+		//float D = volumeValues.SampleLevel(linearSampler, start, 0);	
 		alpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
 
 		if (alpha <= 0.01f) {

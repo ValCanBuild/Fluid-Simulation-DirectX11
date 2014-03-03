@@ -36,6 +36,7 @@ public:
 
 private:	
 	Vector3 mVolumeSize;
+	Vector3 mPrevCameraPos;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 	ID3D11ShaderResourceView *pSourceTexSRV;

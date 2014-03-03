@@ -34,9 +34,10 @@ public:
 	bool Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) const;
 
 	// Returns true if this simulation is updated and false if it wasn't
-	bool Update(float dt);
+	bool Update(float dt) const;
 
-	void DisplayInfoOnBar(const CTwBar * const pBar) const;
+	void DisplayInfoOnBar(CTwBar * const pBar);
+	bool IntersectsRay(Ray &ray, float &distance) const;
 
 	std::shared_ptr<VolumeRenderer> GetVolumeRenderer() const;
 
@@ -45,6 +46,8 @@ private:
 	std::shared_ptr<VolumeRenderer> mVolumeRenderer;
 
 	DirectX::BoundingFrustum *pBoundingFrustum;
+
+	bool mUpdatePaused;
 };
 
 #endif

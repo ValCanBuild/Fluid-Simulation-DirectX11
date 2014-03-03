@@ -132,7 +132,7 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 result = velocity[i];
 
 	if (temperatureVal > fAmbientTemperature) {
-		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, -1.0f, 0.0f);
+		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, 1.0f, 0.0f);
 	}
 	buoyancyResult[i] = result;
 }

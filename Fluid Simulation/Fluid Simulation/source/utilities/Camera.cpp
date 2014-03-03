@@ -113,8 +113,10 @@ Ray Camera::ScreenPointToRay(Vector2 position) const {
 	float vx = (+2.0f*position.x/screenWidth  - 1.0f)/mProjectionMatrix(0,0);
 	float vy = (-2.0f*position.y/screenHeight + 1.0f)/mProjectionMatrix(1,1);
 
+	float zDirection = mRightHanded ? -1.0f : 1.0f;
+
 	Vector3 rayOrigin(0.0f);
-	Vector3 rayDir(vx,vy,-1.0f);
+	Vector3 rayDir(vx,vy,zDirection);
 
 	Matrix viewInverse;
 	mViewMatrix.Invert(viewInverse);

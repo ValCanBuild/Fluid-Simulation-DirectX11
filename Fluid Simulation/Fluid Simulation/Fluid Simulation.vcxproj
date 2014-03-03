@@ -188,6 +188,7 @@
     <ClInclude Include="source\utilities\D3dIncludes.h" />
     <ClInclude Include="source\utilities\FluidCalculation\Fluid2DCalculator.h" />
     <ClInclude Include="source\utilities\FluidCalculation\Fluid3DCalculator.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\FluidSettings.h" />
     <ClInclude Include="source\utilities\GeometryBuilder.h" />
     <ClInclude Include="source\utilities\math\MathUtils.h" />
     <ClInclude Include="source\utilities\D3DTexture.h" />

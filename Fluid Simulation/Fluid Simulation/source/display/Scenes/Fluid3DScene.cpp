@@ -19,9 +19,7 @@ Date: 24/10/2013
 using namespace Fluid3D;
 using namespace DirectX;
 
-#define DIM 80
-
-Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0) {
+Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), pPickedSimulation(nullptr) {
 	
 }
 
@@ -34,6 +32,7 @@ Fluid3DScene::~Fluid3DScene() {
 
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
+	pPickedSimulation = nullptr;
 	mPrimitiveObjects.clear();
 	mSimulations.clear();
 }
@@ -53,18 +52,50 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar("3D Fluid Simulation");
 	// Position bar
-	int barPos[2] = {580,2};
+	int barPos[2] = {550,2};
 	TwSetParam(mTwBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
-	int barSize[2] = {218,150};
+	int barSize[2] = {250,250};
 	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 
-	// Add Variables to tweak bar
-	//TwAddVarRW(mTwBar,"Jacobi Iterations", TW_TYPE_INT32, &mFluid3DEffect->jacobiIterations, "min=1 max=100 step=1");
-	//TwAddVarRW(mTwBar,"Time Step", TW_TYPE_FLOAT, &mFluid3DEffect->timeStep, "min=0.0 max=1.0 step=0.001");
-	//TwAddVarRW(mTwBar,"MacCormarck Advection", TW_TYPE_BOOLCPP, &mFluid3DEffect->macCormackEnabled, nullptr);
 	//TwAddVarRW(mTwBar,"Simulation Paused", TW_TYPE_BOOLCPP, &mPaused, nullptr);
 
 	return result;
+}
+
+bool Fluid3DScene::InitSimulations(HWND hwnd) {
+	shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
+	mSimulations.push_back(fluidSimulation);
+	shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
+	volumeRenderer->transform->position.y = 0.57f;
+
+	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
+		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd, mCamera.get());
+		if (!result) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void Fluid3DScene::InitCamera() {
+	float nearVal, farVal;
+	pD3dGraphicsObj->GetScreenDepthInfo(nearVal, farVal);
+	int screenWidth, screenHeight;
+	pD3dGraphicsObj->GetScreenDimensions(screenWidth, screenHeight);
+	float fieldOfView = (float)PI / 4.0f;
+	float screenAspect = (float)screenWidth / (float)screenHeight;
+
+	mCamera = Camera::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
+	mCamera->SetPosition(0,0.5f,-6);
+}
+
+void Fluid3DScene::InitGameObjects() {
+	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false));
+	planeObject.transform->position = Vector3(0.0f,0.0f,0.0f);
+	planeObject.transform->scale = Vector3(70.0f,0.1f,70.0f);
+
+	mPrimitiveObjects.push_back(planeObject);
 }
 
 void Fluid3DScene::Update(float delta) {
@@ -113,7 +144,7 @@ void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBat
 	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
 }
 
-void Fluid3DScene::UpdateCamera(float delta) {
+void Fluid3DScene::UpdateCamera(float delta) const {
 
 	// Move camera with WASD 
 	float forwardAmount = 0.0f;
@@ -149,41 +180,38 @@ void Fluid3DScene::UpdateCamera(float delta) {
 }
 
 void Fluid3DScene::HandleInput() {
-
+	if (pInputSystem->IsMouseLeftClicked()) {
+		HandleMousePicking();
+	}
 }
 
-bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
-	mSimulations.push_back(fluidSimulation);
-	shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-	volumeRenderer->transform->position.y = 0.57f;
+void Fluid3DScene::HandleMousePicking() {
+	int posX,posY;
+	pInputSystem->GetMousePos(posX,posY);
+	Ray ray = mCamera->ScreenPointToRay(Vector2((float)posX,(float)posY));
 
+	float prevMinDistance = FLT_MAX;
+	shared_ptr<FluidSimulation> picked(nullptr);
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
-		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd, mCamera.get());
-		if (!result) {
-			return false;
+		float distance;
+		if (simulation->IntersectsRay(ray, distance)) {
+			if (distance < prevMinDistance) {
+				picked = simulation;
+			}
 		}
 	}
 
-	return true;
-}
-
-void Fluid3DScene::InitCamera() {
-	float nearVal, farVal;
-	pD3dGraphicsObj->GetScreenDepthInfo(nearVal, farVal);
-	int screenWidth, screenHeight;
-	pD3dGraphicsObj->GetScreenDimensions(screenWidth, screenHeight);
-	float fieldOfView = (float)PI / 4.0f;
-	float screenAspect = (float)screenWidth / (float)screenHeight;
-
-	mCamera = Camera::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
-	mCamera->SetPosition(0,0.5f,-6);
-}
-
-void Fluid3DScene::InitGameObjects() {
-	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false));
-	planeObject.transform->position = Vector3(0.0f,0.0f,0.0f);
-	planeObject.transform->scale = Vector3(70.0f,0.1f,70.0f);
-
-	mPrimitiveObjects.push_back(planeObject);
+	if (picked == pPickedSimulation) {
+		return;
+	}
+	else {
+		if (pPickedSimulation != nullptr) {
+			pPickedSimulation = nullptr;
+			TwRemoveAllVars(mTwBar);
+		}
+		if (picked != nullptr) {
+			pPickedSimulation = picked;
+			pPickedSimulation->DisplayInfoOnBar(mTwBar);
+		}
+	}
 }

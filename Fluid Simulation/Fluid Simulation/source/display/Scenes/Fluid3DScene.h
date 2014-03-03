@@ -39,12 +39,14 @@ public:
 private:
 	bool InitSimulations(HWND hwnd);
 	void InitGameObjects();
-	void UpdateCamera(float delta);
+	void UpdateCamera(float delta) const;
 	void HandleInput();
+	void HandleMousePicking();
 
 private:
 	unique_ptr<Camera>	mCamera;
 	
+	shared_ptr<FluidSimulation> pPickedSimulation;
 	vector<shared_ptr<FluidSimulation>> mSimulations;
 	vector<PrimitiveGameObject>	mPrimitiveObjects;
 

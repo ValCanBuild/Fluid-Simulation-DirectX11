@@ -57,6 +57,8 @@ public:
 
 	bool Initialize (ID3D11Device* device, HWND hwnd);	
 
+	// Child classes supply this function to bind any constant buffers, samplers, etc... before rendering
+	virtual void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {};
 	// IEffect methods.
 	void Apply(_In_ ID3D11DeviceContext* deviceContext) override;
 

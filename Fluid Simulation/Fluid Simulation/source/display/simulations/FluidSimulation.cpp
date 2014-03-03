@@ -16,29 +16,14 @@ using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-// Default simulation parameters
-#define DIMENSION 80
-#define TIME_STEP 0.125f
-#define IMPULSE_RADIUS 3.0f
-#define INTERACTION_IMPULSE_RADIUS 7.0f
-#define OBSTACLES_IMPULSE_RADIUS 5.0f
-#define JACOBI_ITERATIONS 15
-#define VEL_DISSIPATION 0.999f
-#define DENSITY_DISSIPATION 0.999f
-#define TEMPERATURE_DISSIPATION 0.99f
-#define SMOKE_BUOYANCY 1.0f
-#define SMOKE_WEIGHT 0.05f
-#define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 1.5f
-#define IMPULSE_DENSITY 1.0f
-
-FluidSimulation::FluidSimulation() : pBoundingFrustum(nullptr) {
-	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(Vector3(DIMENSION)));
-	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(DIMENSION)));
+FluidSimulation::FluidSimulation() : pBoundingFrustum(nullptr), mUpdatePaused(false) {
+	FluidSettings fluidSettings;
+	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
+	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), pBoundingFrustum(nullptr)
+	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), pBoundingFrustum(nullptr), mUpdatePaused(false)
 {
 
 }
@@ -77,14 +62,42 @@ bool FluidSimulation::Render(const Matrix &viewMatrix, const Matrix &projectionM
 	return false;
 }
 
-bool FluidSimulation::Update(float dt) {
-	mFluidCalculator->Process();
+bool FluidSimulation::Update(float dt) const {
 	mVolumeRenderer->Update();
-	return true;
+
+	if (!mUpdatePaused) {
+		mFluidCalculator->Process();
+	}
+
+	return !mUpdatePaused;
 }
 
-void FluidSimulation::DisplayInfoOnBar(const TwBar * const pBar) const {
+void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 
+	// Add fluid calculator settings
+	FluidSettings &fluidSettings = mFluidCalculator->fluidSettings;
+
+	TwAddVarRW(pBar,"Update Paused", TW_TYPE_BOOLCPP, &mUpdatePaused, nullptr);
+	TwAddVarRO(pBar,"Dimensions", TW_TYPE_DIR3F, &fluidSettings.dimensions, "");
+	TwAddVarRW(pBar,"MacCormarck Advection", TW_TYPE_BOOLCPP, &fluidSettings.macCormackEnabled, nullptr);
+	TwAddVarRW(pBar,"Time Step", TW_TYPE_FLOAT, &fluidSettings.timeStep, "min=0.0 max=1.0 step=0.001");
+	TwAddVarRW(pBar,"Jacobi Iterations", TW_TYPE_INT32, &fluidSettings.jacobiIterations, "min=1 max=50 step=1");
+	TwAddVarRW(pBar,"Velocity Dissipation", TW_TYPE_FLOAT, &fluidSettings.velocityDissipation, "min=0.0 max=1.0 step=0.001");
+	TwAddVarRW(pBar,"Temperature Dissipation", TW_TYPE_FLOAT, &fluidSettings.temperatureDissipation, "min=0.0 max=1.0 step=0.001");
+	TwAddVarRW(pBar,"Constant Temperature", TW_TYPE_FLOAT, &fluidSettings.constantTemperature, "min=0.0 max=100.0 step=0.01");
+	TwAddVarRW(pBar,"Density Dissipation", TW_TYPE_FLOAT, &fluidSettings.densityDissipation, "min=0.0 max=1.0 step=0.001");
+	TwAddVarRW(pBar,"Constant Density", TW_TYPE_FLOAT, &fluidSettings.constantDensityAmount, "min=0.0 max=100.0 step=0.01");
+	TwAddVarRW(pBar,"Density Weight", TW_TYPE_FLOAT, &fluidSettings.densityWeight, "min=0.05 max=10.0 step=0.001");
+	TwAddVarRW(pBar,"Density Buoyancy", TW_TYPE_FLOAT, &fluidSettings.densityBuoyancy, "min=0.0 max=100.0 step=0.001");
+	TwAddVarRW(pBar,"Input Radius", TW_TYPE_FLOAT, &fluidSettings.constantInputRadius, "min=0.05 max=10.0 step=0.1");
+	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &fluidSettings.constantInputPosition, "");
+
+	// Add volume renderer settings
+}
+
+bool FluidSimulation::IntersectsRay(Ray &ray, float &distance) const {
+	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
+	return ray.Intersects(*boundingBox, distance);
 }
 
 std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {

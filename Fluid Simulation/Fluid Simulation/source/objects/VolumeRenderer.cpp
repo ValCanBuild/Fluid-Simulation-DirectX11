@@ -16,6 +16,11 @@ Date: 19/2/2014
 using namespace std;
 using namespace DirectX;
 
+
+static Color defaultSmokeColor = Color(0.74f, 0.0f, 0.99f, 1.0f);
+static float defaultSmokeAbsorption = 60.0f;
+static int   defaultNumSamples = 64;
+
 static std::unique_ptr<VolumeRenderShader>	sharedVolumeRenderShader;
 
 VolumeRenderer::VolumeRenderer(Vector3 &volumeSize) :
@@ -41,6 +46,7 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 			return false;
 		}
 	}
+	sharedVolumeRenderShader->SetSmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultNumSamples);
 
 	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
 
@@ -56,12 +62,18 @@ void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMa
 
 	Matrix wvpMatrix = objectMatrix*viewMatrix*projectionMatrix;
 	sharedVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
-	sharedVolumeRenderShader->SetPixelBufferValues(*transform, camPos, mVolumeSize, pSourceTexSRV);
+
+	if (mPrevCameraPos != camPos) {
+		sharedVolumeRenderShader->SetPixelBufferValues(*transform, camPos, mVolumeSize, pSourceTexSRV);
+		mPrevCameraPos = camPos;
+	}
 
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
-
 	primitive->Draw(sharedVolumeRenderShader.get(), sharedVolumeRenderShader->GetInputLayout(), false, false, [=] 
 		{
+			// set custom sampler
+			//sharedVolumeRenderShader->ApplySamplers();
+
 			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
 			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
 			

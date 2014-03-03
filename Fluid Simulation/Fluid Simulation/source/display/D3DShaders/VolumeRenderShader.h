@@ -18,8 +18,12 @@ public:
 	VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject);
 	~VolumeRenderShader();
 
+	void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) override;
+
 	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
-	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions, ID3D11ShaderResourceView* volumeValues) const;
+	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions, ID3D11ShaderResourceView* volumeValues);
+	void SetSmokeProperties(Color &color, float absorption, int numSamples) const;
+	void ApplySamplers();
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -47,8 +51,20 @@ private:
 		float  padding3;	
 	};
 
+	struct PixelSmokeProperties {
+		Color vSmokeColor;
+		float fSmokeAbsorption;
+		int iNumSamples;
+
+		Vector2 padding;
+	};
+
 	CComPtr<ID3D11Buffer>		mVertexInputBuffer;
 	CComPtr<ID3D11Buffer>		mPixelInputBuffer;
+	CComPtr<ID3D11Buffer>		mPixelSmokePropertiesBuffer;
+	CComPtr<ID3D11SamplerState> mSampleState;
+
+	ID3D11ShaderResourceView *  pVolumeValuesTexture;
 };
 
 #endif

@@ -15,6 +15,7 @@ Date: 18/2/2014
 
 
 #include "../../display/D3DGraphicsObject.h"
+#include "FluidSettings.h"
 
 struct ShaderParams;
 struct InputBufferGeneral;
@@ -32,7 +33,7 @@ class BuoyancyShader;
 
 class Fluid3DCalculator {
 public:
-	Fluid3DCalculator(Vector3 dimensions);
+	Fluid3DCalculator(FluidSettings fluidSettings);
 	~Fluid3DCalculator();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
@@ -41,12 +42,7 @@ public:
 	ID3D11ShaderResourceView * GetVolumeTexture() const;
 
 public:
-	int jacobiIterations;
-	float timeStep;
-	bool macCormackEnabled;
-
-private:
-	Vector3 mDimensions;
+	FluidSettings fluidSettings;
 
 private:
 	void Advect(ShaderParams *target);
