@@ -16,6 +16,8 @@ AntTweakBar: http://anttweakbar.sourceforge.net/
 
 Changelog so far:
 
+v2.0: Implemented simple 3D Fluid Simulation.
+
 v1.1.1: Implemented obstacles for 2D Fluid Simulation. Slightly improved performance by reducing floating point
 precision for Textures to 16-bits. Changed advection calculation to use the MacCormack scheme.
 
