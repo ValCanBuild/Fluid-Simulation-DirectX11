@@ -11,32 +11,32 @@ Version: 1.0
 #ifndef _BASED3DSHADER_H
 #define _BASED3DSHADER_H
 
+#include <unordered_map>
 #include <stdexcept>
 #include <Effects.h>
 #include "../../utilities/AtlInclude.h"
 
 #include "../../utilities/D3dIncludes.h"
 
+struct ShaderFileDescription {
+	WCHAR* shaderFilename;
+	char* shaderFunctionName;
+
+	ShaderFileDescription() {
+		shaderFilename = nullptr;
+		shaderFunctionName = nullptr;
+	}
+
+	~ShaderFileDescription() {
+		shaderFunctionName = nullptr;	
+		shaderFilename = nullptr;
+	}
+};
 /**
 ShaderDescription is a struct every shader must provide in order to be
 properly initialized.
 **/
-struct ShaderDescription {
-	struct ShaderFileDescription {
-		WCHAR* shaderFilename;
-		char* shaderFunctionName;
-
-		ShaderFileDescription() {
-			shaderFilename = nullptr;
-			shaderFunctionName = nullptr;
-		}
-
-		~ShaderFileDescription() {
-			shaderFunctionName = nullptr;	
-			shaderFilename = nullptr;
-		}
-	};
-
+struct ShaderDescription {	
 	ShaderFileDescription vertexShaderDesc;
 	ShaderFileDescription pixelShaderDesc;
 	ShaderFileDescription computeShaderDesc;
@@ -66,9 +66,6 @@ public:
 
 	ID3D11InputLayout* GetInputLayout() const;
 
-private:
-	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) const;
-
 protected:
 	// This renders an object using the provided Pixel and Vertex Shaders given the index count
 	void RenderShader(ID3D11DeviceContext* context, int indexCount);
@@ -79,11 +76,48 @@ protected:
 	virtual ShaderDescription GetShaderDescription() = 0;
 	// At the end of the Initialize function this function will be called in order to do any child-specific initialization
 	virtual bool SpecificInitialization(ID3D11Device* device) = 0;
+
+private:
+	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) const;
+
+	bool CreatePixelShader(ShaderFileDescription &shaderFileDesc, int flags, HWND hwnd, ID3D11Device* device);
+	bool CreateVertexShaderAndInputLayout(ShaderFileDescription &shaderFileDesc, int flags, HWND hwnd, ID3D11Device* device, D3D11_INPUT_ELEMENT_DESC *polygonLayout, int numElements);
+
+	bool CreateComputeShader(ShaderFileDescription &shaderFileDesc, int flags, HWND hwnd, ID3D11Device* device);
+
 private:
 	CComPtr<ID3D11VertexShader>		mVertexShader;
 	CComPtr<ID3D11PixelShader>		mPixelShader;
 	CComPtr<ID3D11ComputeShader>	mComputeShader;
 	CComPtr<ID3D11InputLayout>		mLayout;
+
+private:
+	struct ShaderFileDescriptionHash {
+		std::size_t operator()(const ShaderFileDescription& k) const	{
+			return std::hash<WCHAR*>()(k.shaderFilename) ^
+				(std::hash<char*>()(k.shaderFunctionName) << 1);
+		}
+	};
+
+	struct ShaderFileDescriptionEqual {
+		bool operator()(const ShaderFileDescription& a, const ShaderFileDescription &b) const {
+			int first = wcscmp(a.shaderFilename, b.shaderFilename);
+			int second = strcmp(a.shaderFunctionName, b.shaderFunctionName);
+
+			return (first == 0) && (second == 0);
+		}
+	};
+
+	// Static map of used shaders
+	static std::unordered_map<ShaderFileDescription, CComPtr<ID3D11PixelShader>, ShaderFileDescriptionHash, ShaderFileDescriptionEqual> pixelShaderMap;
+	static std::unordered_map<ShaderFileDescription, CComPtr<ID3D11ComputeShader>, ShaderFileDescriptionHash, ShaderFileDescriptionEqual> computeShaderMap;
+
+	struct VertexShaderData {
+		CComPtr<ID3D11VertexShader> vertexShader;
+		CComPtr<ID3D11InputLayout> inputLayout;
+	};
+
+	static std::unordered_map<ShaderFileDescription, VertexShaderData, ShaderFileDescriptionHash, ShaderFileDescriptionEqual> vertexShaderMap;
 };
 
 #endif

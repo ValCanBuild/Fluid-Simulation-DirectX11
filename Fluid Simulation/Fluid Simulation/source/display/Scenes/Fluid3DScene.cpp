@@ -63,11 +63,13 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
-	mSimulations.push_back(fluidSimulation);
-	shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-	volumeRenderer->transform->position.y = 0.57f;
-
+	for (int i = 0; i < 2; i++) {
+		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
+		mSimulations.push_back(fluidSimulation);
+		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
+		volumeRenderer->transform->position.y = 0.57f;
+		volumeRenderer->transform->position.x = 0.0f + 2.0f*i;
+	}
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd, mCamera.get());
 		if (!result) {

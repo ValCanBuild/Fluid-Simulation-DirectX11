@@ -17,6 +17,7 @@ Date: 19/2/2014
 
 struct ShaderParams;
 class Camera;
+class VolumeRenderShader;
 
 namespace DirectX 
 {
@@ -42,6 +43,7 @@ private:
 	ID3D11ShaderResourceView *pSourceTexSRV;
 	Camera *pCamera;
 
+	std::unique_ptr<VolumeRenderShader>		mVolumeRenderShader;
 	std::shared_ptr<DirectX::CommonStates>	pCommonStates;	
 };
 
