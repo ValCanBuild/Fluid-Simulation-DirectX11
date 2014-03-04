@@ -96,10 +96,6 @@ void VolumeRenderShader::SetPixelBufferValues(Transform &transform, Vector3 &vEy
 	dataPtr->vScale = transform.scale;
 	dataPtr->vTranslate = transform.position;
 	dataPtr->vEyePos = vEyePos;
-	dataPtr->padding0 = 0.0f;
-	dataPtr->padding1 = 0.0f;
-	dataPtr->padding2 = 0.0f;
-	dataPtr->padding3 = 0.0f;
 
 	context->Unmap(mPixelInputBuffer,0);
 
@@ -107,9 +103,9 @@ void VolumeRenderShader::SetPixelBufferValues(Transform &transform, Vector3 &vEy
 	pVolumeValuesTexture = volumeValues;
 }
 
-void VolumeRenderShader::SetSmokeProperties(Color &color, float absorption, int numSamples) const {
+void VolumeRenderShader::SetSmokeProperties(SmokeProperties &smokeProperties) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	PixelSmokeProperties* dataPtr;
+	PixelSmokePropertiesBuffer* dataPtr;
 
 	ID3D11DeviceContext *context = pD3dGraphicsObject->GetDeviceContext();
 
@@ -119,11 +115,8 @@ void VolumeRenderShader::SetSmokeProperties(Color &color, float absorption, int 
 		throw std::runtime_error(std::string("VolumeRenderShader: failed to map buffer in SetSmokeProperties function"));
 	}
 
-	dataPtr = (PixelSmokeProperties*)mappedResource.pData;
-	dataPtr->vSmokeColor = color;
-	dataPtr->fSmokeAbsorption = absorption;
-	dataPtr->iNumSamples = numSamples;
-	dataPtr->padding = Vector2();
+	dataPtr = (PixelSmokePropertiesBuffer*)mappedResource.pData;
+	dataPtr->smokeProperties = smokeProperties;
 
 	context->Unmap(mPixelSmokePropertiesBuffer,0);
 
@@ -174,7 +167,7 @@ bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	// Create the pixel smoke properties buffer
 	D3D11_BUFFER_DESC pixelSmokePropertiesBufferDesc;
 	pixelSmokePropertiesBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	pixelSmokePropertiesBufferDesc.ByteWidth = sizeof(PixelSmokeProperties);
+	pixelSmokePropertiesBufferDesc.ByteWidth = sizeof(PixelSmokePropertiesBuffer);
 	pixelSmokePropertiesBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	pixelSmokePropertiesBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pixelSmokePropertiesBufferDesc.MiscFlags = 0;

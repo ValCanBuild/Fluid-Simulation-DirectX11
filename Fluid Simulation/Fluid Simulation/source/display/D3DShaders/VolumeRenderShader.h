@@ -13,6 +13,16 @@ Date: 19/02/2014
 class D3DGraphicsObject;
 class Transform;
 
+struct SmokeProperties {
+	Color vSmokeColor;
+	float fSmokeAbsorption;
+	int iNumSamples;
+	
+	SmokeProperties();
+	SmokeProperties(Color color, float absorption, int numSamples) : 
+		vSmokeColor(color), fSmokeAbsorption(absorption), iNumSamples(numSamples) {}
+};
+
 class VolumeRenderShader : public BaseD3DShader {
 public:
 	VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject);
@@ -22,7 +32,7 @@ public:
 
 	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
 	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions, ID3D11ShaderResourceView* volumeValues);
-	void SetSmokeProperties(Color &color, float absorption, int numSamples) const;
+	void SetSmokeProperties(SmokeProperties &smokeProperties) const;
 	void ApplySamplers();
 
 private:
@@ -51,11 +61,8 @@ private:
 		float  padding3;	
 	};
 
-	struct PixelSmokeProperties {
-		Color vSmokeColor;
-		float fSmokeAbsorption;
-		int iNumSamples;
-
+	struct PixelSmokePropertiesBuffer {
+		SmokeProperties smokeProperties;
 		Vector2 padding;
 	};
 

@@ -7,6 +7,7 @@ Date: 19/2/2014
 *********************************************************************/
 
 #include "VolumeRenderer.h"
+#include <AntTweakBar.h>
 #include <CommonStates.h>
 #include "../system/ServiceProvider.h"
 #include "../display/D3DShaders/ShaderParams.h"
@@ -19,6 +20,18 @@ using namespace DirectX;
 static Color defaultSmokeColor = Color(0.74f, 0.0f, 0.99f, 1.0f);
 static float defaultSmokeAbsorption = 60.0f;
 static int   defaultNumSamples = 64;
+
+TwType smokePropertiesTwType;
+
+void DefineSmokePropertiesTwType() {
+	TwStructMember smokePropertiesStructMembers[] = {
+		{ "Smoke Color", TW_TYPE_COLOR4F, offsetof(SmokeProperties, vSmokeColor), "" },
+		{ "Smoke Absorption", TW_TYPE_FLOAT, offsetof(SmokeProperties, fSmokeAbsorption), "min=0.0 max=200.0 step=0.5" },
+		{ "Number of Samples", TW_TYPE_INT32, offsetof(SmokeProperties, iNumSamples), "min=16 max=512 step=1" }
+	};
+
+	smokePropertiesTwType = TwDefineStruct("Render Properties", smokePropertiesStructMembers, 3, sizeof(SmokeProperties), nullptr, nullptr);
+}
 
 VolumeRenderer::VolumeRenderer(Vector3 &volumeSize) :
 	mVolumeSize(volumeSize), 
@@ -42,9 +55,15 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 		return false;
 	}
 	
-	mVolumeRenderShader->SetSmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultNumSamples);
+	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultNumSamples));
+
+	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
 
 	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
+
+	if (smokePropertiesTwType == TW_TYPE_UNDEF) {
+		DefineSmokePropertiesTwType();
+	}
 
 	return true;
 }
@@ -85,4 +104,17 @@ void VolumeRenderer::SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV) {
 
 void VolumeRenderer::SetCamera(Camera *camera) {
 	pCamera = camera;
+}
+
+void VolumeRenderer::DisplayRenderInfoOnBar(TwBar * const pBar) {
+	TwAddVarRW(pBar,"Rendering", smokePropertiesTwType, mSmokeProperties.get(), "");
+	TwAddButton(pBar, "Update", SetSmokePropertiesCallback, this, "label='Apply Changes' group=Rendering");
+}
+
+void VolumeRenderer::RefreshSmokeProperties() {
+	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
+}
+
+void __stdcall VolumeRenderer::SetSmokePropertiesCallback(void *clientData) {
+	static_cast<VolumeRenderer *>(clientData)->RefreshSmokeProperties();
 }

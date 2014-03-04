@@ -11,13 +11,15 @@ Date: 19/2/2014
 
 #include "../objects/PrimitiveGameObject.h"
 
+#include <string>
 #include <memory>
 #include "../utilities/AtlInclude.h"
 #include "../display/D3DGraphicsObject.h"
 
-struct ShaderParams;
 class Camera;
 class VolumeRenderShader;
+struct CTwBar;
+struct SmokeProperties;
 
 namespace DirectX 
 {
@@ -35,6 +37,12 @@ public:
 	void SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV);
 	void SetCamera(Camera *camera);
 
+	void DisplayRenderInfoOnBar(CTwBar * const pBar);
+
+private:
+	static void __stdcall SetSmokePropertiesCallback(void *clientData);
+	void RefreshSmokeProperties();
+
 private:	
 	Vector3 mVolumeSize;
 	Vector3 mPrevCameraPos;
@@ -43,6 +51,7 @@ private:
 	ID3D11ShaderResourceView *pSourceTexSRV;
 	Camera *pCamera;
 
+	std::unique_ptr<SmokeProperties>		mSmokeProperties;
 	std::unique_ptr<VolumeRenderShader>		mVolumeRenderShader;
 	std::shared_ptr<DirectX::CommonStates>	pCommonStates;	
 };

@@ -77,22 +77,26 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	// Add fluid calculator settings
 	FluidSettings &fluidSettings = mFluidCalculator->fluidSettings;
 
-	TwAddVarRW(pBar,"Update Paused", TW_TYPE_BOOLCPP, &mUpdatePaused, nullptr);
-	TwAddVarRO(pBar,"Dimensions", TW_TYPE_DIR3F, &fluidSettings.dimensions, "");
-	TwAddVarRW(pBar,"MacCormarck Advection", TW_TYPE_BOOLCPP, &fluidSettings.macCormackEnabled, nullptr);
-	TwAddVarRW(pBar,"Time Step", TW_TYPE_FLOAT, &fluidSettings.timeStep, "min=0.0 max=1.0 step=0.001");
-	TwAddVarRW(pBar,"Jacobi Iterations", TW_TYPE_INT32, &fluidSettings.jacobiIterations, "min=1 max=50 step=1");
-	TwAddVarRW(pBar,"Velocity Dissipation", TW_TYPE_FLOAT, &fluidSettings.velocityDissipation, "min=0.0 max=1.0 step=0.001");
-	TwAddVarRW(pBar,"Temperature Dissipation", TW_TYPE_FLOAT, &fluidSettings.temperatureDissipation, "min=0.0 max=1.0 step=0.001");
-	TwAddVarRW(pBar,"Constant Temperature", TW_TYPE_FLOAT, &fluidSettings.constantTemperature, "min=0.0 max=100.0 step=0.01");
-	TwAddVarRW(pBar,"Density Dissipation", TW_TYPE_FLOAT, &fluidSettings.densityDissipation, "min=0.0 max=1.0 step=0.001");
-	TwAddVarRW(pBar,"Constant Density", TW_TYPE_FLOAT, &fluidSettings.constantDensityAmount, "min=0.0 max=100.0 step=0.01");
-	TwAddVarRW(pBar,"Density Weight", TW_TYPE_FLOAT, &fluidSettings.densityWeight, "min=0.05 max=10.0 step=0.001");
-	TwAddVarRW(pBar,"Density Buoyancy", TW_TYPE_FLOAT, &fluidSettings.densityBuoyancy, "min=0.0 max=100.0 step=0.001");
-	TwAddVarRW(pBar,"Input Radius", TW_TYPE_FLOAT, &fluidSettings.constantInputRadius, "min=0.05 max=10.0 step=0.1");
-	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &fluidSettings.constantInputPosition, "");
+	TwAddVarRW(pBar,"Active", TW_TYPE_BOOLCPP, &mUpdatePaused, nullptr);
+
+	string groupName = "group=Simulation";
+
+	TwAddVarRO(pBar,"Dimensions", TW_TYPE_DIR3F, &fluidSettings.dimensions, groupName.c_str());
+	TwAddVarRW(pBar,"MacCormarck Advection", TW_TYPE_BOOLCPP, &fluidSettings.macCormackEnabled, groupName.c_str());
+	TwAddVarRW(pBar,"Time Step", TW_TYPE_FLOAT, &fluidSettings.timeStep, ("min=0.0 max=1.0 step=0.001 " + groupName).c_str());
+	TwAddVarRW(pBar,"Jacobi Iterations", TW_TYPE_INT32, &fluidSettings.jacobiIterations, ("min=1 max=50 step=1 " + groupName).c_str());
+	TwAddVarRW(pBar,"Velocity Dissipation", TW_TYPE_FLOAT, &fluidSettings.velocityDissipation, ("min=0.0 max=1.0 step=0.001 " + groupName).c_str());
+	TwAddVarRW(pBar,"Temperature Dissipation", TW_TYPE_FLOAT, &fluidSettings.temperatureDissipation, ("min=0.0 max=1.0 step=0.001 " + groupName).c_str());
+	TwAddVarRW(pBar,"Constant Temperature", TW_TYPE_FLOAT, &fluidSettings.constantTemperature, ("min=0.0 max=100.0 step=0.01 " + groupName).c_str());
+	TwAddVarRW(pBar,"Density Dissipation", TW_TYPE_FLOAT, &fluidSettings.densityDissipation, ("min=0.0 max=1.0 step=0.001 " + groupName).c_str());
+	TwAddVarRW(pBar,"Constant Density", TW_TYPE_FLOAT, &fluidSettings.constantDensityAmount, ("min=0.0 max=100.0 step=0.01 " + groupName).c_str());
+	TwAddVarRW(pBar,"Density Weight", TW_TYPE_FLOAT, &fluidSettings.densityWeight, ("min=0.05 max=10.0 step=0.001 " + groupName).c_str());
+	TwAddVarRW(pBar,"Density Buoyancy", TW_TYPE_FLOAT, &fluidSettings.densityBuoyancy, ("min=0.0 max=100.0 step=0.001 " + groupName).c_str());
+	TwAddVarRW(pBar,"Input Radius", TW_TYPE_FLOAT, &fluidSettings.constantInputRadius, ("min=0.05 max=10.0 step=0.1 "  + groupName).c_str());
+	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &fluidSettings.constantInputPosition, groupName.c_str());
 
 	// Add volume renderer settings
+	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
 }
 
 bool FluidSimulation::IntersectsRay(Ray &ray, float &distance) const {
