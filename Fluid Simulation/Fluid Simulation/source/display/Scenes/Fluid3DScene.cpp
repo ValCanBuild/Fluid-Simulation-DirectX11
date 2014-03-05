@@ -8,6 +8,7 @@ Date: 24/10/2013
 
 
 #include "Fluid3DScene.h"
+#include <algorithm>
 #include <AntTweakBar.h>
 
 #include "../D3DGraphicsObject.h"
@@ -18,6 +19,21 @@ Date: 24/10/2013
 
 using namespace Fluid3D;
 using namespace DirectX;
+
+const string barName = "3D Fluid Simulation";
+
+struct FluidSimulationDepthSort {
+	Vector3 cameraPosition;
+
+	FluidSimulationDepthSort(Vector3 &cameraPosition) : cameraPosition(cameraPosition) {}
+
+	bool operator() (const std::shared_ptr<FluidSimulation>& first, const std::shared_ptr<FluidSimulation>& second) const {
+		Vector3 firstPositon = first->GetVolumeRenderer()->transform->position;
+		Vector3 secondPosition = second->GetVolumeRenderer()->transform->position;
+
+		return Vector3::Distance(firstPositon, cameraPosition) > Vector3::Distance(secondPosition, cameraPosition);
+	}
+};
 
 Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), pPickedSimulation(nullptr) {
 	
@@ -50,23 +66,26 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	pInputSystem = ServiceProvider::Instance().GetInputSystem();
 
 	// Initialize this scene's tweak bar
-	mTwBar = TwNewBar("3D Fluid Simulation");
+	mTwBar = TwNewBar(barName.c_str());
 	// Position bar
 	int barPos[2] = {550,2};
 	TwSetParam(mTwBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
 	int barSize[2] = {250,250};
 	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
+	// hide bar initially
+	string command = " '" + barName + "' iconified=true ";
+	TwDefine(command.c_str());
 
 	return result;
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 3; i++) {
 		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
 		mSimulations.push_back(fluidSimulation);
 		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
 		volumeRenderer->transform->position.y = 0.57f;
-		volumeRenderer->transform->position.x = 0.0f + 2.0f*i;
+		volumeRenderer->transform->position.x = 0.0f + 1.0f*i;
 	}
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd, mCamera.get());
@@ -128,6 +147,7 @@ bool Fluid3DScene::Render() {
 	}
 
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
+		
 		if (simulation->Render(viewMatrix, projectionMatrix)) {
 			++mNumRenderedFluids;
 		}
@@ -144,8 +164,7 @@ void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBat
 	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
 }
 
-void Fluid3DScene::UpdateCamera(float delta) const {
-
+void Fluid3DScene::UpdateCamera(float delta) {
 	// Move camera with WASD 
 	float forwardAmount = 0.0f;
 	float rightAmount = 0.0f;
@@ -166,6 +185,8 @@ void Fluid3DScene::UpdateCamera(float delta) const {
 
 	if (forwardAmount != 0.0f || rightAmount != 0.0f) {
 		mCamera->MoveFacing(forwardAmount*moveFactor,rightAmount*moveFactor);
+		// the camera has moved - sort transparent object render order
+		SortTransparentObjects(); 
 	}
 
 	// Rotate camera with mouse button
@@ -208,10 +229,20 @@ void Fluid3DScene::HandleMousePicking() {
 		if (pPickedSimulation != nullptr) {
 			pPickedSimulation = nullptr;
 			TwRemoveAllVars(mTwBar);
+			string command = " '" + barName + "' iconified=true ";
+			TwDefine(command.c_str());
 		}
 		if (picked != nullptr) {
 			pPickedSimulation = picked;
 			pPickedSimulation->DisplayInfoOnBar(mTwBar);
+			string command = " '" + barName + "' iconified=false ";
+			TwDefine(command.c_str());
 		}
 	}
+}
+
+void Fluid3DScene::SortTransparentObjects() {
+	Vector3 camPos;
+	mCamera->GetPosition(camPos);
+	sort(mSimulations.begin(), mSimulations.end(), FluidSimulationDepthSort(camPos));
 }

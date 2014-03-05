@@ -39,9 +39,11 @@ public:
 private:
 	bool InitSimulations(HWND hwnd);
 	void InitGameObjects();
-	void UpdateCamera(float delta) const;
+	void UpdateCamera(float delta);
 	void HandleInput();
 	void HandleMousePicking();
+
+	void SortTransparentObjects();
 
 private:
 	unique_ptr<Camera>	mCamera;
