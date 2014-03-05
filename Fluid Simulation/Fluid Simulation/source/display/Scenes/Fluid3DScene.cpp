@@ -57,13 +57,11 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	int barSize[2] = {250,250};
 	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 
-	//TwAddVarRW(mTwBar,"Simulation Paused", TW_TYPE_BOOLCPP, &mPaused, nullptr);
-
 	return result;
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 2; i++) {
 		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
 		mSimulations.push_back(fluidSimulation);
 		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
@@ -89,7 +87,7 @@ void Fluid3DScene::InitCamera() {
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
 	mCamera = Camera::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
-	mCamera->SetPosition(0,0.5f,-6);
+	mCamera->SetPosition(0,0.5f,-4);
 }
 
 void Fluid3DScene::InitGameObjects() {

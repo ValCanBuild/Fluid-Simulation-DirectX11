@@ -136,6 +136,7 @@
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp" />
     <ClCompile Include="source\utilities\GeometryBuilder.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
     <ClCompile Include="source\utilities\Physics.cpp" />
@@ -198,16 +199,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pFluid2DTexture.psh" />
-    <FxCompile Include="hlsl\pVolumeRender.psh">
-      <FileType>Document</FileType>
+    <None Include="hlsl\pVolumeRender.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VolumeRenderPixelShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="hlsl\pTexture.psh">
-      <FileType>Document</FileType>
+    </None>
+    <None Include="hlsl\pTexture.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TexturePixelShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-    </FxCompile>
+    </None>
     <None Include="hlsl\vOrthocolor.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ColorVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
@@ -218,27 +217,24 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
     </None>
-    <FxCompile Include="hlsl\pOrthotexture.psh">
+    <None Include="hlsl\pOrthotexture.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TexturePixelShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </FxCompile>
+    </None>
     <None Include="hlsl\vOrthotexture.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TextureVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </None>
-    <FxCompile Include="hlsl\vTexture.vsh">
-      <FileType>Document</FileType>
+    <None Include="hlsl\vTexture.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TextureVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="hlsl\vVolumeRender.vsh">
-      <FileType>Document</FileType>
+    </None>
+    <None Include="hlsl\vVolumeRender.vsh">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VolumeRenderVertexShader</EntryPointName>
-    </FxCompile>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -268,10 +264,6 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AdvectComputeShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-    </FxCompile>
-    <FxCompile Include="hlsl\cVolumeRender.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RenderComputeShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

@@ -225,6 +225,9 @@
     <ClCompile Include="source\display\simulations\FluidSimulation.cpp">
       <Filter>Source Files\Display\Simulations</Filter>
     </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\utilities\D3dIncludes.h">
@@ -403,6 +406,21 @@
     <None Include="hlsl\vOrthocolor.vsh">
       <Filter>HLSL\OrthoColor</Filter>
     </None>
+    <None Include="hlsl\vTexture.vsh">
+      <Filter>HLSL\Texture</Filter>
+    </None>
+    <None Include="hlsl\pTexture.psh">
+      <Filter>HLSL\Texture</Filter>
+    </None>
+    <None Include="hlsl\pOrthotexture.psh">
+      <Filter>HLSL\OrthoTexture</Filter>
+    </None>
+    <None Include="hlsl\pVolumeRender.psh">
+      <Filter>HLSL\VolumeRender</Filter>
+    </None>
+    <None Include="hlsl\vVolumeRender.vsh">
+      <Filter>HLSL\VolumeRender</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="hlsl\cFluid2D.hlsl">
@@ -410,24 +428,6 @@
     </FxCompile>
     <FxCompile Include="hlsl\cFluid3D.hlsl">
       <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\cVolumeRender.hlsl">
-      <Filter>HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pOrthotexture.psh">
-      <Filter>HLSL\OrthoTexture</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pVolumeRender.psh">
-      <Filter>HLSL\VolumeRender</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\vVolumeRender.vsh">
-      <Filter>HLSL\VolumeRender</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\pTexture.psh">
-      <Filter>HLSL\Texture</Filter>
-    </FxCompile>
-    <FxCompile Include="hlsl\vTexture.vsh">
-      <Filter>HLSL\Texture</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

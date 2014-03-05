@@ -16,12 +16,10 @@ Date: 09/11/2013
 // Constant buffers
 cbuffer InputBufferGeneral : register (b0) {
 	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader	
-	float fBuoyancy;			// Used for BuoyancyComputeShader
+	float fDensityBuoyancy;		// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
 	float fAmbientTemperature;  // Used for BuoyancyComputeShader
-
-	float3 vDimensions;
-	float  padding10;			// pad to 32 bytes
+	// 16 bytes //
 };
 
 cbuffer InputBufferDissipation : register (b1) {
@@ -30,10 +28,10 @@ cbuffer InputBufferDissipation : register (b1) {
 }
 
 cbuffer InputBufferImpulse : register (b2) {
-	float4 vPoint;				// Used for ImpulseComputeShader
+	float3 vPoint;				// Used for ImpulseComputeShader
+	float  fRadius;				// Used for ImpulseComputeShader
 	float4 vFillColor;			// Used for ImpulseComputeShader
-	float fRadius;				// Used for ImpulseComputeShader
-	float3 padding2;			// pad to 48 bytes
+	// 32 bytes //
 }
 
 
@@ -62,12 +60,26 @@ RWTexture3D<float> pressureResult : register (u0); // Used for JacobiComputeShad
 
 RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader
 
+uint3 GetDimensionsFloat3(Texture3D<float3> tex) {
+	uint3 dimensions;
+	tex.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
+	return dimensions;
+}
+
+uint3 GetDimensionsFloat(Texture3D<float> tex) {
+	uint3 dimensions;
+	tex.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
+	return dimensions;
+}
+
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Advect the speed by sampling at pos - deltaTime*velocity
 void AdvectComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(velocity);
+
 	// advect by trace back
 	float3 prevPos = i - fTimeStep * velocity[i];
-	prevPos = (prevPos+0.5f)/vDimensions;
+	prevPos = (prevPos+0.5f)/dimensions;
 
 	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
@@ -77,9 +89,10 @@ void AdvectComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Advect the speed by sampling at pos + deltaTime*velocity
 void AdvectBackwardComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(velocity);
 	// advect by trace forward
 	float3 prevPos = i + fTimeStep * velocity[i];
-	prevPos = (prevPos+0.5f)/vDimensions;
+	prevPos = (prevPos+0.5f)/dimensions;
 
 	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
@@ -89,11 +102,12 @@ void AdvectBackwardComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Advect the speed by using the two intermediate semi-Lagrangian steps to achieve higher-order accuracy
 void AdvectMacCormackComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(velocity);
 	// advect by trace back
 	float3 prevPos = i - fTimeStep * velocity[i];
 	uint3 j = (uint3) prevPos;
 
-	prevPos = (prevPos+0.5f)/vDimensions;
+	prevPos = (prevPos+0.5f)/dimensions;
 
 	// Get the values of nodes that contribute to the interpolated value.  
 	float3 r0 = advectionTargetA[j + uint3(0,0,0)];
@@ -132,13 +146,13 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 result = velocity[i];
 
 	if (temperatureVal > fAmbientTemperature) {
-		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, 1.0f, 0.0f);
+		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, 1.0f, 0.0f);
 	}
 	buoyancyResult[i] = result;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
-// Adds impulse depending on point of interaction, also used for rendering obstacles
+// Adds impulse depending on point of interaction
 void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float d = distance(vPoint.xyz,i);
 
@@ -147,13 +161,15 @@ void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
 		//a = min(a,1.0f);
 		impulseResult[i] = vFillColor.xyz;
 	}
-	else
+	else {
 		impulseResult[i] = impulseInitial[i];
+	}
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // calculate the velocity divergence
 void DivergenceComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(velocity);
 
 	uint3 coordT = i + uint3(0, 1, 0);
 	uint3 coordB = i - uint3(0, 1, 0);
@@ -171,19 +187,19 @@ void DivergenceComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 vD = velocity[coordD];
 
 	// Enforce boundaries
-	if (coordT.y > vDimensions.y - 1) {
+	if (coordT.y > dimensions.y - 1) {
 		vT.y = 0.0f;
 	}
 	if (coordB.y < 1) {
 		vB.y = 0.0f;
 	}
-	if (coordR.x > vDimensions.x - 1) {
+	if (coordR.x > dimensions.x - 1) {
 		vR.x = 0.0f;
 	}
 	if (coordL.x < 1) {
 		vL.x = 0.0f;
 	}
-	if (coordU.z > vDimensions.z - 1) {
+	if (coordU.z > dimensions.z - 1) {
 		vU.z = 0.0f;
 	}
 	if (coordD.z < 1) {
@@ -198,11 +214,13 @@ void DivergenceComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // jacobi shader to compute the gradient pressure field
 void JacobiComputeShader( uint3 i : SV_DispatchThreadID ) {
-	uint3 coordT = uint3(i.x, min(i.y+1,vDimensions.y-1), i.z);
+	uint3 dimensions = GetDimensionsFloat(pressure);
+
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
 	uint3 coordB = uint3(i.x, max(i.y-1,1), i.z);
-	uint3 coordR = uint3(min(i.x+1,vDimensions.x-1), i.y, i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
 	uint3 coordL = uint3(max(i.x-1,1), i.y, i.z);
-	uint3 coordU = uint3(i.x, i.y, min(i.z+1,vDimensions.z-1));
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
 	uint3 coordD = uint3(i.x, i.y, max(i.z-1,1));
 
 	float xC = pressure[i];
@@ -225,6 +243,8 @@ void JacobiComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // enforce incompressibility condition by making the velocity divergence 0 by subtracting the pressure gradient
 void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat(pressure);
+
 	uint3 coordT = i + uint3(0, 1, 0);
 	uint3 coordB = i - uint3(0, 1, 0);
 	uint3 coordR = i + uint3(1, 0, 0);
@@ -242,19 +262,19 @@ void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float pC = pressure[i];
 
 	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity. 
-	if (coordT.y > vDimensions.y - 1) {
+	if (coordT.y > dimensions.y - 1) {
 		pT = pC;
 	}
 	if (coordB.y < 1) {
 		pB = pC;
 	}
-	if (coordR.x > vDimensions.x - 1) {
+	if (coordR.x > dimensions.x - 1) {
 		pR = pC;
 	}
 	if (coordL.x < 1) {
 		pL = pC;
 	}
-	if (coordU.z > vDimensions.z - 1) {
+	if (coordU.z > dimensions.z - 1) {
 		pU = pC;
 	}
 	if (coordD.z < 1) {

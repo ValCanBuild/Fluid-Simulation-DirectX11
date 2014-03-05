@@ -41,21 +41,29 @@ public:
 
 	ID3D11ShaderResourceView * GetVolumeTexture() const;
 
-public:
-	FluidSettings fluidSettings;
+	const FluidSettings &GetFluidSettings() const;
+	void SetFluidSettings(const FluidSettings &fluidSettings);
 
 private:
+	bool InitBuffersAndSamplers();
+
 	void Advect(ShaderParams *target);
 	void RefreshConstantImpulse();
 	void ApplyBuoyancy();
 	void CalculatePressureGradient();
 
-	void SetGeneralBuffer();
-	void SetImpulseBuffer(Vector4& point, Vector4& amount, float radius);
-	void SetDissipationBuffer(float dissipation);
+	enum DissipationBufferType_t {
+		DENSITY, VELOCITY, TEMPERATURE
+	};
+	void UpdateDissipationBuffer(DissipationBufferType_t bufferType);
+	void UpdateGeneralBuffer();
+	void UpdateImpulseBuffer(Vector3& point, Vector4& amount, float radius);
 
+	int  GetUpdateDirtyFlags(const FluidSettings &newSettings) const;
 private:
 	D3DGraphicsObject* pD3dGraphicsObj;
+
+	FluidSettings mFluidSettings;
 
 	std::unique_ptr<AdvectionShader>			mForwardAdvectionShader;
 	std::unique_ptr<AdvectionShader>			mBackwardAdvectionShader;
@@ -76,7 +84,9 @@ private:
 
 	CComPtr<ID3D11Buffer>					mInputBufferGeneral;
 	CComPtr<ID3D11Buffer>					mInputBufferImpulse;
-	CComPtr<ID3D11Buffer>					mInputBufferDissipation;
+	CComPtr<ID3D11Buffer>					mInputBufferDensityDissipation;
+	CComPtr<ID3D11Buffer>					mInputBufferVelocityDissipation;
+	CComPtr<ID3D11Buffer>					mInputBufferTemperatureDissipation;
 	CComPtr<ID3D11SamplerState>				mSampleState;
 };
 

@@ -1,6 +1,7 @@
 /********************************************************************
 FluidSettings.h: A struct encompassing the settings required for a 
-fluid calculator
+fluid calculator. Provides a method for getting a TwType for placing
+on a Tweak Bar
 
 Author:	Valentin Hinov
 Date: 3/3/2014
@@ -12,7 +13,7 @@ Date: 3/3/2014
 #include "../math/MathUtils.h"
 
 // Default parameters
-#define DIMENSION 80
+#define DIMENSION 64
 #define TIME_STEP 0.125f
 #define IMPULSE_RADIUS 3.0f
 #define INTERACTION_IMPULSE_RADIUS 7.0f
@@ -58,5 +59,8 @@ struct FluidSettings {
 		constantInputPosition = Vector3(0.5f,0.0f,0.5f);
 	}
 };
+
+enum ETwType;
+ETwType GetFluidSettingsTwType(); // for use on an AntTweakBar
 
 #endif

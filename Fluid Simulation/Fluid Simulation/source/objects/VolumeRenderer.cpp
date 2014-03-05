@@ -79,7 +79,7 @@ void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMa
 	mVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
 
 	if (mPrevCameraPos != camPos) {
-		mVolumeRenderShader->SetPixelBufferValues(*transform, camPos, mVolumeSize, pSourceTexSRV);
+		mVolumeRenderShader->SetPixelBufferValues(*transform, camPos, mVolumeSize);
 		mPrevCameraPos = camPos;
 	}
 
@@ -99,7 +99,7 @@ void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMa
 }
 
 void VolumeRenderer::SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV) {
-	pSourceTexSRV = sourceTexSRV;
+	mVolumeRenderShader->SetVolumeValuesTexture(sourceTexSRV);
 }
 
 void VolumeRenderer::SetCamera(Camera *camera) {

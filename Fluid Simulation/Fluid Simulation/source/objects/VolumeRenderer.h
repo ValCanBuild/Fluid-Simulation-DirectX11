@@ -48,7 +48,6 @@ private:
 	Vector3 mPrevCameraPos;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
-	ID3D11ShaderResourceView *pSourceTexSRV;
 	Camera *pCamera;
 
 	std::unique_ptr<SmokeProperties>		mSmokeProperties;

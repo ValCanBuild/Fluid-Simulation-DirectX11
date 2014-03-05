@@ -31,8 +31,10 @@ public:
 	void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) override;
 
 	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
-	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions, ID3D11ShaderResourceView* volumeValues);
+	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions);
 	void SetSmokeProperties(SmokeProperties &smokeProperties) const;
+
+	void SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues);
 	void ApplySamplers();
 
 private:

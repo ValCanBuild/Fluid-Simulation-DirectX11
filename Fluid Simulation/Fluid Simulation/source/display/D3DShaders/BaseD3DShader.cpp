@@ -29,7 +29,7 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 #if defined (_DEBUG)
 	flags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #else
-	flags = D3D10_SHADER_ENABLE_STRICTNESS;
+	flags = D3D10_SHADER_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 
 	bool result;

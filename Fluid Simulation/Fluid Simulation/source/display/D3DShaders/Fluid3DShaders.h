@@ -17,13 +17,9 @@ namespace Fluid3D {
 
 struct InputBufferGeneral {
 	float fTimeStep;
-
-	float fBuoyancy;	
+	float fDensityBuoyancy;	
 	float fDensityWeight;		
-	float fAmbientTemperature;  				
-
-	Vector3 vDimensions;
-	float  padding10;
+	float fAmbientTemperature; 
 };
 
 struct InputBufferDissipation {
@@ -32,11 +28,9 @@ struct InputBufferDissipation {
 };
 
 struct InputBufferImpulse {
-	Vector4 vPoint;				
-	Vector4 vFillColor;			
+	Vector3 vPoint;				
 	float fRadius;
-
-	Vector3 padding2; // pad to 32 bytes
+	Vector4 vFillColor;			
 };
 
 class AdvectionShader : public BaseD3DShader {

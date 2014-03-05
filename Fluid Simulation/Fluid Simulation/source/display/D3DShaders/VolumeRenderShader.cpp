@@ -79,7 +79,7 @@ void VolumeRenderShader::SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldM
 	// Set the buffer inside the vertex shader
 }
 
-void VolumeRenderShader::SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions, ID3D11ShaderResourceView* volumeValues) {
+void VolumeRenderShader::SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	PixelInputBuffer* dataPtr;
 
@@ -98,9 +98,6 @@ void VolumeRenderShader::SetPixelBufferValues(Transform &transform, Vector3 &vEy
 	dataPtr->vEyePos = vEyePos;
 
 	context->Unmap(mPixelInputBuffer,0);
-
-	// Set the buffer inside the pixel shader
-	pVolumeValuesTexture = volumeValues;
 }
 
 void VolumeRenderShader::SetSmokeProperties(SmokeProperties &smokeProperties) const {
@@ -197,4 +194,8 @@ bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	}
 
 	return true;
+}
+
+void VolumeRenderShader::SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues) {
+	pVolumeValuesTexture = volumeValues;
 }

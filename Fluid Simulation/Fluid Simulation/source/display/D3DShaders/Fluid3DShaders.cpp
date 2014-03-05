@@ -8,10 +8,10 @@ Date: 09/11/2013
 #include "Fluid3DShaders.h"
 #include "../D3DGraphicsObject.h"
 
-// Thread number defines based on values from cFluid2D.hlsl
-#define NUM_THREADS_X 16.0f
-#define NUM_THREADS_Y 4.0f
-#define NUM_THREADS_Z 4.0f
+// Thread number defines based on values from cFluid3D.hlsl
+#define NUM_THREADS_X 16
+#define NUM_THREADS_Y 4
+#define NUM_THREADS_Z 4
 
 const Vector3 BoxSize(80);
 
