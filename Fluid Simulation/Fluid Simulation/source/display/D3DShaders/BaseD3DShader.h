@@ -52,8 +52,7 @@ struct ShaderDescription {
 
 class BaseD3DShader : public DirectX::IEffect {
 public:
-	BaseD3DShader(){}
-	~BaseD3DShader(){}
+	~BaseD3DShader() {}
 
 	bool Initialize (ID3D11Device* device, HWND hwnd);	
 
@@ -67,6 +66,8 @@ public:
 	ID3D11InputLayout* GetInputLayout() const;
 
 protected:
+	BaseD3DShader() {} // only child classes can be constructed
+
 	// This renders an object using the provided Pixel and Vertex Shaders given the index count
 	void RenderShader(ID3D11DeviceContext* context, int indexCount);
 
@@ -75,7 +76,7 @@ protected:
 	// Every child of this class has to provide an implementation of these functions in order to get the correct shader name
 	virtual ShaderDescription GetShaderDescription() = 0;
 	// At the end of the Initialize function this function will be called in order to do any child-specific initialization
-	virtual bool SpecificInitialization(ID3D11Device* device) = 0;
+	virtual bool SpecificInitialization(ID3D11Device* device) {return true;};
 
 private:
 	void OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename) const;

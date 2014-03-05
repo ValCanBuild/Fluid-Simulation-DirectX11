@@ -13,7 +13,6 @@ Date: 18/2/2014
 #include <memory>
 #include "../AtlInclude.h"
 
-
 #include "../../display/D3DGraphicsObject.h"
 #include "FluidSettings.h"
 
@@ -42,6 +41,8 @@ public:
 	void SetFluidSettings(const FluidSettings &fluidSettings);
 
 private:
+	bool InitShaders(HWND hwnd);
+	bool InitShaderParams(HWND hwnd);
 	bool InitBuffersAndSamplers();
 
 	void Advect(ShaderParams *target);

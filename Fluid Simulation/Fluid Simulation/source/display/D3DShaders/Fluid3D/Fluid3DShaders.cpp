@@ -6,28 +6,47 @@ Author: Valentin Hinov
 Date: 09/11/2013
 **************************************************************/
 #include "Fluid3DShaders.h"
-#include "../../D3DGraphicsObject.h"
 
 // Thread number defines based on values from cFluid3D.hlsl
 #define NUM_THREADS_X 16
 #define NUM_THREADS_Y 4
 #define NUM_THREADS_Z 4
 
-const Vector3 BoxSize(80);
-
 using namespace Fluid3D;
 
+BaseFluid3DShader::BaseFluid3DShader(Vector3 dimensions) {
+	SetDimensions(dimensions);
+}
+
+BaseFluid3DShader::~BaseFluid3DShader() {
+
+}
+
+void BaseFluid3DShader::Dispatch(_In_ ID3D11DeviceContext* context) const {
+	// Run compute shader
+	SetComputeShader(context);
+	context->Dispatch(mNumThreadGroupX,mNumThreadGroupY,mNumThreadGroupZ);
+}
+
+void BaseFluid3DShader::SetDimensions(const Vector3 &dimensions) {
+	mNumThreadGroupX = (UINT)ceil(dimensions.x/NUM_THREADS_X);
+	mNumThreadGroupY = (UINT)ceil(dimensions.y/NUM_THREADS_Y);
+	mNumThreadGroupZ = (UINT)ceil(dimensions.z/NUM_THREADS_Z);
+}
+
+ShaderDescription BaseFluid3DShader::GetShaderDescription() {
+	throw std::runtime_error(std::string("BaseFluid3DShader: GetShaderDescription called on Base class"));
+}
+
 ///////ADVECTION SHADER BEGIN////////
-AdvectionShader::AdvectionShader(AdvectionType_t advectionType) 
-: mAdvectionType(advectionType) {
+AdvectionShader::AdvectionShader(AdvectionType_t advectionType, Vector3 dimensions) 
+: BaseFluid3DShader(dimensions), mAdvectionType(advectionType) {
 }
 
 AdvectionShader::~AdvectionShader() {
 }
 
-bool AdvectionShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult) {
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
+bool AdvectionShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult) {
 	// Set the parameters inside the compute shader
 	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
 
@@ -43,13 +62,7 @@ bool AdvectionShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ Shade
 
 	context->CSSetUnorderedAccessViews(0,1,&(advectResult->mUAV.p),nullptr);
 
-	UINT numThreadGroupX = (UINT)ceil(BoxSize.x/NUM_THREADS_X);
-	UINT numThreadGroupY = (UINT)ceil(BoxSize.y/NUM_THREADS_Y);
-	UINT numThreadGroupZ = (UINT)ceil(BoxSize.z/NUM_THREADS_Z);
-
-	// Run compute shader
-	SetComputeShader(context);
-	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
+	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
 	ID3D11ShaderResourceView *const pSRVNULL[4] = {nullptr,nullptr,nullptr,nullptr};
@@ -83,26 +96,18 @@ ShaderDescription AdvectionShader::GetShaderDescription() {
 
 
 ///////IMPULSE SHADER BEGIN////////
-ImpulseShader::ImpulseShader() {
+ImpulseShader::ImpulseShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 }
 
 ImpulseShader::~ImpulseShader() {
 }
 
-bool ImpulseShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult) {
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
+bool ImpulseShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult) {
 	// Set the parameters inside the compute shader	
 	context->CSSetShaderResources(0,1,&(impulseInitial->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(impulseResult->mUAV.p),nullptr);
 
-	UINT numThreadGroupX = (UINT)ceil(BoxSize.x/NUM_THREADS_X);
-	UINT numThreadGroupY = (UINT)ceil(BoxSize.y/NUM_THREADS_Y);
-	UINT numThreadGroupZ = (UINT)ceil(BoxSize.z/NUM_THREADS_Z);
-
-	// Run compute shader
-	SetComputeShader(context);
-	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
+	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
 	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
@@ -126,27 +131,19 @@ ShaderDescription ImpulseShader::GetShaderDescription() {
 
 
 ///////JACOBI SHADER BEGIN////////
-JacobiShader::JacobiShader() {
+JacobiShader::JacobiShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 }
 
 JacobiShader::~JacobiShader() {
 }
 
-bool JacobiShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult) {
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
+bool JacobiShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult) {
 	// Set the parameters inside the pixel shader
 	context->CSSetShaderResources(0,1,&(divergence->mSRV.p));
 	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(pressureResult->mUAV.p),nullptr);
 
-	UINT numThreadGroupX = (UINT)ceil(BoxSize.x/NUM_THREADS_X);
-	UINT numThreadGroupY = (UINT)ceil(BoxSize.y/NUM_THREADS_Y);
-	UINT numThreadGroupZ = (UINT)ceil(BoxSize.z/NUM_THREADS_Z);
-
-	// Run compute shader
-	SetComputeShader(context);
-	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
+	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
 	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
@@ -170,26 +167,18 @@ ShaderDescription JacobiShader::GetShaderDescription() {
 
 
 ///////DIVERGENCE SHADER BEGIN////////
-DivergenceShader::DivergenceShader() {
+DivergenceShader::DivergenceShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 }
 
 DivergenceShader::~DivergenceShader() {
 }
 
-bool DivergenceShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult) {
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
+bool DivergenceShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult) {
 	// Set the parameters inside the pixel shader
 	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(divergenceResult->mUAV.p),nullptr);
 
-	UINT numThreadGroupX = (UINT)ceil(BoxSize.x/NUM_THREADS_X);
-	UINT numThreadGroupY = (UINT)ceil(BoxSize.y/NUM_THREADS_Y);
-	UINT numThreadGroupZ = (UINT)ceil(BoxSize.z/NUM_THREADS_Z);
-
-	// Run compute shader
-	SetComputeShader(context);
-	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
+	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
 	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
@@ -213,27 +202,19 @@ ShaderDescription DivergenceShader::GetShaderDescription() {
 
 
 ///////SUBTRACT GRADIENT SHADER END////////
-SubtractGradientShader::SubtractGradientShader() {
+SubtractGradientShader::SubtractGradientShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 }
 
 SubtractGradientShader::~SubtractGradientShader() {
 }
 
-bool SubtractGradientShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult) {
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
+bool SubtractGradientShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult) {
 	// Set the parameters inside the pixel shader
 	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
 	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
 
-	UINT numThreadGroupX = (UINT)ceil(BoxSize.x/NUM_THREADS_X);
-	UINT numThreadGroupY = (UINT)ceil(BoxSize.y/NUM_THREADS_Y);
-	UINT numThreadGroupZ = (UINT)ceil(BoxSize.z/NUM_THREADS_Z);
-
-	// Run compute shader
-	SetComputeShader(context);
-	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
+	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
 	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
@@ -257,28 +238,20 @@ ShaderDescription SubtractGradientShader::GetShaderDescription() {
 
 
 ///////BUOYANCY SHADER BEGIN////////
-BuoyancyShader::BuoyancyShader() {
+BuoyancyShader::BuoyancyShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 }
 
 BuoyancyShader::~BuoyancyShader() {
 }
 
-bool BuoyancyShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult) {
-	ID3D11DeviceContext *context = graphicsObject->GetDeviceContext();
-
+bool BuoyancyShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult) {
 	// Set the parameters inside the pixel shader
 	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
 	context->CSSetShaderResources(1,1,&(temperatureField->mSRV.p));
 	context->CSSetShaderResources(2,1,&(density->mSRV.p));
 	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
 
-	UINT numThreadGroupX = (UINT)ceil(BoxSize.x/NUM_THREADS_X);
-	UINT numThreadGroupY = (UINT)ceil(BoxSize.y/NUM_THREADS_Y);
-	UINT numThreadGroupZ = (UINT)ceil(BoxSize.z/NUM_THREADS_Z);
-
-	// Run compute shader
-	SetComputeShader(context);
-	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
+	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
 	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};

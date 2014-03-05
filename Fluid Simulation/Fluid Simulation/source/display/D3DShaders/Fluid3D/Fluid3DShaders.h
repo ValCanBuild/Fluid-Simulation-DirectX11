@@ -11,11 +11,24 @@ Date: 09/11/2013
 #include "../BaseD3DShader.h"
 #include "../ShaderParams.h"
 
-class D3DGraphicsObject;
-
 namespace Fluid3D {
 
-class AdvectionShader : public BaseD3DShader {
+class BaseFluid3DShader : public BaseD3DShader {
+public:
+	~BaseFluid3DShader();
+
+protected:
+	BaseFluid3DShader(Vector3 dimensions);	// base class cannot be created
+	void Dispatch(_In_ ID3D11DeviceContext* context) const;
+
+private:
+	UINT mNumThreadGroupX, mNumThreadGroupY, mNumThreadGroupZ;
+	void SetDimensions(const Vector3 &dimensions);
+
+	ShaderDescription GetShaderDescription();
+};
+
+class AdvectionShader : public BaseFluid3DShader {
 public:
 	enum AdvectionType_t {
 		ADVECTION_TYPE_FORWARD,
@@ -24,82 +37,76 @@ public:
 	};
 
 public:
-	AdvectionShader(AdvectionType_t advectionType);
+	AdvectionShader(AdvectionType_t advectionType, Vector3 dimensions);
 	~AdvectionShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult);
+	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
 
 private:
 	AdvectionType_t mAdvectionType;
 };
 
 
-class ImpulseShader : public BaseD3DShader {
+class ImpulseShader : public BaseFluid3DShader {
 public:
-	ImpulseShader();
+	ImpulseShader(Vector3 dimensions);
 	~ImpulseShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
+	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
-class JacobiShader : public BaseD3DShader {
+class JacobiShader : public BaseFluid3DShader {
 public:
-	JacobiShader();
+	JacobiShader(Vector3 dimensions);
 	~JacobiShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult);
+	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
-class DivergenceShader : public BaseD3DShader {
+class DivergenceShader : public BaseFluid3DShader {
 public:
-	DivergenceShader();
+	DivergenceShader(Vector3 dimensions);
 	~DivergenceShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult);
+	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
-class SubtractGradientShader : public BaseD3DShader {
+class SubtractGradientShader : public BaseFluid3DShader {
 public:
-	SubtractGradientShader();
+	SubtractGradientShader(Vector3 dimensions);
 	~SubtractGradientShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult);
+	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 
-class BuoyancyShader : public BaseD3DShader {
+class BuoyancyShader : public BaseFluid3DShader {
 public:
-	BuoyancyShader();
+	BuoyancyShader(Vector3 dimensions);
 	~BuoyancyShader();
 
-	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult);
+	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult);
 
 private:
 	ShaderDescription GetShaderDescription();
-	bool SpecificInitialization(ID3D11Device* device) {return true;};
 };
 
 }// End namespace Fluid3D

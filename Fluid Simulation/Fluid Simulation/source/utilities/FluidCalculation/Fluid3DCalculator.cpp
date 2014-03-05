@@ -67,54 +67,86 @@ Fluid3DCalculator::~Fluid3DCalculator() {
 bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
 	pD3dGraphicsObj = d3dGraphicsObj;
 
-	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD));
-	bool result = mForwardAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	bool result = InitShaders(hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_BACKWARD));
-	result = mBackwardAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	result = InitShaderParams(hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mMacCormarckAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_MACCORMARCK));
-	result = mMacCormarckAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	result = InitBuffersAndSamplers();
+	if (!result) {
+		MessageBox(hwnd, L"Could not initialize the fluid buffers or samplers", L"Error", MB_OK);
+		return false;
+	}
+
+	// Update buffers with values
+	UpdateGeneralBuffer();
+	UpdateDissipationBuffer(VELOCITY);
+	UpdateDissipationBuffer(DENSITY);
+	UpdateDissipationBuffer(TEMPERATURE);
+
+	return true;
+}
+
+bool Fluid3DCalculator::InitShaders(HWND hwnd) {
+	ID3D11Device *device = pD3dGraphicsObj->GetDevice();
+	
+	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD, mFluidSettings.dimensions));
+	bool result = mForwardAdvectionShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mImpulseShader = unique_ptr<ImpulseShader>(new ImpulseShader());
-	result = mImpulseShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_BACKWARD, mFluidSettings.dimensions));
+	result = mBackwardAdvectionShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mJacobiShader = unique_ptr<JacobiShader>(new JacobiShader());
-	result = mJacobiShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	mMacCormarckAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_MACCORMARCK, mFluidSettings.dimensions));
+	result = mMacCormarckAdvectionShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mDivergenceShader = unique_ptr<DivergenceShader>(new DivergenceShader());
-	result = mDivergenceShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	mImpulseShader = unique_ptr<ImpulseShader>(new ImpulseShader(mFluidSettings.dimensions));
+	result = mImpulseShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mSubtractGradientShader = unique_ptr<SubtractGradientShader>(new SubtractGradientShader());
-	result = mSubtractGradientShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	mJacobiShader = unique_ptr<JacobiShader>(new JacobiShader(mFluidSettings.dimensions));
+	result = mJacobiShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mBuoyancyShader = unique_ptr<BuoyancyShader>(new BuoyancyShader());
-	result = mBuoyancyShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
+	mDivergenceShader = unique_ptr<DivergenceShader>(new DivergenceShader(mFluidSettings.dimensions));
+	result = mDivergenceShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
 
+	mSubtractGradientShader = unique_ptr<SubtractGradientShader>(new SubtractGradientShader(mFluidSettings.dimensions));
+	result = mSubtractGradientShader->Initialize(device,hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mBuoyancyShader = unique_ptr<BuoyancyShader>(new BuoyancyShader(mFluidSettings.dimensions));
+	result = mBuoyancyShader->Initialize(device,hwnd);
+	if (!result) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Fluid3D::Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 	// Create the velocity shader params
 	CComPtr<ID3D11Texture3D> velocityText[4];
 	mVelocitySP = new ShaderParams[4];
@@ -241,22 +273,10 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 		}
 	}
 
-	result = InitBuffersAndSamplers();
-	if (!result) {
-		MessageBox(hwnd, L"Could not initialize the fluid buffers or samplers", L"Error", MB_OK);
-		return false;
-	}
-
-	// Update buffers with values
-	UpdateGeneralBuffer();
-	UpdateDissipationBuffer(VELOCITY);
-	UpdateDissipationBuffer(DENSITY);
-	UpdateDissipationBuffer(TEMPERATURE);
-
 	return true;
 }
 
-bool Fluid3D::Fluid3DCalculator::InitBuffersAndSamplers() {
+bool Fluid3DCalculator::InitBuffersAndSamplers() {
 	// Create the constant buffers
 	bool result = BuildBuffer<InputBufferGeneral>(pD3dGraphicsObj->GetDevice(), &mInputBufferGeneral);
 	if (!result) {
@@ -329,42 +349,46 @@ void Fluid3DCalculator::Process() {
 	swap(mDensitySP[READ],mDensitySP[resultBuffer]);
 
 	//Determine how the temperature of the fluid changes the velocity
-	mBuoyancyShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
+	mBuoyancyShader->Compute(context,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
 	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
 	RefreshConstantImpulse();
 
 	// Calculate the divergence of the velocity
-	mDivergenceShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],mDivergenceSP.get());
+	mDivergenceShader->Compute(context,&mVelocitySP[READ],mDivergenceSP.get());
 
 	CalculatePressureGradient();
 
 	//Use the pressure texture that was last computed. This computes divergence free velocity
-	mSubtractGradientShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&mPressureSP[READ],&mVelocitySP[WRITE]);
+	mSubtractGradientShader->Compute(context,&mVelocitySP[READ],&mPressureSP[READ],&mVelocitySP[WRITE]);
 	std::swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 }
 
 void Fluid3DCalculator::Advect(ShaderParams *target) {
-	mForwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
+	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+
+	mForwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
 	if (mFluidSettings.macCormackEnabled) {
-		mBackwardAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
+		mBackwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
 		ShaderParams advectArrayDens[3] = {target[WRITE2], target[WRITE3], target[READ]};
-		mMacCormarckAdvectionShader->Compute(pD3dGraphicsObj,&mVelocitySP[READ],advectArrayDens,&target[WRITE]);
+		mMacCormarckAdvectionShader->Compute(context,&mVelocitySP[READ],advectArrayDens,&target[WRITE]);
 	}
 }
 
 void Fluid3DCalculator::RefreshConstantImpulse() {
+	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+
 	//refresh the impulse of the density and temperature
 	Vector3 impulsePos = mFluidSettings.dimensions * mFluidSettings.constantInputPosition;
 	Vector4 temperatureAmount(mFluidSettings.constantTemperature,mFluidSettings.constantTemperature,mFluidSettings.constantTemperature,0);
 	Vector4 densityAmount(mFluidSettings.constantDensityAmount,mFluidSettings.constantDensityAmount,mFluidSettings.constantDensityAmount,0);
 
 	UpdateImpulseBuffer(impulsePos, densityAmount, mFluidSettings.constantInputRadius);
-	mImpulseShader->Compute(pD3dGraphicsObj, &mDensitySP[READ], &mDensitySP[WRITE]);
+	mImpulseShader->Compute(context, &mDensitySP[READ], &mDensitySP[WRITE]);
 	swap(mDensitySP[READ], mDensitySP[WRITE]);
 
 	UpdateImpulseBuffer(impulsePos, temperatureAmount, mFluidSettings.constantInputRadius);
-	mImpulseShader->Compute(pD3dGraphicsObj, &mTemperatureSP[READ], &mTemperatureSP[WRITE]);
+	mImpulseShader->Compute(context, &mTemperatureSP[READ], &mTemperatureSP[WRITE]);
 	swap(mTemperatureSP[READ], mTemperatureSP[WRITE]);
 }
 
@@ -378,7 +402,7 @@ void Fluid3DCalculator::CalculatePressureGradient() {
 	// perform Jacobi on pressure field
 	int i;
 	for (i = 0; i < mFluidSettings.jacobiIterations; ++i) {		
-		mJacobiShader->Compute(pD3dGraphicsObj,
+		mJacobiShader->Compute(context,
 			&mPressureSP[READ],
 			mDivergenceSP.get(),
 			&mPressureSP[WRITE]);
@@ -463,7 +487,7 @@ void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, Vector4& amount, flo
 	context->Unmap(mInputBufferImpulse,0);
 }
 
-ID3D11ShaderResourceView * Fluid3D::Fluid3DCalculator::GetVolumeTexture() const {
+ID3D11ShaderResourceView * Fluid3DCalculator::GetVolumeTexture() const {
 	return mDensitySP[READ].mSRV;
 }
 
