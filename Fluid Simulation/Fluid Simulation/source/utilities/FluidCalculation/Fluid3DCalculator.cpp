@@ -7,7 +7,8 @@ Date: 18/2/2014
 *********************************************************************/
 
 #include "Fluid3DCalculator.h"
-#include "../../display/D3DShaders/Fluid3DShaders.h"
+#include "../../display/D3DShaders/Fluid3D/Fluid3DShaders.h"
+#include "../../display/D3DShaders/Fluid3D/Fluid3DBuffers.h"
 
 #define READ 0
 #define WRITE 1
@@ -257,36 +258,24 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 
 bool Fluid3D::Fluid3DCalculator::InitBuffersAndSamplers() {
 	// Create the constant buffers
-	D3D11_BUFFER_DESC inputBufferDesc;
-	inputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	inputBufferDesc.ByteWidth = sizeof(InputBufferGeneral);
-	inputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	inputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	inputBufferDesc.MiscFlags = 0;
-	inputBufferDesc.StructureByteStride = 0;
-	// General buffer
-	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferGeneral);
-	if(FAILED(hresult)) {
+	bool result = BuildBuffer<InputBufferGeneral>(pD3dGraphicsObj->GetDevice(), &mInputBufferGeneral);
+	if (!result) {
 		return false;
 	}
-	// Dissipation buffers
-	inputBufferDesc.ByteWidth = sizeof(InputBufferDissipation);
-	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferDensityDissipation);
-	if(FAILED(hresult)) {
+	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferDensityDissipation);
+	if (!result) {
 		return false;
 	}
-	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferVelocityDissipation);
-	if(FAILED(hresult)) {
+	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferVelocityDissipation);
+	if (!result) {
 		return false;
 	}
-	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferTemperatureDissipation);
-	if(FAILED(hresult)) {
+	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferTemperatureDissipation);
+	if (!result) {
 		return false;
 	}
-	// Impulse buffer
-	inputBufferDesc.ByteWidth = sizeof(InputBufferImpulse);
-	hresult = pD3dGraphicsObj->GetDevice()->CreateBuffer(&inputBufferDesc, NULL, &mInputBufferImpulse);
-	if(FAILED(hresult)) {
+	result = BuildBuffer<InputBufferImpulse>(pD3dGraphicsObj->GetDevice(), &mInputBufferImpulse);
+	if (!result) {
 		return false;
 	}
 
@@ -307,7 +296,7 @@ bool Fluid3D::Fluid3DCalculator::InitBuffersAndSamplers() {
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &mSampleState);
+	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &mSampleState);
 	if(FAILED(hresult)) {
 		return false;
 	}

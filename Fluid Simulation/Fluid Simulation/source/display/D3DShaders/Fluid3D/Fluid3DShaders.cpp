@@ -6,7 +6,7 @@ Author: Valentin Hinov
 Date: 09/11/2013
 **************************************************************/
 #include "Fluid3DShaders.h"
-#include "../D3DGraphicsObject.h"
+#include "../../D3DGraphicsObject.h"
 
 // Thread number defines based on values from cFluid3D.hlsl
 #define NUM_THREADS_X 16
@@ -52,8 +52,8 @@ bool AdvectionShader::Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ Shade
 	context->Dispatch(numThreadGroupX,numThreadGroupY,numThreadGroupZ);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[4] = {NULL,NULL,NULL,NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11ShaderResourceView *const pSRVNULL[4] = {nullptr,nullptr,nullptr,nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 4, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);

@@ -18,9 +18,6 @@ Date: 18/2/2014
 #include "FluidSettings.h"
 
 struct ShaderParams;
-struct InputBufferGeneral;
-struct InputBufferDissipation;
-struct InputBufferImpulse;
 
 namespace Fluid3D {
 

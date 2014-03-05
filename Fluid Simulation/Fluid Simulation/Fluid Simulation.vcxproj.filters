@@ -100,6 +100,12 @@
     <Filter Include="Source Files\Display\Simulations">
       <UniqueIdentifier>{fd6be55c-0226-46db-b1cb-df7dde383485}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Display\D3DShaders\Fluid3D">
+      <UniqueIdentifier>{304fcd5d-e0c1-47a6-a088-099777c35e73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Display\D3DShaders\Fluid3D">
+      <UniqueIdentifier>{6e7cc974-7061-48a8-9624-2d1a61f09321}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -161,9 +167,6 @@
     </ClCompile>
     <ClCompile Include="source\display\D3DFrameBuffer.cpp">
       <Filter>Source Files\Display\Frame Buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\Fluid3DShaders.cpp">
-      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
@@ -227,6 +230,9 @@
     </ClCompile>
     <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp">
       <Filter>Source Files\Utilities\FluidCalculation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.cpp">
+      <Filter>Source Files\Display\D3DShaders\Fluid3D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -308,9 +314,6 @@
     <ClInclude Include="source\display\D3DFrameBuffer.h">
       <Filter>Header Files\Display\Frame Buffer</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\Fluid3DShaders.h">
-      <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h">
       <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
@@ -388,6 +391,12 @@
     </ClInclude>
     <ClInclude Include="source\utilities\FluidCalculation\FluidSettings.h">
       <Filter>Header Files\Utilities\FluidCalculation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.h">
+      <Filter>Header Files\Display\D3DShaders\Fluid3D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DBuffers.h">
+      <Filter>Header Files\Display\D3DShaders\Fluid3D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

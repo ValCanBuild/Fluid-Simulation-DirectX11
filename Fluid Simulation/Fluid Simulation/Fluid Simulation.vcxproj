@@ -104,7 +104,7 @@
     <ClCompile Include="source\display\D3DRenderer.cpp" />
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid3DShaders.cpp" />
+    <ClCompile Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp" />
@@ -148,7 +148,8 @@
     <ClInclude Include="source\display\D3DRenderer.h" />
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
     <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid3DShaders.h" />
+    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DBuffers.h" />
+    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />

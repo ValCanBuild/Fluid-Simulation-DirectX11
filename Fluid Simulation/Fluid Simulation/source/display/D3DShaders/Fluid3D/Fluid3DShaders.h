@@ -8,30 +8,12 @@ Date: 09/11/2013
 #ifndef _FLUID3DSHADERS_H
 #define _FLUID3DSHADERS_H
 
-#include "BaseD3DShader.h"
-#include "ShaderParams.h"
+#include "../BaseD3DShader.h"
+#include "../ShaderParams.h"
 
 class D3DGraphicsObject;
 
 namespace Fluid3D {
-
-struct InputBufferGeneral {
-	float fTimeStep;
-	float fDensityBuoyancy;	
-	float fDensityWeight;		
-	float fAmbientTemperature; 
-};
-
-struct InputBufferDissipation {
-	float fDissipation;
-	Vector3 padding1;
-};
-
-struct InputBufferImpulse {
-	Vector3 vPoint;				
-	float fRadius;
-	Vector4 vFillColor;			
-};
 
 class AdvectionShader : public BaseD3DShader {
 public:
