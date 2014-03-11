@@ -40,7 +40,7 @@ public:
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
-
+	D3D11_INPUT_ELEMENT_DESC *GetInputElementDescription();
 private:
 	const D3DGraphicsObject * pD3dGraphicsObject;
 

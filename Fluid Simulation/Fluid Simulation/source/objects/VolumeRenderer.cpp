@@ -42,6 +42,7 @@ VolumeRenderer::VolumeRenderer(Vector3 &volumeSize) :
 
 VolumeRenderer::~VolumeRenderer() {
 	pD3dGraphicsObj = nullptr;
+	pCamera = nullptr;
 }
 
 bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {

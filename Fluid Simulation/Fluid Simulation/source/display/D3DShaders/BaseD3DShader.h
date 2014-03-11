@@ -48,6 +48,9 @@ struct ShaderDescription {
 		polygonLayout = nullptr;
 		numLayoutElements = 0;
 	}
+	~ShaderDescription() {
+		polygonLayout = nullptr;
+	}
 };
 
 class BaseD3DShader : public DirectX::IEffect {

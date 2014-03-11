@@ -94,7 +94,7 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 
 bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 	ID3D11Device *device = pD3dGraphicsObj->GetDevice();
-	
+
 	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD, mFluidSettings.dimensions));
 	bool result = mForwardAdvectionShader->Initialize(device,hwnd);
 	if (!result) {

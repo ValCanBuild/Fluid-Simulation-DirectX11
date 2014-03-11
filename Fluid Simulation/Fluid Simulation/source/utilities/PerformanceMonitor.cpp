@@ -51,7 +51,7 @@ void PerformanceMonitor::Tick() {
 			mLastSampleTime = GetTickCount(); 
 
 			PdhCollectQueryData(mQueryHandle);
-        
+		
 			PdhGetFormattedCounterValue(mCounterHandle, PDH_FMT_LONG, NULL, &value);
 
 			mCpuUsage = value.longValue;

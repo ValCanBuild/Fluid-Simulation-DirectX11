@@ -17,6 +17,7 @@ Date: 24/10/2013
 #include "../../objects/VolumeRenderer.h"
 #include "../simulations/FluidSimulation.h"
 
+
 using namespace Fluid3D;
 using namespace DirectX;
 
@@ -80,7 +81,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 2; i++) {
 		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
 		mSimulations.push_back(fluidSimulation);
 		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();

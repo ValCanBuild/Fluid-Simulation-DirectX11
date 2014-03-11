@@ -9,6 +9,7 @@ Version: 1.0
 #ifndef _SERVICEPROVIDER_H_
 #define _SERVICEPROVIDER_H_
 
+#include <memory>
 #include "InputSystem.h"
 #include "GraphicsSystem.h"
 
@@ -17,7 +18,7 @@ public:
 	static ServiceProvider& Instance() {
 		// Lazy initialize.
 		if (mSingleton == nullptr)
-			mSingleton = new ServiceProvider();
+			mSingleton = std::unique_ptr<ServiceProvider>(new ServiceProvider());
 
 		return *mSingleton;
 	}
@@ -44,7 +45,7 @@ private:
 	ServiceProvider() {mInitialized = false;}
 	
 private:
-	static ServiceProvider *mSingleton;
+	static std::unique_ptr<ServiceProvider> mSingleton;
 	bool mInitialized;
 	InputSystem* pInputSystem;
 	GraphicsSystem* pGraphicsSystem;

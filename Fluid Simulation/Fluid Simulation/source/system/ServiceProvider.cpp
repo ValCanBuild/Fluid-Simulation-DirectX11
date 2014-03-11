@@ -1,3 +1,3 @@
 #include "ServiceProvider.h"
 
-ServiceProvider* ServiceProvider::mSingleton;
+std::unique_ptr<ServiceProvider> ServiceProvider::mSingleton;
