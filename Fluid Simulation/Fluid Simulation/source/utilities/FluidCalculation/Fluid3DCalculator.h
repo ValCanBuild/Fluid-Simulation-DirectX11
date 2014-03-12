@@ -26,6 +26,8 @@ class JacobiShader ;
 class DivergenceShader;
 class SubtractGradientShader;
 class BuoyancyShader;
+class VorticityShader;
+class ConfinementShader;
 
 class Fluid3DCalculator {
 public:
@@ -48,6 +50,7 @@ private:
 	void Advect(ShaderParams *target);
 	void RefreshConstantImpulse();
 	void ApplyBuoyancy();
+	void ComputeVorticityConfinement();
 	void CalculatePressureGradient();
 
 	enum DissipationBufferType_t {
@@ -55,7 +58,7 @@ private:
 	};
 	void UpdateDissipationBuffer(DissipationBufferType_t bufferType);
 	void UpdateGeneralBuffer();
-	void UpdateImpulseBuffer(Vector3& point, Vector4& amount, float radius);
+	void UpdateImpulseBuffer(Vector3& point, float amount, float radius);
 
 	int  GetUpdateDirtyFlags(const FluidSettings &newSettings) const;
 private:
@@ -67,11 +70,14 @@ private:
 	std::unique_ptr<AdvectionShader>			mBackwardAdvectionShader;
 	std::unique_ptr<AdvectionShader>			mMacCormarckAdvectionShader;
 	std::unique_ptr<ImpulseShader>				mImpulseShader;
+	std::unique_ptr<VorticityShader>			mVorticityShader;
+	std::unique_ptr<ConfinementShader>			mConfinementShader;
 	std::unique_ptr<JacobiShader>				mJacobiShader;
 	std::unique_ptr<DivergenceShader>			mDivergenceShader;
 	std::unique_ptr<SubtractGradientShader>		mSubtractGradientShader;
 	std::unique_ptr<BuoyancyShader>				mBuoyancyShader;
 
+	ShaderParams* mVorticitySP;
 	ShaderParams* mVelocitySP;
 	ShaderParams* mDensitySP;
 	ShaderParams* mTemperatureSP;

@@ -17,7 +17,7 @@ namespace Fluid3D {
 		float fTimeStep;
 		float fDensityBuoyancy;	
 		float fDensityWeight;		
-		float fAmbientTemperature; 
+		float fVorticityStrength; 
 	};
 
 	struct InputBufferDissipation {
@@ -28,23 +28,9 @@ namespace Fluid3D {
 	struct InputBufferImpulse {
 		Vector3 vPoint;				
 		float fRadius;
-		Vector4 vFillColor;			
+		float fAmount;
+		Vector3 padding2;	
 	};
-
-	template<typename T>
-	bool BuildBuffer(_In_ ID3D11Device *device, _Out_ ID3D11Buffer **pOutBuffer) {
-		D3D11_BUFFER_DESC bufferDesc;
-		bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-		bufferDesc.ByteWidth = sizeof(T);
-		bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		bufferDesc.MiscFlags = 0;
-		bufferDesc.StructureByteStride = 0;
-		// General buffer
-		HRESULT hresult = device->CreateBuffer(&bufferDesc, NULL, pOutBuffer);
-
-		return !FAILED(hresult);
-	}
 }
 
 #endif

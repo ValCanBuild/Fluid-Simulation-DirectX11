@@ -85,8 +85,9 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
 		mSimulations.push_back(fluidSimulation);
 		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-		volumeRenderer->transform->position.y = 0.57f;
+		volumeRenderer->transform->position.y = 1.2f;
 		volumeRenderer->transform->position.x = 0.0f + 1.0f*i;
+		volumeRenderer->transform->scale = Vector3(1,2,1);
 	}
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);

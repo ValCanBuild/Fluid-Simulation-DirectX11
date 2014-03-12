@@ -35,7 +35,8 @@ Fluid3DCalculator::Fluid3DCalculator(FluidSettings fluidSettings) : pD3dGraphics
 	mDensitySP(nullptr),
 	mTemperatureSP(nullptr),
 	mPressureSP(nullptr),
-	mObstacleSP(nullptr) {
+	mObstacleSP(nullptr),
+	mVorticitySP(nullptr) {
 
 }
 
@@ -59,6 +60,10 @@ Fluid3DCalculator::~Fluid3DCalculator() {
 	if (mObstacleSP) {
 		delete [] mObstacleSP;
 		mObstacleSP = nullptr;
+	}
+	if (mVorticitySP) {
+		delete [] mVorticitySP;
+		mVorticitySP = nullptr;
 	}
 
 	pD3dGraphicsObj = nullptr;
@@ -115,6 +120,18 @@ bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 
 	mImpulseShader = unique_ptr<ImpulseShader>(new ImpulseShader(mFluidSettings.dimensions));
 	result = mImpulseShader->Initialize(device,hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mVorticityShader = unique_ptr<VorticityShader>(new VorticityShader(mFluidSettings.dimensions));
+	result = mVorticityShader->Initialize(device,hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mConfinementShader = unique_ptr<ConfinementShader>(new ConfinementShader(mFluidSettings.dimensions));
+	result = mConfinementShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
@@ -177,6 +194,28 @@ bool Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(velocityText[i], NULL, &mVelocitySP[i].mUAV);
 		if(FAILED(hr)) {
 			MessageBox(hwnd, L"Could not create the velocity UAV", L"Error", MB_OK);
+			return false;
+		}
+	}
+
+	// Create the vorticity shader params
+	CComPtr<ID3D11Texture3D> vorticityText[2];
+	mVorticitySP = new ShaderParams[2];
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &vorticityText[i]);
+		if (FAILED(hr)) {
+			MessageBox(hwnd, L"Could not create the vorticity Texture Object", L"Error", MB_OK);
+			return false;
+		}
+		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(vorticityText[i], NULL, &mVorticitySP[i].mSRV);
+		if(FAILED(hr)) {
+			MessageBox(hwnd, L"Could not create the vorticity SRV", L"Error", MB_OK);
+			return false;
+
+		}
+		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(vorticityText[i], NULL, &mVorticitySP[i].mUAV);
+		if(FAILED(hr)) {
+			MessageBox(hwnd, L"Could not create the vorticity UAV", L"Error", MB_OK);
 			return false;
 		}
 	}
@@ -278,23 +317,23 @@ bool Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 
 bool Fluid3DCalculator::InitBuffersAndSamplers() {
 	// Create the constant buffers
-	bool result = BuildBuffer<InputBufferGeneral>(pD3dGraphicsObj->GetDevice(), &mInputBufferGeneral);
+	bool result = BuildDynamicBuffer<InputBufferGeneral>(pD3dGraphicsObj->GetDevice(), &mInputBufferGeneral);
 	if (!result) {
 		return false;
 	}
-	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferDensityDissipation);
+	result = BuildDynamicBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferDensityDissipation);
 	if (!result) {
 		return false;
 	}
-	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferVelocityDissipation);
+	result = BuildDynamicBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferVelocityDissipation);
 	if (!result) {
 		return false;
 	}
-	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferTemperatureDissipation);
+	result = BuildDynamicBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferTemperatureDissipation);
 	if (!result) {
 		return false;
 	}
-	result = BuildBuffer<InputBufferImpulse>(pD3dGraphicsObj->GetDevice(), &mInputBufferImpulse);
+	result = BuildDynamicBuffer<InputBufferImpulse>(pD3dGraphicsObj->GetDevice(), &mInputBufferImpulse);
 	if (!result) {
 		return false;
 	}
@@ -332,9 +371,6 @@ void Fluid3DCalculator::Process() {
 	ID3D11Buffer *const pProcessConstantBuffers[3] = {mInputBufferGeneral, mInputBufferVelocityDissipation, mInputBufferImpulse};
 	context->CSSetConstantBuffers(0, 3, pProcessConstantBuffers);
 
-	// Advect velocity against itself
-	Advect(mVelocitySP);
-
 	//Advect temperature against velocity
 	context->CSSetConstantBuffers(1, 1, &(mInputBufferTemperatureDissipation.p));
 	Advect(mTemperatureSP);
@@ -342,6 +378,9 @@ void Fluid3DCalculator::Process() {
 	// Advect density against velocity
 	context->CSSetConstantBuffers(1, 1, &(mInputBufferDensityDissipation.p));
 	Advect(mDensitySP);
+
+	// Advect velocity against itself
+	Advect(mVelocitySP);
 
 	int resultBuffer = mFluidSettings.macCormackEnabled ? WRITE : WRITE2;
 	swap(mVelocitySP[READ],mVelocitySP[resultBuffer]);
@@ -352,7 +391,11 @@ void Fluid3DCalculator::Process() {
 	mBuoyancyShader->Compute(context,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
 	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 
+	// Add a constant amount of density and temperature back into the system
 	RefreshConstantImpulse();
+
+	// Try to preserve swirling movement of the fluid by injecting vorticity back into the system
+	ComputeVorticityConfinement();
 
 	// Calculate the divergence of the velocity
 	mDivergenceShader->Compute(context,&mVelocitySP[READ],mDivergenceSP.get());
@@ -378,18 +421,27 @@ void Fluid3DCalculator::Advect(ShaderParams *target) {
 void Fluid3DCalculator::RefreshConstantImpulse() {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
-	//refresh the impulse of the density and temperature
 	Vector3 impulsePos = mFluidSettings.dimensions * mFluidSettings.constantInputPosition;
-	Vector4 temperatureAmount(mFluidSettings.constantTemperature,mFluidSettings.constantTemperature,mFluidSettings.constantTemperature,0);
-	Vector4 densityAmount(mFluidSettings.constantDensityAmount,mFluidSettings.constantDensityAmount,mFluidSettings.constantDensityAmount,0);
 
-	UpdateImpulseBuffer(impulsePos, densityAmount, mFluidSettings.constantInputRadius);
+	//refresh the impulse of the density and temperature
+	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, mFluidSettings.constantInputRadius);
 	mImpulseShader->Compute(context, &mDensitySP[READ], &mDensitySP[WRITE]);
 	swap(mDensitySP[READ], mDensitySP[WRITE]);
 
-	UpdateImpulseBuffer(impulsePos, temperatureAmount, mFluidSettings.constantInputRadius);
+	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantTemperature, mFluidSettings.constantInputRadius);
 	mImpulseShader->Compute(context, &mTemperatureSP[READ], &mTemperatureSP[WRITE]);
 	swap(mTemperatureSP[READ], mTemperatureSP[WRITE]);
+}
+
+void Fluid3DCalculator::ComputeVorticityConfinement() {
+	ID3D11DeviceContext* context = pD3dGraphicsObj->GetDeviceContext();
+
+	mVorticityShader->Compute(context, &mVelocitySP[READ], &mVorticitySP[WRITE]);
+	swap(mVorticitySP[READ], mVorticitySP[WRITE]);
+
+	mConfinementShader->Compute(context, &mVelocitySP[READ], &mVorticitySP[READ], &mVelocitySP[WRITE]);
+
+	swap(mVelocitySP[READ], mVelocitySP[WRITE]);
 }
 
 void Fluid3DCalculator::CalculatePressureGradient() {
@@ -427,7 +479,7 @@ void Fluid3DCalculator::UpdateGeneralBuffer() {
 	dataPtr->fTimeStep = mFluidSettings.timeStep;
 	dataPtr->fDensityBuoyancy = mFluidSettings.densityBuoyancy;
 	dataPtr->fDensityWeight	= mFluidSettings.densityWeight;
-	dataPtr->fAmbientTemperature = AMBIENT_TEMPERATURE;
+	dataPtr->fVorticityStrength = mFluidSettings.vorticityStrength;
 
 	context->Unmap(mInputBufferGeneral,0);
 }
@@ -467,7 +519,7 @@ void Fluid3DCalculator::UpdateDissipationBuffer(DissipationBufferType_t bufferTy
 	context->Unmap(bufferToMap,0);
 }
 
-void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, Vector4& amount, float radius) {
+void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, float amount, float radius) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	InputBufferImpulse* dataPtr;
 
@@ -482,7 +534,7 @@ void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, Vector4& amount, flo
 	dataPtr = (InputBufferImpulse*)mappedResource.pData;
 	dataPtr->vPoint	    = point;
 	dataPtr->fRadius    = radius;	
-	dataPtr->vFillColor	= amount;
+	dataPtr->fAmount	= amount;
 
 	context->Unmap(mInputBufferImpulse,0);
 }
@@ -529,7 +581,8 @@ int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) con
 	}
 
 	if (newSettings.timeStep != mFluidSettings.timeStep || newSettings.densityBuoyancy != mFluidSettings.densityBuoyancy
-		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions)
+		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions
+		|| newSettings.vorticityStrength != mFluidSettings.vorticityStrength)
 	{
 		dirtyFlags |= BufferDirtyFlags::General;
 	}

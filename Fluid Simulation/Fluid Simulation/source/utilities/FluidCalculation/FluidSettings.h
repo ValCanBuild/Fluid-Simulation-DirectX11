@@ -15,18 +15,19 @@ Date: 3/3/2014
 // Default parameters
 #define DIMENSION 64
 #define TIME_STEP 0.125f
-#define IMPULSE_RADIUS 3.0f
+#define CONSTANT_INPUT_RADIUS 23.0f
 #define INTERACTION_IMPULSE_RADIUS 7.0f
 #define OBSTACLES_IMPULSE_RADIUS 5.0f
-#define JACOBI_ITERATIONS 15
-#define VEL_DISSIPATION 0.999f
+#define JACOBI_ITERATIONS 10
+#define VEL_DISSIPATION 0.995f
 #define DENSITY_DISSIPATION 0.999f
-#define TEMPERATURE_DISSIPATION 0.99f
+#define TEMPERATURE_DISSIPATION 0.995f
 #define SMOKE_BUOYANCY 1.0f
-#define SMOKE_WEIGHT 0.05f
+#define SMOKE_WEIGHT 0.013f
 #define AMBIENT_TEMPERATURE 0.0f
-#define IMPULSE_TEMPERATURE 1.5f
-#define IMPULSE_DENSITY 1.0f
+#define CONSTANT_TEMPERATURE 3.0f
+#define CONSTANT_DENSITY 1.0f
+#define VORTICITY_STRENGTH 0.4f
 
 struct FluidSettings {
 	int jacobiIterations;
@@ -40,6 +41,7 @@ struct FluidSettings {
 	float densityWeight;
 	float densityBuoyancy;
 	float constantInputRadius;
+	float vorticityStrength;
 	Vector3 dimensions;	
 	Vector3 constantInputPosition;	// location of permanent density and temperature input as % of dimensions
 
@@ -49,13 +51,14 @@ struct FluidSettings {
 		macCormackEnabled = true;
 		velocityDissipation = VEL_DISSIPATION;
 		temperatureDissipation = TEMPERATURE_DISSIPATION;
-		constantTemperature = IMPULSE_TEMPERATURE;
+		constantTemperature = CONSTANT_TEMPERATURE;
 		densityDissipation = DENSITY_DISSIPATION;
-		constantDensityAmount = IMPULSE_DENSITY;
+		constantDensityAmount = CONSTANT_DENSITY;
 		densityWeight = SMOKE_WEIGHT;
 		densityBuoyancy = SMOKE_BUOYANCY;
 		dimensions = Vector3(DIMENSION);
-		constantInputRadius = IMPULSE_RADIUS;
+		constantInputRadius = CONSTANT_INPUT_RADIUS;
+		vorticityStrength = VORTICITY_STRENGTH;
 		constantInputPosition = Vector3(0.5f,0.0f,0.5f);
 	}
 };

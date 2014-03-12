@@ -150,52 +150,26 @@ void VolumeRenderShader::ApplySamplers() {
 
 bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	// Create the vertex buffer
-	D3D11_BUFFER_DESC vertexInputBufferDesc;
-	vertexInputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	vertexInputBufferDesc.ByteWidth = sizeof(VertexInputBuffer);
-	vertexInputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	vertexInputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	vertexInputBufferDesc.MiscFlags = 0;
-	vertexInputBufferDesc.StructureByteStride = 0;
-	// General buffer
-	HRESULT hresult = device->CreateBuffer(&vertexInputBufferDesc, NULL, &mVertexInputBuffer);
-	if(FAILED(hresult)) {
+	bool result = BuildDynamicBuffer<VertexInputBuffer>(device, &mVertexInputBuffer);
+	if (!result) {
 		return false;
 	}
 
-	// Create the pixel input buffer
-	D3D11_BUFFER_DESC pixelInputBufferDesc;
-	pixelInputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	pixelInputBufferDesc.ByteWidth = sizeof(PixelBufferPerFrame);
-	pixelInputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	pixelInputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	pixelInputBufferDesc.MiscFlags = 0;
-	pixelInputBufferDesc.StructureByteStride = 0;
-	// General buffer
-	hresult = device->CreateBuffer(&pixelInputBufferDesc, NULL, &mPixelBufferPerFrame);
-	if(FAILED(hresult)) {
+	// Create the pixel per frame buffer
+	result = BuildDynamicBuffer<PixelBufferPerFrame>(device, &mPixelBufferPerFrame);
+	if (!result) {
 		return false;
 	}
 
-	// Create the pixel input buffer
-	pixelInputBufferDesc.ByteWidth = sizeof(PixelBufferPerObject);
-	// General buffer
-	hresult = device->CreateBuffer(&pixelInputBufferDesc, NULL, &mPixelBufferPerObject);
-	if(FAILED(hresult)) {
+	// Create the pixel per object buffer
+	result = BuildDynamicBuffer<PixelBufferPerObject>(device, &mPixelBufferPerObject);
+	if (!result) {
 		return false;
 	}
 
 	// Create the pixel smoke properties buffer
-	D3D11_BUFFER_DESC pixelSmokePropertiesBufferDesc;
-	pixelSmokePropertiesBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	pixelSmokePropertiesBufferDesc.ByteWidth = sizeof(PixelSmokePropertiesBuffer);
-	pixelSmokePropertiesBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	pixelSmokePropertiesBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	pixelSmokePropertiesBufferDesc.MiscFlags = 0;
-	pixelSmokePropertiesBufferDesc.StructureByteStride = 0;
-	// General buffer
-	hresult = device->CreateBuffer(&pixelSmokePropertiesBufferDesc, NULL, &mPixelSmokePropertiesBuffer);
-	if(FAILED(hresult)) {
+	result = BuildDynamicBuffer<PixelSmokePropertiesBuffer>(device, &mPixelSmokePropertiesBuffer);
+	if (!result) {
 		return false;
 	}
 
@@ -212,8 +186,8 @@ bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	HRESULT result = device->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(result)) {
+	HRESULT hresult = device->CreateSamplerState(&samplerDesc, &mSampleState);
+	if(FAILED(hresult)) {
 		return false;
 	}
 

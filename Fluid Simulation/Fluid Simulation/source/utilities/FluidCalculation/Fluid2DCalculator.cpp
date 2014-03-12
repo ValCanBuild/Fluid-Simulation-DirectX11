@@ -28,7 +28,7 @@ Date: 18/2/2014
 #define SMOKE_WEIGHT 0.05f
 #define AMBIENT_TEMPERATURE 0.0f
 #define IMPULSE_TEMPERATURE 4.0f
-#define IMPULSE_DENSITY	1.0f
+#define CONSTANT_DENSITY	1.0f
 
 using namespace Fluid2D;
 
@@ -426,7 +426,7 @@ void Fluid2D::Fluid2DCalculator::RefreshConstantImpulse() {
 
 	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 
-	SetImpulseBuffer(Vector2(halfWidth,(float)height),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS);
+	SetImpulseBuffer(Vector2(halfWidth,(float)height),Vector2(CONSTANT_DENSITY,CONSTANT_DENSITY), IMPULSE_RADIUS);
 	mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
 
 	swap(mDensitySP[READ],mDensitySP[WRITE]);

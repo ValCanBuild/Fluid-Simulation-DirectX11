@@ -17,7 +17,7 @@ Date: 19/2/2014
 using namespace std;
 using namespace DirectX;
 
-static Color defaultSmokeColor = Color(0.74f, 0.0f, 0.99f, 1.0f);
+static Color defaultSmokeColor = Color(0.447f, 0.42f, 0.42f, 1.0f);
 static float defaultSmokeAbsorption = 60.0f;
 static int   defaultNumSamples = 64;
 

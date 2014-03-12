@@ -18,7 +18,7 @@ cbuffer InputBufferGeneral : register (b0) {
 	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader	
 	float fDensityBuoyancy;		// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
-	float fAmbientTemperature;  // Used for BuoyancyComputeShader
+	float fVorticityStrength;  // Used for BuoyancyComputeShader
 	// 16 bytes //
 };
 
@@ -30,8 +30,8 @@ cbuffer InputBufferDissipation : register (b1) {
 cbuffer InputBufferImpulse : register (b2) {
 	float3 vPoint;				// Used for ImpulseComputeShader
 	float  fRadius;				// Used for ImpulseComputeShader
-	float4 vFillColor;			// Used for ImpulseComputeShader
-	// 32 bytes //
+	float  fAmount;				// Used for ImpulseComputeShader
+	float3 padding2;			// pad to 32 bytes
 }
 
 
@@ -39,7 +39,7 @@ cbuffer InputBufferImpulse : register (b2) {
 SamplerState linearSampler : register (s0);
 
 // Texture Inputs
-Texture3D<float3>	velocity : register (t0);	// Used for AdvectComputeShader, DivergenceComputeShader, BuoyancyComputeShader, SubtractGradientComputeShader
+Texture3D<float3>	velocity : register (t0);	// Used for AdvectComputeShader, DivergenceComputeShader, BuoyancyComputeShader, SubtractGradientComputeShader, VorticityComputeShader, ConfinementComputeShader
 Texture3D<float3>	advectionTargetA : register (t1); // Used for AdvectComputeShader, AdvectBackwardComputeShader
 Texture3D<float3>	advectionTargetB : register (t2); // User for AdvectMacCormackComputeShader
 Texture3D<float3>	advectionTargetC : register (t3); // User for AdvectMacCormackComputeShader
@@ -49,8 +49,11 @@ Texture3D<float>	temperature : register (t1); // Used for BuoyancyComputeShader
 Texture3D<float>	density : register (t2); // Used for BuoyancyComputeShader
 RWTexture3D<float3> buoyancyResult : register (u0); // Used for BuoyancyComputeShader
 
-Texture3D<float3>   impulseInitial : register (t0); // Used for ImpulseComputeShader
-RWTexture3D<float3> impulseResult : register (u0); // Used for ImpulseComputeShader
+Texture3D<float>   impulseInitial : register (t0); // Used for ImpulseComputeShader
+RWTexture3D<float> impulseResult : register (u0); // Used for ImpulseComputeShader
+
+Texture3D<float3>   vorticity : register (t1); // Used for ConfinementComputeShader
+RWTexture3D<float3> vorticityResult : register (u0); // Used for VorticityComputeShader
 
 Texture3D<float>     divergence   : register (t0);  // Used for JacobiComputeShader
 RWTexture3D<float>   divergenceResult : register (u0);  // Used for DivergenceComputeShader
@@ -58,7 +61,7 @@ RWTexture3D<float>   divergenceResult : register (u0);  // Used for DivergenceCo
 Texture3D<float>   pressure : register (t1);  // Used for JacobiComputeShader, SubtractGradientComputeShader
 RWTexture3D<float> pressureResult : register (u0); // Used for JacobiComputeShader
 
-RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader
+RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader, ConfinementComputeShader
 
 uint3 GetDimensionsFloat3(Texture3D<float3> tex) {
 	uint3 dimensions;
@@ -144,7 +147,7 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float densityVal = density[i];
 
 	float3 result = velocity[i];
-
+	float fAmbientTemperature = 0.0f;
 	if (temperatureVal > fAmbientTemperature) {
 		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, 1.0f, 0.0f);
 	}
@@ -154,20 +157,67 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Adds impulse depending on point of interaction
 void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
-	/*float mag = distance(vPoint.xyz,i);
+	float3 pos = i - vPoint;
+	float mag = pos.x*pos.x + pos.y*pos.y + pos.z*pos.z;
 	mag *= mag;
 	float rad2 = fRadius*fRadius;
 
-	float3 amount = exp(-mag/rad2) * vFillColor.rgb * fTimeStep;
-	impulseResult[i] = impulseInitial[i] + amount;*/
+	float amount = exp(-mag/rad2) * fAmount.r * fTimeStep;
+	impulseResult[i] = impulseInitial[i] + amount;
+}
 
-	float d = distance(vPoint.xyz,i);
-	if (d < fRadius) {
-		impulseResult[i] = vFillColor.xyz;
-	}
-	else {
-		impulseResult[i] = impulseInitial[i];
-	}
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+// reintroduce some vorticity back into the system
+void VorticityComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(velocity);
+
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,1), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,1), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,1));
+
+	float3 vT = velocity[coordT];
+	float3 vB = velocity[coordB];
+	float3 vR = velocity[coordR];
+	float3 vL = velocity[coordL];
+	float3 vU = velocity[coordU];
+	float3 vD = velocity[coordD];
+
+	float3 result = 0.5f * float3( (( vT.z - vB.z ) - ( vU.y - vD.y )) , (( vU.x - vD.x ) - ( vR.z - vL.z )) , (( vR.y - vL.y ) - ( vT.x - vB.x )) );
+
+	vorticityResult[i] = result;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+// reintroduce some vorticity back into the system
+void ConfinementComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(vorticity);
+
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,1), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,1), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,1));
+
+	float omegaT = length(vorticity[coordT]);
+	float omegaB = length(vorticity[coordB]);
+	float omegaR = length(vorticity[coordR]);
+	float omegaL = length(vorticity[coordL]);
+	float omegaU = length(vorticity[coordU]);
+	float omegaD = length(vorticity[coordD]);
+
+	float3 omega = vorticity[i];
+
+	float3 eta = 0.5f * float3( omegaR - omegaL, omegaT - omegaB, omegaU - omegaD );
+	eta = normalize( eta + float3(0.001f,0.001f,0.001f) );
+
+	//float fVorticityStrength = 0.4f;
+	float3 force = fTimeStep * fVorticityStrength * float3( (eta.y * omega.z - eta.z * omega.y), (eta.z * omega.x - eta.x * omega.z), (eta.x * omega.y - eta.y * omega.x) );
+
+	velocityResult[i] = velocity[i] + force;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]

@@ -18,7 +18,7 @@ using namespace Fluid3D;
 
 FluidSimulation::FluidSimulation() : mUpdatePaused(false) {
 	FluidSettings fluidSettings;
-	fluidSettings.dimensions = Vector3(64);
+	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }

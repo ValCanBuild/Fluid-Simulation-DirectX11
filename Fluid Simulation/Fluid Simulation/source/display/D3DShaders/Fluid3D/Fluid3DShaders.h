@@ -40,7 +40,7 @@ public:
 	AdvectionShader(AdvectionType_t advectionType, Vector3 dimensions);
 	~AdvectionShader();
 
-	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult);
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -55,7 +55,7 @@ public:
 	ImpulseShader(Vector3 dimensions);
 	~ImpulseShader();
 
-	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -67,7 +67,7 @@ public:
 	JacobiShader(Vector3 dimensions);
 	~JacobiShader();
 
-	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult);
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -79,7 +79,7 @@ public:
 	DivergenceShader(Vector3 dimensions);
 	~DivergenceShader();
 
-	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult);
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -91,7 +91,7 @@ public:
 	SubtractGradientShader(Vector3 dimensions);
 	~SubtractGradientShader();
 
-	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult);
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult);
 
 private:
 	ShaderDescription GetShaderDescription();
@@ -103,7 +103,29 @@ public:
 	BuoyancyShader(Vector3 dimensions);
 	~BuoyancyShader();
 
-	bool Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult);
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult);
+
+private:
+	ShaderDescription GetShaderDescription();
+};
+
+class VorticityShader : public BaseFluid3DShader {
+public:
+	VorticityShader(Vector3 dimensions);
+	~VorticityShader();
+
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* vorticityResult);
+
+private:
+	ShaderDescription GetShaderDescription();
+};
+
+class ConfinementShader : public BaseFluid3DShader {
+public:
+	ConfinementShader(Vector3 dimensions);
+	~ConfinementShader();
+
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* vorticityField, _In_ ShaderParams* velocityResult);
 
 private:
 	ShaderDescription GetShaderDescription();

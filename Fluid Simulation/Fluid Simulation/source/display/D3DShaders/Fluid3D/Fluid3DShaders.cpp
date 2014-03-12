@@ -46,21 +46,19 @@ AdvectionShader::AdvectionShader(AdvectionType_t advectionType, Vector3 dimensio
 AdvectionShader::~AdvectionShader() {
 }
 
-bool AdvectionShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult) {
+void AdvectionShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult) {
 	// Set the parameters inside the compute shader
-	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
-
 	// MacCormarck expects 3 advection targets
 	if (mAdvectionType == ADVECTION_TYPE_MACCORMARCK) {
-		context->CSSetShaderResources(1,1,&(advectTarget[0].mSRV.p));
-		context->CSSetShaderResources(2,1,&(advectTarget[1].mSRV.p));
-		context->CSSetShaderResources(3,1,&(advectTarget[2].mSRV.p));
+		ID3D11ShaderResourceView *const pSRV[4] = {velocityField->mSRV, advectTarget[0].mSRV, advectTarget[1].mSRV, advectTarget[2].mSRV};
+		context->CSSetShaderResources(0, 4, pSRV);
 	}
 	else {
-		context->CSSetShaderResources(1,1,&(advectTarget->mSRV.p));
+		ID3D11ShaderResourceView *const pSRV[2] = {velocityField->mSRV, advectTarget->mSRV};
+		context->CSSetShaderResources(0, 2, pSRV);
 	}
 
-	context->CSSetUnorderedAccessViews(0,1,&(advectResult->mUAV.p),nullptr);
+	context->CSSetUnorderedAccessViews(0, 1, &(advectResult->mUAV.p),nullptr);
 
 	Dispatch(context);
 
@@ -70,8 +68,6 @@ bool AdvectionShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderPara
 
 	context->CSSetShaderResources(0, 4, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	return true;
 }
 
 ShaderDescription AdvectionShader::GetShaderDescription() {
@@ -102,21 +98,19 @@ ImpulseShader::ImpulseShader(Vector3 dimensions) : BaseFluid3DShader(dimensions)
 ImpulseShader::~ImpulseShader() {
 }
 
-bool ImpulseShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult) {
+void ImpulseShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult) {
 	// Set the parameters inside the compute shader	
-	context->CSSetShaderResources(0,1,&(impulseInitial->mSRV.p));
-	context->CSSetUnorderedAccessViews(0,1,&(impulseResult->mUAV.p),nullptr);
+	context->CSSetShaderResources(0, 1, &(impulseInitial->mSRV.p));
+	context->CSSetUnorderedAccessViews(0, 1, &(impulseResult->mUAV.p), nullptr);
 
 	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11ShaderResourceView *const pSRVNULL[1] = {nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 1, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	return true;
 }
 
 ShaderDescription ImpulseShader::GetShaderDescription() {
@@ -137,22 +131,20 @@ JacobiShader::JacobiShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 JacobiShader::~JacobiShader() {
 }
 
-bool JacobiShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult) {
+void JacobiShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* pressureField, _In_ ShaderParams* divergence, _In_ ShaderParams* pressureResult) {
 	// Set the parameters inside the pixel shader
-	context->CSSetShaderResources(0,1,&(divergence->mSRV.p));
-	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
-	context->CSSetUnorderedAccessViews(0,1,&(pressureResult->mUAV.p),nullptr);
+	ID3D11ShaderResourceView *const pSRV[2] = {divergence->mSRV, pressureField->mSRV};
+	context->CSSetShaderResources(0, 2, pSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &(pressureResult->mUAV.p), nullptr);
 
 	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {nullptr, nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 2, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	return true;
 }
 
 ShaderDescription JacobiShader::GetShaderDescription() {
@@ -173,21 +165,19 @@ DivergenceShader::DivergenceShader(Vector3 dimensions) : BaseFluid3DShader(dimen
 DivergenceShader::~DivergenceShader() {
 }
 
-bool DivergenceShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult) {
+void DivergenceShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* divergenceResult) {
 	// Set the parameters inside the pixel shader
-	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
-	context->CSSetUnorderedAccessViews(0,1,&(divergenceResult->mUAV.p),nullptr);
+	context->CSSetShaderResources(0, 1, &(velocityField->mSRV.p));
+	context->CSSetUnorderedAccessViews(0, 1, &(divergenceResult->mUAV.p), nullptr);
 
 	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[1] = {NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11ShaderResourceView *const pSRVNULL[1] = {nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 1, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	return true;
 }
 
 ShaderDescription DivergenceShader::GetShaderDescription() {
@@ -208,22 +198,20 @@ SubtractGradientShader::SubtractGradientShader(Vector3 dimensions) : BaseFluid3D
 SubtractGradientShader::~SubtractGradientShader() {
 }
 
-bool SubtractGradientShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult) {
+void SubtractGradientShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* pressureField, _In_ ShaderParams* velocityResult) {
 	// Set the parameters inside the pixel shader
-	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
-	context->CSSetShaderResources(1,1,&(pressureField->mSRV.p));
-	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
+	ID3D11ShaderResourceView *const pSRV[2] = {velocityField->mSRV, pressureField->mSRV};
+	context->CSSetShaderResources(0, 2, pSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &(velocityResult->mUAV.p), nullptr);
 
 	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[2] = {NULL,NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {nullptr, nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 2, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	return true;
 }
 
 ShaderDescription SubtractGradientShader::GetShaderDescription() {
@@ -244,23 +232,20 @@ BuoyancyShader::BuoyancyShader(Vector3 dimensions) : BaseFluid3DShader(dimension
 BuoyancyShader::~BuoyancyShader() {
 }
 
-bool BuoyancyShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult) {
+void BuoyancyShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* temperatureField, _In_ ShaderParams* density, _In_ ShaderParams* velocityResult) {
 	// Set the parameters inside the pixel shader
-	context->CSSetShaderResources(0,1,&(velocityField->mSRV.p));
-	context->CSSetShaderResources(1,1,&(temperatureField->mSRV.p));
-	context->CSSetShaderResources(2,1,&(density->mSRV.p));
-	context->CSSetUnorderedAccessViews(0,1,&(velocityResult->mUAV.p),nullptr);
+	ID3D11ShaderResourceView *const pSRV[3] = {velocityField->mSRV, temperatureField->mSRV, density->mSRV};
+	context->CSSetShaderResources(0, 3, pSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &(velocityResult->mUAV.p), nullptr);
 
 	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[3] = {NULL,NULL,NULL};
-	ID3D11UnorderedAccessView *const pUAVNULL[1] = {NULL};
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {nullptr, nullptr, nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 3, pSRVNULL);
 	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
-
-	return true;
 }
 
 ShaderDescription BuoyancyShader::GetShaderDescription() {
@@ -272,3 +257,72 @@ ShaderDescription BuoyancyShader::GetShaderDescription() {
 	return shaderDescription;
 }
 ///////BUOYANCY SHADER END////////
+
+///////VORTICITY SHADER BEGIN////////
+VorticityShader::VorticityShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
+
+}
+
+VorticityShader::~VorticityShader() {
+
+}
+
+void VorticityShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* vorticityResult) {
+	// Set the parameters inside the pixel shader
+	context->CSSetShaderResources(0, 1, &(velocityField->mSRV.p));
+	context->CSSetUnorderedAccessViews(0, 1, &(vorticityResult->mUAV.p), nullptr);
+
+	Dispatch(context);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[1] = {nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
+
+	context->CSSetShaderResources(0, 1, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+}
+
+ShaderDescription VorticityShader::GetShaderDescription() {
+	ShaderDescription shaderDescription;
+
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid3D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "VorticityComputeShader";
+
+	return shaderDescription;
+}
+///////VORTICITY SHADER END////////
+
+///////CONFINEMENT SHADER BEGIN////////
+ConfinementShader::ConfinementShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
+
+}
+
+ConfinementShader::~ConfinementShader() {
+
+}
+
+void ConfinementShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* vorticityField, _In_ ShaderParams* velocityResult) {
+	// Set the parameters inside the pixel shader
+	ID3D11ShaderResourceView *const pSRV[2] = {velocityField->mSRV, vorticityField->mSRV};
+	context->CSSetShaderResources(0, 2, pSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &(velocityResult->mUAV.p), nullptr);
+
+	Dispatch(context);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {nullptr, nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+}
+
+ShaderDescription ConfinementShader::GetShaderDescription() {
+	ShaderDescription shaderDescription;
+
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid3D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "ConfinementComputeShader";
+
+	return shaderDescription;
+}
+///////CONFINEMENT SHADER END////////
