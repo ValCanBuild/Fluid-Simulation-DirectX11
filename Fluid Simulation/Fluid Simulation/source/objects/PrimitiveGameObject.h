@@ -12,6 +12,8 @@ Date: 28/2/2014
 #include "GameObject.h"
 #include <GeometricPrimitive.h>
 
+class ICamera;
+
 class PrimitiveGameObject : public GameObject {
 public:
 	PrimitiveGameObject();
@@ -20,7 +22,7 @@ public:
 	virtual ~PrimitiveGameObject();
 
 	void Update();
-	virtual void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix);
+	virtual void Render(const ICamera &camera);
 
 protected:
 	std::shared_ptr<DirectX::GeometricPrimitive> primitive;

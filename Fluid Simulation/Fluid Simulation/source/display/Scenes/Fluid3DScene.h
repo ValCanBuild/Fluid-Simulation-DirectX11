@@ -15,7 +15,7 @@ Date: 24/10/2013
 #include "IScene.h"
 #include "../../objects/PrimitiveGameObject.h"
 
-class Camera;
+class CameraImpl;
 class D3DGraphicsObject;
 class InputSystem;
 class FluidSimulation;
@@ -46,7 +46,7 @@ private:
 	void SortTransparentObjects();
 
 private:
-	unique_ptr<Camera>	mCamera;
+	unique_ptr<CameraImpl>	mCamera;
 	
 	shared_ptr<FluidSimulation> pPickedSimulation;
 	vector<shared_ptr<FluidSimulation>> mSimulations;

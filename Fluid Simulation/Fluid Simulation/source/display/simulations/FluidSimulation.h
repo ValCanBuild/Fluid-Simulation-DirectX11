@@ -14,7 +14,7 @@ Date: 3/3/2014
 #include "../D3DGraphicsObject.h"
 
 class VolumeRenderer;
-class Camera;
+class ICamera;
 struct CTwBar;
 
 namespace Fluid3D {
@@ -28,10 +28,10 @@ public:
 	FluidSimulation(std::unique_ptr<Fluid3D::Fluid3DCalculator> fluidCalculator, std::shared_ptr<VolumeRenderer> volumeRenderer);
 	~FluidSimulation();
 
-	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd, Camera *camera);
+	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
 
 	// Returns true if this simulation is rendered, and false if it is culled away
-	bool Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) const;
+	bool Render(const ICamera &camera);
 
 	// Returns true if this simulation is updated and false if it wasn't
 	bool Update(float dt) const;
@@ -49,7 +49,6 @@ private:
 	std::unique_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
 	std::shared_ptr<VolumeRenderer> mVolumeRenderer;
 
-	DirectX::BoundingFrustum *pBoundingFrustum;
 
 	bool mUpdatePaused;
 };

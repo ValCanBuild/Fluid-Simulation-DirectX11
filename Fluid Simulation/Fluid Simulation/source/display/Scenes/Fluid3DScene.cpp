@@ -12,7 +12,7 @@ Date: 24/10/2013
 #include <AntTweakBar.h>
 
 #include "../D3DGraphicsObject.h"
-#include "../../utilities/Camera.h"
+#include "../../utilities/CameraImpl.h"
 #include "../../system/ServiceProvider.h"
 #include "../../objects/VolumeRenderer.h"
 #include "../simulations/FluidSimulation.h"
@@ -81,7 +81,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 1; i++) {
 		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
 		mSimulations.push_back(fluidSimulation);
 		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
@@ -89,7 +89,7 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 		volumeRenderer->transform->position.x = 0.0f + 1.0f*i;
 	}
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
-		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd, mCamera.get());
+		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
 		if (!result) {
 			return false;
 		}
@@ -106,7 +106,7 @@ void Fluid3DScene::InitCamera() {
 	float fieldOfView = (float)PI / 4.0f;
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
-	mCamera = Camera::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
+	mCamera = CameraImpl::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
 	mCamera->SetPosition(0,0.5f,-4);
 }
 
@@ -139,17 +139,13 @@ void Fluid3DScene::Update(float delta) {
 
 bool Fluid3DScene::Render() {
 	mNumRenderedFluids = 0;
-	Matrix viewMatrix, projectionMatrix;
-	mCamera->GetProjectionMatrix(projectionMatrix);
-	mCamera->GetViewMatrix(viewMatrix);
 
 	for (PrimitiveGameObject &object : mPrimitiveObjects) {
-		object.Render(viewMatrix, projectionMatrix);
+		object.Render(*mCamera);
 	}
 
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
-		
-		if (simulation->Render(viewMatrix, projectionMatrix)) {
+		if (simulation->Render(*mCamera)) {
 			++mNumRenderedFluids;
 		}
 	}

@@ -79,25 +79,41 @@ void VolumeRenderShader::SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldM
 	// Set the buffer inside the vertex shader
 }
 
-void VolumeRenderShader::SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions) {
+void VolumeRenderShader::SetTransform(const Transform &transform) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	PixelInputBuffer* dataPtr;
+	PixelBufferPerObject* dataPtr;
 
 	ID3D11DeviceContext *context = pD3dGraphicsObject->GetDeviceContext();
 
 	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mPixelInputBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	HRESULT result = context->Map(mPixelBufferPerObject, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result)) {
-		throw std::runtime_error(std::string("VolumeRenderShader: failed to map buffer in SetPixelBufferValues function"));
+		throw std::runtime_error(std::string("VolumeRenderShader: failed to map buffer in SetTransform function"));
 	}
 
-	dataPtr = (PixelInputBuffer*)mappedResource.pData;
-	dataPtr->vDimensions = vDimensions;
+	dataPtr = (PixelBufferPerObject*)mappedResource.pData;
 	dataPtr->vScale = transform.scale;
 	dataPtr->vTranslate = transform.position;
-	dataPtr->vEyePos = vEyePos;
 
-	context->Unmap(mPixelInputBuffer,0);
+	context->Unmap(mPixelBufferPerObject,0);
+}
+
+void VolumeRenderShader::SetCameraPosition(const Vector3 &camPos) const {
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	PixelBufferPerFrame* dataPtr;
+
+	ID3D11DeviceContext *context = pD3dGraphicsObject->GetDeviceContext();
+
+	// Lock the screen size constant buffer so it can be written to.
+	HRESULT result = context->Map(mPixelBufferPerFrame, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if(FAILED(result)) {
+		throw std::runtime_error(std::string("VolumeRenderShader: failed to map buffer in SetCameraPosition function"));
+	}
+
+	dataPtr = (PixelBufferPerFrame*)mappedResource.pData;
+	dataPtr->vEyePos = camPos;
+
+	context->Unmap(mPixelBufferPerFrame,0);
 }
 
 void VolumeRenderShader::SetSmokeProperties(SmokeProperties &smokeProperties) const {
@@ -122,8 +138,8 @@ void VolumeRenderShader::SetSmokeProperties(SmokeProperties &smokeProperties) co
 
 void VolumeRenderShader::BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {
 	deviceContext->VSSetConstantBuffers(0,1,&(mVertexInputBuffer.p));
-	ID3D11Buffer *const pPixelBuffers[2] = {mPixelInputBuffer, mPixelSmokePropertiesBuffer};
-	deviceContext->PSSetConstantBuffers(0,2,pPixelBuffers);
+	ID3D11Buffer *const pPixelBuffers[3] = {mPixelBufferPerFrame, mPixelBufferPerObject, mPixelSmokePropertiesBuffer};
+	deviceContext->PSSetConstantBuffers(0,3,pPixelBuffers);
 
 	deviceContext->PSSetShaderResources(0,1,&pVolumeValuesTexture);
 }
@@ -150,13 +166,21 @@ bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	// Create the pixel input buffer
 	D3D11_BUFFER_DESC pixelInputBufferDesc;
 	pixelInputBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	pixelInputBufferDesc.ByteWidth = sizeof(PixelInputBuffer);
+	pixelInputBufferDesc.ByteWidth = sizeof(PixelBufferPerFrame);
 	pixelInputBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	pixelInputBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pixelInputBufferDesc.MiscFlags = 0;
 	pixelInputBufferDesc.StructureByteStride = 0;
 	// General buffer
-	hresult = device->CreateBuffer(&pixelInputBufferDesc, NULL, &mPixelInputBuffer);
+	hresult = device->CreateBuffer(&pixelInputBufferDesc, NULL, &mPixelBufferPerFrame);
+	if(FAILED(hresult)) {
+		return false;
+	}
+
+	// Create the pixel input buffer
+	pixelInputBufferDesc.ByteWidth = sizeof(PixelBufferPerObject);
+	// General buffer
+	hresult = device->CreateBuffer(&pixelInputBufferDesc, NULL, &mPixelBufferPerObject);
 	if(FAILED(hresult)) {
 		return false;
 	}

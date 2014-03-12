@@ -130,7 +130,7 @@
     <ClCompile Include="source\system\MainSystem.cpp" />
     <ClCompile Include="source\system\ServiceProvider.cpp" />
     <ClCompile Include="source\utilities\AppTimer.cpp" />
-    <ClCompile Include="source\utilities\Camera.cpp" />
+    <ClCompile Include="source\utilities\CameraImpl.cpp" />
     <ClCompile Include="source\utilities\CollisionManager.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
@@ -177,14 +177,15 @@
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\objects\VolumeRenderer.h" />
     <ClInclude Include="source\system\GraphicsSystemImpl.h" />
-    <ClInclude Include="source\system\GraphicsSystem.h" />
+    <ClInclude Include="source\system\IGraphicsSystem.h" />
     <ClInclude Include="source\system\InputSystemImpl.h" />
     <ClInclude Include="source\system\InputSystem.h" />
     <ClInclude Include="source\system\MainSystem.h" />
     <ClInclude Include="source\system\ServiceProvider.h" />
     <ClInclude Include="source\utilities\AppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
-    <ClInclude Include="source\utilities\Camera.h" />
+    <ClInclude Include="source\utilities\ICamera.h" />
+    <ClInclude Include="source\utilities\CameraImpl.h" />
     <ClInclude Include="source\utilities\CollisionManager.h" />
     <ClInclude Include="source\utilities\Console.h" />
     <ClInclude Include="source\utilities\D3dIncludes.h" />

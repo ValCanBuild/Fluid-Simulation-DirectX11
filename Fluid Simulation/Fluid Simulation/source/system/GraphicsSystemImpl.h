@@ -11,7 +11,7 @@ Date: 02/09/2013
 
 #include <string>
 
-#include "GraphicsSystem.h"
+#include "IGraphicsSystem.h"
 #include "../display/IGraphicsObject.h"
 
 class IScene;
@@ -34,7 +34,7 @@ const float SCREEN_NEAR = 0.1f;
 const int SCREEN_WIDTH_WINDOWED = 800;
 const int SCREEN_HEIGHT_WINDOWED = 600;
 
-class GraphicsSystemImpl : public GraphicsSystem {
+class GraphicsSystemImpl : public IGraphicsSystem {
 public:
 	GraphicsSystemImpl();
 	GraphicsSystemImpl(const GraphicsSystemImpl&);

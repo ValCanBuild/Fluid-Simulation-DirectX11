@@ -21,7 +21,7 @@ namespace DirectX
 }
 #endif
 
-class GraphicsSystem {
+class IGraphicsSystem {
 public:
 	virtual bool TakeScreenshot(LPCWSTR name) const = 0;
 	const virtual IGraphicsObject * const GetGraphicsObject() const = 0;

@@ -1,24 +1,23 @@
 /***************************************************************
-Camera.h: Camera class to be used to obtain a view matrix
+Camera.h: Camera implementation
 
 Author: Valentin Hinov
 Date: 04/09/2013
 Version: 1.0
 **************************************************************/
 
-#ifndef _CAMERA_H
-#define _CAMERA_H
+#ifndef _CAMERAIMPL_H
+#define _CAMERAIMPL_H
 
+#include "ICamera.h"
 #include <memory>
-#include "../utilities/D3dIncludes.h"
-#include "../utilities/math/MathUtils.h"
 
-class Camera {
+class CameraImpl : public ICamera {
 public:
-	~Camera();
+	~CameraImpl();
 
-	static std::unique_ptr<Camera>	CreateCameraLH(float fieldOfView, float screenAspect, float screenNear, float screenFar);
-	static std::unique_ptr<Camera>	CreateCameraRH(float fieldOfView, float screenAspect, float screenNear, float screenFar);
+	static std::unique_ptr<CameraImpl>	CreateCameraLH(float fieldOfView, float screenAspect, float screenNear, float screenFar);
+	static std::unique_ptr<CameraImpl>	CreateCameraRH(float fieldOfView, float screenAspect, float screenNear, float screenFar);
 
 	void Update();
 
@@ -33,6 +32,8 @@ public:
 	void GetPosition(Vector3& pos) const;
 	void GetTarget(Vector3& target) const;
 
+	const Matrix &GetProjectionMatrix() const;
+	const Matrix &GetViewMatrix() const;
 	void GetProjectionMatrix(Matrix& projMatrix) const;
 	void GetViewMatrix(Matrix& viewMatrix) const;
 	void GetRotationMatrix(Matrix& rotationMatrix) const;
@@ -40,10 +41,10 @@ public:
 	Ray  ScreenPointToRay(Vector2 position) const;
 
 	// works only for Left handed coordinate systems
-	DirectX::BoundingFrustum * GetBoundingFrustum();	
+	const DirectX::BoundingFrustum &GetBoundingFrustum() const;	
 
 private:
-	Camera(float fieldOfView, float screenAspect, float screenNear, float screenFar, bool rightHand);
+	CameraImpl(float fieldOfView, float screenAspect, float screenNear, float screenFar, bool rightHand);
 
 private:
 	Matrix mProjectionMatrix;

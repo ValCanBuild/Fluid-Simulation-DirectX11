@@ -146,7 +146,7 @@ bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 	return true;
 }
 
-bool Fluid3D::Fluid3DCalculator::InitShaderParams(HWND hwnd) {
+bool Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 	// Create the velocity shader params
 	CComPtr<ID3D11Texture3D> velocityText[4];
 	mVelocitySP = new ShaderParams[4];

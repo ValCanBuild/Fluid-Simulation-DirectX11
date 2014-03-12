@@ -31,7 +31,8 @@ public:
 	void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) override;
 
 	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
-	void SetPixelBufferValues(Transform &transform, Vector3 &vEyePos, Vector3 &vDimensions);
+	void SetTransform(const Transform &transform) const;
+	void SetCameraPosition(const Vector3 &camPos) const;
 	void SetSmokeProperties(SmokeProperties &smokeProperties) const;
 
 	void SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues);
@@ -49,13 +50,12 @@ private:
 		Matrix worldMatrix;
 	};
 
-	struct PixelInputBuffer {
-		Vector3 vDimensions;			
-		float  padding0;	
-
+	struct PixelBufferPerFrame {
 		Vector3 vEyePos;	
 		float  padding1;	
+	};
 
+	struct PixelBufferPerObject {
 		Vector3 vTranslate; 
 		float  padding2;	
 
@@ -69,7 +69,8 @@ private:
 	};
 
 	CComPtr<ID3D11Buffer>		mVertexInputBuffer;
-	CComPtr<ID3D11Buffer>		mPixelInputBuffer;
+	CComPtr<ID3D11Buffer>		mPixelBufferPerFrame;
+	CComPtr<ID3D11Buffer>		mPixelBufferPerObject;
 	CComPtr<ID3D11Buffer>		mPixelSmokePropertiesBuffer;
 	CComPtr<ID3D11SamplerState> mSampleState;
 

@@ -16,7 +16,7 @@ Date: 19/2/2014
 #include "../utilities/AtlInclude.h"
 #include "../display/D3DGraphicsObject.h"
 
-class Camera;
+class ICamera;
 class VolumeRenderShader;
 struct CTwBar;
 struct SmokeProperties;
@@ -32,10 +32,9 @@ public:
 	VolumeRenderer(Vector3 &volumeSize);
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
-	virtual void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) override;
+	void Render(const ICamera &camera) override;
 
 	void SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV);
-	void SetCamera(Camera *camera);
 
 	void DisplayRenderInfoOnBar(CTwBar * const pBar);
 
@@ -48,7 +47,6 @@ private:
 	Vector3 mPrevCameraPos;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
-	Camera *pCamera;
 
 	std::unique_ptr<SmokeProperties>		mSmokeProperties;
 	std::unique_ptr<VolumeRenderShader>		mVolumeRenderShader;

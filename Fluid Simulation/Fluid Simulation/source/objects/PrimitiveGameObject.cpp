@@ -7,6 +7,7 @@ Date: 28/2/2014
 *********************************************************************/
 
 #include "PrimitiveGameObject.h"
+#include "../utilities/ICamera.h"
 
 using namespace DirectX;
 
@@ -42,8 +43,8 @@ void PrimitiveGameObject::Update() {
 	bounds->Update();
 }
 
-void PrimitiveGameObject::Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) {
+void PrimitiveGameObject::Render(const ICamera &camera) {
 	Matrix worldMatrix;
 	transform->GetTransformMatrixQuaternion(worldMatrix);
-	primitive->Draw(worldMatrix, viewMatrix, projectionMatrix);
+	primitive->Draw(worldMatrix, camera.GetViewMatrix(), camera.GetProjectionMatrix());
 }

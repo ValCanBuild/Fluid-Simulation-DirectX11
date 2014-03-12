@@ -10,29 +10,29 @@ Date: 3/3/2014
 #include <AntTweakBar.h>
 #include "../../objects/VolumeRenderer.h"
 #include "../../utilities/FluidCalculation/Fluid3DCalculator.h"
-#include "../../utilities/Camera.h"
+#include "../../utilities/ICamera.h"
 
 using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-FluidSimulation::FluidSimulation() : pBoundingFrustum(nullptr), mUpdatePaused(false) {
+FluidSimulation::FluidSimulation() : mUpdatePaused(false) {
 	FluidSettings fluidSettings;
+	fluidSettings.dimensions = Vector3(64);
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), pBoundingFrustum(nullptr), mUpdatePaused(false)
+	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false)
 {
 
 }
 
 FluidSimulation::~FluidSimulation() {
-	pBoundingFrustum = nullptr;
 }
 
-bool FluidSimulation::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd, Camera *camera) {
+bool FluidSimulation::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
 	bool result = mVolumeRenderer->Initialize(d3dGraphicsObj, hwnd);
 	if (!result) {
 		return false;
@@ -44,19 +44,18 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hw
 	}
 
 	mVolumeRenderer->SetSourceTexture(mFluidCalculator->GetVolumeTexture());
-	mVolumeRenderer->SetCamera(camera);
-
-	pBoundingFrustum = camera->GetBoundingFrustum();
 
 	return true;
 }
 
-bool FluidSimulation::Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) const {
+bool FluidSimulation::Render(const ICamera &camera) {
+	DirectX::BoundingFrustum boundingFrustum = camera.GetBoundingFrustum();
+
 	// Perform a frustum - bounding box containment test
 	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
-	ContainmentType cType = pBoundingFrustum->Contains(*boundingBox);
+	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
 	if (cType != DISJOINT) {
-		mVolumeRenderer->Render(viewMatrix, projectionMatrix);
+		mVolumeRenderer->Render(camera);
 		return true;
 	}
 	return false;

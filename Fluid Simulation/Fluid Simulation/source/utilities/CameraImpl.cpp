@@ -6,14 +6,14 @@ Date: 04/09/2013
 Version: 1.0
 **************************************************************/
 
-#include "Camera.h"
+#include "CameraImpl.h"
 #include "../system/ServiceProvider.h"
 #include "../display/IGraphicsObject.h"
 #include <DirectXMath.h>
 
 using namespace DirectX;
 
-Camera::Camera(float fieldOfView, float screenAspect, float screenNear, float screenFar, bool rightHand) :
+CameraImpl::CameraImpl(float fieldOfView, float screenAspect, float screenNear, float screenFar, bool rightHand) :
 mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0), mRightHanded(rightHand) {
 	mYaw = mPitch = mRoll = 0.0f;
 
@@ -31,23 +31,23 @@ mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0)
 	BoundingFrustum::CreateFromMatrix(mUntransformedFrustum, mProjectionMatrix);
 }
 
-Camera::~Camera() {
+CameraImpl::~CameraImpl() {
 
 }
 
-std::unique_ptr<Camera> Camera::CreateCameraLH(float fieldOfView, float screenAspect, float screenNear, float screenFar) {
-	std::unique_ptr<Camera> camera(new Camera(fieldOfView, screenAspect, screenNear, screenFar, false));
+std::unique_ptr<CameraImpl> CameraImpl::CreateCameraLH(float fieldOfView, float screenAspect, float screenNear, float screenFar) {
+	std::unique_ptr<CameraImpl> camera(new CameraImpl(fieldOfView, screenAspect, screenNear, screenFar, false));
 
 	return camera;
 }
 
-std::unique_ptr<Camera> Camera::CreateCameraRH(float fieldOfView, float screenAspect, float screenNear, float screenFar) {
-	std::unique_ptr<Camera> camera(new Camera(fieldOfView, screenAspect, screenNear, screenFar, true));
+std::unique_ptr<CameraImpl> CameraImpl::CreateCameraRH(float fieldOfView, float screenAspect, float screenNear, float screenFar) {
+	std::unique_ptr<CameraImpl> camera(new CameraImpl(fieldOfView, screenAspect, screenNear, screenFar, true));
 
 	return camera;
 }
 
-void Camera::Update() {
+void CameraImpl::Update() {
 	// don't compute anything if no attributes have changed
 	if (mHasChanged) {
 		mHasChanged = false;
@@ -75,37 +75,37 @@ void Camera::Update() {
 	mUntransformedFrustum.Transform(mBoundingFrustum, mViewMatrix.Invert());
 }
 
-void Camera::MoveFacing(float forwardAmount, float rightAmount) {
+void CameraImpl::MoveFacing(float forwardAmount, float rightAmount) {
 	mPosition += forwardAmount*mLookAt;
 	mPosition += rightAmount*mRight;
 	mHasChanged = true;
 }
 
-void Camera::AddYawPitchRoll(float yaw, float pitch, float roll) {
+void CameraImpl::AddYawPitchRoll(float yaw, float pitch, float roll) {
 	mYaw += yaw;
 	mPitch += pitch;
 	mRoll += roll;
 	mHasChanged = true;
 }
 
-void Camera::SetYawPitchRoll(float yaw, float pitch, float roll) {
+void CameraImpl::SetYawPitchRoll(float yaw, float pitch, float roll) {
 	mYaw = yaw;
 	mPitch = pitch;
 	mRoll = roll;
 	mHasChanged = true;
 }
 
-void Camera::AddPosition(float x, float y, float z) {
+void CameraImpl::AddPosition(float x, float y, float z) {
 	mPosition += Vector3(x,y,z);
 	mHasChanged = true;
 }
 
-void Camera::SetPosition(float x, float y, float z) {
+void CameraImpl::SetPosition(float x, float y, float z) {
 	mPosition = Vector3(x,y,z);
 	mHasChanged = true;
 }
 
-Ray Camera::ScreenPointToRay(Vector2 position) const {
+Ray CameraImpl::ScreenPointToRay(Vector2 position) const {
 	const IGraphicsObject *graphicsObject = ServiceProvider::Instance().GetGraphicsSystem()->GetGraphicsObject();
 	int screenWidth,screenHeight;
 	graphicsObject->GetScreenDimensions(screenWidth,screenHeight);
@@ -128,27 +128,35 @@ Ray Camera::ScreenPointToRay(Vector2 position) const {
 	return Ray(rayOrigin,rayDir);
 }
 
-void Camera::GetPosition(Vector3& pos) const {
+void CameraImpl::GetPosition(Vector3& pos) const {
 	pos = mPosition;
 }
 
-void Camera::GetTarget(Vector3& target) const {
+void CameraImpl::GetTarget(Vector3& target) const {
 	target = mTarget;
 }
 
-void Camera::GetViewMatrix(Matrix& viewMatrix) const {
+void CameraImpl::GetViewMatrix(Matrix& viewMatrix) const {
 	viewMatrix = mViewMatrix;
 }
 
-void Camera::GetRotationMatrix(Matrix& rotationMatrix) const {
+const Matrix & CameraImpl::GetViewMatrix() const {
+	return mViewMatrix;
+}
+
+void CameraImpl::GetRotationMatrix(Matrix& rotationMatrix) const {
 	rotationMatrix = mRotationMatrix;
 }
 
-void Camera::GetProjectionMatrix(Matrix& projMatrix) const {
+void CameraImpl::GetProjectionMatrix(Matrix& projMatrix) const {
 	projMatrix = mProjectionMatrix;
 }
 
-DirectX::BoundingFrustum * Camera::GetBoundingFrustum() {
-	return &mBoundingFrustum;
+const Matrix & CameraImpl::GetProjectionMatrix() const {
+	return mProjectionMatrix;
+}
+
+const DirectX::BoundingFrustum &CameraImpl::GetBoundingFrustum() const {
+	return mBoundingFrustum;
 }
 

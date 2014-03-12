@@ -11,7 +11,7 @@ Date: 19/2/2014
 #include <CommonStates.h>
 #include "../system/ServiceProvider.h"
 #include "../display/D3DShaders/ShaderParams.h"
-#include "../utilities/Camera.h"
+#include "../utilities/ICamera.h"
 #include "../display/D3DShaders/VolumeRenderShader.h"
 
 using namespace std;
@@ -42,7 +42,6 @@ VolumeRenderer::VolumeRenderer(Vector3 &volumeSize) :
 
 VolumeRenderer::~VolumeRenderer() {
 	pD3dGraphicsObj = nullptr;
-	pCamera = nullptr;
 }
 
 bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
@@ -59,6 +58,7 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultNumSamples));
 
 	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
+	mVolumeRenderShader->SetTransform(*transform);
 
 	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
 
@@ -69,18 +69,18 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 	return true;
 }
 
-void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMatrix) {
+void VolumeRenderer::Render(const ICamera &camera) {
 	Matrix objectMatrix;
 	transform->GetTransformMatrixQuaternion(objectMatrix);
 
 	Vector3 camPos;
-	pCamera->GetPosition(camPos);
+	camera.GetPosition(camPos);
 
-	Matrix wvpMatrix = objectMatrix*viewMatrix*projectionMatrix;
+	Matrix wvpMatrix = objectMatrix*camera.GetViewMatrix()*camera.GetProjectionMatrix();
 	mVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
 
 	if (mPrevCameraPos != camPos) {
-		mVolumeRenderShader->SetPixelBufferValues(*transform, camPos, mVolumeSize);
+		mVolumeRenderShader->SetCameraPosition(camPos);
 		mPrevCameraPos = camPos;
 	}
 
@@ -101,10 +101,6 @@ void VolumeRenderer::Render(const Matrix &viewMatrix, const Matrix &projectionMa
 
 void VolumeRenderer::SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV) {
 	mVolumeRenderShader->SetVolumeValuesTexture(sourceTexSRV);
-}
-
-void VolumeRenderer::SetCamera(Camera *camera) {
-	pCamera = camera;
 }
 
 void VolumeRenderer::DisplayRenderInfoOnBar(TwBar * const pBar) {

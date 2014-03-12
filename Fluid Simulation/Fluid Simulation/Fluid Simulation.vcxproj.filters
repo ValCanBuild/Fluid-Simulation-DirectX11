@@ -106,6 +106,12 @@
     <Filter Include="Source Files\Display\D3DShaders\Fluid3D">
       <UniqueIdentifier>{6e7cc974-7061-48a8-9624-2d1a61f09321}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities\Camera">
+      <UniqueIdentifier>{c5fa175f-cd3c-45c0-99f2-eef025339794}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\Camera">
+      <UniqueIdentifier>{f60b5147-93f8-4f1c-8673-c81220a9c930}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -122,9 +128,6 @@
     </ClCompile>
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
-    </ClCompile>
-    <ClCompile Include="source\utilities\Camera.cpp">
-      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="source\system\ServiceProvider.cpp">
       <Filter>Source Files\System</Filter>
@@ -234,6 +237,9 @@
     <ClCompile Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.cpp">
       <Filter>Source Files\Display\D3DShaders\Fluid3D</Filter>
     </ClCompile>
+    <ClCompile Include="source\utilities\CameraImpl.cpp">
+      <Filter>Source Files\Utilities\Camera</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\utilities\D3dIncludes.h">
@@ -256,9 +262,6 @@
     </ClInclude>
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\Camera.h">
-      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="source\system\ServiceProvider.h">
       <Filter>Header Files\System</Filter>
@@ -356,9 +359,6 @@
     <ClInclude Include="source\system\GraphicsSystemImpl.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="source\system\GraphicsSystem.h">
-      <Filter>Header Files\System\Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
@@ -397,6 +397,15 @@
     </ClInclude>
     <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DBuffers.h">
       <Filter>Header Files\Display\D3DShaders\Fluid3D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\CameraImpl.h">
+      <Filter>Header Files\Utilities\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="source\system\IGraphicsSystem.h">
+      <Filter>Header Files\System\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\ICamera.h">
+      <Filter>Header Files\Utilities\Camera</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

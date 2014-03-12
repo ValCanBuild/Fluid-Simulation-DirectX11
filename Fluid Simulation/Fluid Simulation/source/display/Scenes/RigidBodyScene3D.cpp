@@ -8,7 +8,7 @@ Date: 26/11/2013
 #include "RigidBodyScene3D.h"
 
 #include "../D3DGraphicsObject.h"
-#include "../../utilities/Camera.h"
+#include "../../utilities/CameraImpl.h"
 #include "../../system/ServiceProvider.h"
 #include "../../objects/BaseD3DBody.h"
 #include "../../utilities/Physics.h"
@@ -45,7 +45,7 @@ bool RigidBodyScene3D::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwn
 	float fieldOfView = (float)PI / 4.0f;
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
-	mCamera = Camera::CreateCameraRH(fieldOfView, screenAspect, nearVal, farVal);
+	mCamera = CameraImpl::CreateCameraRH(fieldOfView, screenAspect, nearVal, farVal);
 	mCamera->SetPosition(0,5,-12);
 
 	Physics::fGravity = -9.8f;

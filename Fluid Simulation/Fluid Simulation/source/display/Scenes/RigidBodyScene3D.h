@@ -21,8 +21,7 @@ Date: 26/11/2013
 
 #include "GeometricPrimitive.h"
 
-
-class Camera;
+class CameraImpl;
 class D3DGraphicsObject;
 class BaseD3DBody;
 class CollisionManager;
@@ -72,7 +71,7 @@ private:
 
 
 private:
-	unique_ptr<Camera>					mCamera;
+	unique_ptr<CameraImpl>					mCamera;
 	
 	BaseD3DBody	*						mBody;
 

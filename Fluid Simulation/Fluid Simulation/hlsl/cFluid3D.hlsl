@@ -154,11 +154,15 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Adds impulse depending on point of interaction
 void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
-	float d = distance(vPoint.xyz,i);
+	/*float mag = distance(vPoint.xyz,i);
+	mag *= mag;
+	float rad2 = fRadius*fRadius;
 
+	float3 amount = exp(-mag/rad2) * vFillColor.rgb * fTimeStep;
+	impulseResult[i] = impulseInitial[i] + amount;*/
+
+	float d = distance(vPoint.xyz,i);
 	if (d < fRadius) {
-		//float a = (fRadius - d) * 0.5f;
-		//a = min(a,1.0f);
 		impulseResult[i] = vFillColor.xyz;
 	}
 	else {

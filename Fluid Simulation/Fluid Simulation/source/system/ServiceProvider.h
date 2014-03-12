@@ -11,7 +11,7 @@ Version: 1.0
 
 #include <memory>
 #include "InputSystem.h"
-#include "GraphicsSystem.h"
+#include "IGraphicsSystem.h"
 
 class ServiceProvider {
 public:		
@@ -23,7 +23,7 @@ public:
 		return *mSingleton;
 	}
 
-	void Initialize(InputSystem* inputSystem, GraphicsSystem* graphicsSystem) {
+	void Initialize(InputSystem* inputSystem, IGraphicsSystem* graphicsSystem) {
 		if (mInitialized)
 			return;
 
@@ -34,7 +34,7 @@ public:
 	}
 
 	InputSystem* GetInputSystem() { return pInputSystem; };
-	GraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; };
+	IGraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; };
 
 	~ServiceProvider() {
 		pInputSystem = nullptr;
@@ -48,7 +48,7 @@ private:
 	static std::unique_ptr<ServiceProvider> mSingleton;
 	bool mInitialized;
 	InputSystem* pInputSystem;
-	GraphicsSystem* pGraphicsSystem;
+	IGraphicsSystem* pGraphicsSystem;
 };
 
 #endif
