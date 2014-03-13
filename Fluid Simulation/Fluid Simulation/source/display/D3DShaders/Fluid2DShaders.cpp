@@ -15,7 +15,7 @@ using namespace Fluid2D;
 #define NUM_THREADS_Y 8.0f
 
 ///////ADVECTION SHADER BEGIN////////
-AdvectionShader::AdvectionShader(AdvectionType_t advectionType) 
+AdvectionShader::AdvectionShader(AdvectionShaderType_t advectionType) 
 : mAdvectionType(advectionType) {
 }
 

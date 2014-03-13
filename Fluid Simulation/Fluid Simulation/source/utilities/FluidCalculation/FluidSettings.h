@@ -13,7 +13,7 @@ Date: 3/3/2014
 #include "../math/MathUtils.h"
 
 // Default parameters
-#define DIMENSION 64
+#define DIMENSION 64.0f
 #define TIME_STEP 0.125f
 #define CONSTANT_INPUT_RADIUS 23.0f
 #define INTERACTION_IMPULSE_RADIUS 7.0f
@@ -27,12 +27,18 @@ Date: 3/3/2014
 #define AMBIENT_TEMPERATURE 0.0f
 #define CONSTANT_TEMPERATURE 3.0f
 #define CONSTANT_DENSITY 1.0f
-#define VORTICITY_STRENGTH 0.4f
+#define VORTICITY_STRENGTH 0.5f
+
+enum SystemAdvectionType_t {
+	NORMAL, 
+	MACCORMARCK
+};
 
 struct FluidSettings {
+	Vector3 dimensions;	
 	int jacobiIterations;
 	float timeStep;
-	bool macCormackEnabled;
+	SystemAdvectionType_t advectionType;
 	float velocityDissipation;
 	float temperatureDissipation;
 	float constantTemperature;
@@ -42,13 +48,12 @@ struct FluidSettings {
 	float densityBuoyancy;
 	float constantInputRadius;
 	float vorticityStrength;
-	Vector3 dimensions;	
 	Vector3 constantInputPosition;	// location of permanent density and temperature input as % of dimensions
 
 	FluidSettings() {
 		jacobiIterations = JACOBI_ITERATIONS;
 		timeStep = TIME_STEP;
-		macCormackEnabled = true;
+		advectionType = MACCORMARCK;
 		velocityDissipation = VEL_DISSIPATION;
 		temperatureDissipation = TEMPERATURE_DISSIPATION;
 		constantTemperature = CONSTANT_TEMPERATURE;

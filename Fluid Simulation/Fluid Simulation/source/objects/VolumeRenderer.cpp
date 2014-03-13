@@ -87,9 +87,6 @@ void VolumeRenderer::Render(const ICamera &camera) {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 	primitive->Draw(mVolumeRenderShader.get(), mVolumeRenderShader->GetInputLayout(), false, false, [=] 
 		{
-			// set custom sampler
-			//sharedVolumeRenderShader->ApplySamplers();
-
 			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
 			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
 			

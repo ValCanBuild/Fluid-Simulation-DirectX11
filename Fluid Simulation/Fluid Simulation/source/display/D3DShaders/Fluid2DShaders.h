@@ -49,14 +49,14 @@ struct InputBufferImpulse {
 
 class AdvectionShader : public BaseD3DShader {
 public:
-	enum AdvectionType_t {
+	enum AdvectionShaderType_t {
 		ADVECTION_TYPE_FORWARD,
 		ADVECTION_TYPE_BACKWARD,
 		ADVECTION_TYPE_MACCORMARCK
 	};
 
 public:
-	AdvectionShader(AdvectionType_t advectionType);
+	AdvectionShader(AdvectionShaderType_t advectionType);
 	~AdvectionShader();
 
 	bool Compute(_In_ D3DGraphicsObject* graphicsObject, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* obstacles, _In_ ShaderParams* advectResult);
@@ -66,7 +66,7 @@ private:
 	bool SpecificInitialization(ID3D11Device* device) {return true;};
 
 private:
-	AdvectionType_t mAdvectionType;
+	AdvectionShaderType_t mAdvectionType;
 };
 
 

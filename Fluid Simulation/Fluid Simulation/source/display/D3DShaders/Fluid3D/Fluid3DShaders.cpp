@@ -39,7 +39,7 @@ ShaderDescription BaseFluid3DShader::GetShaderDescription() {
 }
 
 ///////ADVECTION SHADER BEGIN////////
-AdvectionShader::AdvectionShader(AdvectionType_t advectionType, Vector3 dimensions) 
+AdvectionShader::AdvectionShader(AdvectionShaderType_t advectionType, Vector3 dimensions) 
 : BaseFluid3DShader(dimensions), mAdvectionType(advectionType) {
 }
 

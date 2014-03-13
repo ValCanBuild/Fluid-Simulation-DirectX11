@@ -214,7 +214,6 @@ void ConfinementComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 eta = 0.5f * float3( omegaR - omegaL, omegaT - omegaB, omegaU - omegaD );
 	eta = normalize( eta + float3(0.001f,0.001f,0.001f) );
 
-	//float fVorticityStrength = 0.4f;
 	float3 force = fTimeStep * fVorticityStrength * float3( (eta.y * omega.z - eta.z * omega.y), (eta.z * omega.x - eta.x * omega.z), (eta.x * omega.y - eta.y * omega.x) );
 
 	velocityResult[i] = velocity[i] + force;

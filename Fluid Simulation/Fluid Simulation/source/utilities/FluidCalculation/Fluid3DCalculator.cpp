@@ -382,7 +382,7 @@ void Fluid3DCalculator::Process() {
 	// Advect velocity against itself
 	Advect(mVelocitySP);
 
-	int resultBuffer = mFluidSettings.macCormackEnabled ? WRITE : WRITE2;
+	int resultBuffer = mFluidSettings.advectionType == MACCORMARCK ? WRITE : WRITE2;
 	swap(mVelocitySP[READ],mVelocitySP[resultBuffer]);
 	swap(mTemperatureSP[READ],mTemperatureSP[resultBuffer]);
 	swap(mDensitySP[READ],mDensitySP[resultBuffer]);
@@ -411,7 +411,7 @@ void Fluid3DCalculator::Advect(ShaderParams *target) {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
 	mForwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
-	if (mFluidSettings.macCormackEnabled) {
+	if (mFluidSettings.advectionType == MACCORMARCK) {
 		mBackwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
 		ShaderParams advectArrayDens[3] = {target[WRITE2], target[WRITE3], target[READ]};
 		mMacCormarckAdvectionShader->Compute(context,&mVelocitySP[READ],advectArrayDens,&target[WRITE]);
@@ -588,4 +588,8 @@ int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) con
 	}
 
 	return dirtyFlags;
+}
+
+FluidSettings * const Fluid3D::Fluid3DCalculator::GetFluidSettingsPointer() const {
+	return const_cast<FluidSettings*>(&mFluidSettings);
 }

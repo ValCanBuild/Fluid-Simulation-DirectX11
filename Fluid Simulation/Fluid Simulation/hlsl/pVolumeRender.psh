@@ -137,7 +137,7 @@ float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	float alpha = 1.0f;
 
 	for(int i = 0; i < iNumSamples; i++, start += ds) {	 
-		float D = SampleBilinear(start);	
+		float D = SampleDensity(start);	
 		alpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
 
 		if (alpha <= 0.01f) {

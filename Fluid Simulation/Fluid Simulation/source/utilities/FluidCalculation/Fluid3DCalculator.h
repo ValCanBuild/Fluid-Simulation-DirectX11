@@ -40,6 +40,7 @@ public:
 	ID3D11ShaderResourceView * GetVolumeTexture() const;
 
 	const FluidSettings &GetFluidSettings() const;
+	FluidSettings * const GetFluidSettingsPointer() const;
 	void SetFluidSettings(const FluidSettings &fluidSettings);
 
 private:

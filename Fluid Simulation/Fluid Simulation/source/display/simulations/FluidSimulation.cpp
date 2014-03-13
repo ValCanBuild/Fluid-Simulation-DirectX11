@@ -74,8 +74,11 @@ bool FluidSimulation::Update(float dt) const {
 void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	TwAddVarRW(pBar,"Active", TW_TYPE_BOOLCPP, &mUpdatePaused, nullptr);
 
+	FluidSettings *settings = mFluidCalculator->GetFluidSettingsPointer();
+
 	// Add fluid calculator settings
 	TwAddVarCB(pBar,"Simulation", GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
+	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
 
 	// Add volume renderer settings
 	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
@@ -91,8 +94,7 @@ std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
 }
 
 void TW_CALL FluidSimulation::GetFluidSettings(void *value, void *clientData) {
-	Fluid3DCalculator* fluidCalculator = static_cast<Fluid3DCalculator *>(clientData);
-	*static_cast<FluidSettings *>(value) = fluidCalculator->GetFluidSettings();
+	*static_cast<FluidSettings *>(value) = static_cast<const Fluid3DCalculator *>(clientData)->GetFluidSettings();
 }
 
 void TW_CALL FluidSimulation::SetFluidSettings(const void *value, void *clientData) {

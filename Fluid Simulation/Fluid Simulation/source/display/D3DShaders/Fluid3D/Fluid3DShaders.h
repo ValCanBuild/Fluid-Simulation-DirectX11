@@ -30,14 +30,14 @@ private:
 
 class AdvectionShader : public BaseFluid3DShader {
 public:
-	enum AdvectionType_t {
+	enum AdvectionShaderType_t {
 		ADVECTION_TYPE_FORWARD,
 		ADVECTION_TYPE_BACKWARD,
 		ADVECTION_TYPE_MACCORMARCK
 	};
 
 public:
-	AdvectionShader(AdvectionType_t advectionType, Vector3 dimensions);
+	AdvectionShader(AdvectionShaderType_t advectionType, Vector3 dimensions);
 	~AdvectionShader();
 
 	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* velocityField, _In_ ShaderParams* advectTarget, _In_ ShaderParams* advectResult);
@@ -46,7 +46,7 @@ private:
 	ShaderDescription GetShaderDescription();
 
 private:
-	AdvectionType_t mAdvectionType;
+	AdvectionShaderType_t mAdvectionType;
 };
 
 
