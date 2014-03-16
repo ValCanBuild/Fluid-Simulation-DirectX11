@@ -35,8 +35,7 @@ Fluid3DCalculator::Fluid3DCalculator(FluidSettings fluidSettings) : pD3dGraphics
 	mDensitySP(nullptr),
 	mTemperatureSP(nullptr),
 	mPressureSP(nullptr),
-	mObstacleSP(nullptr),
-	mVorticitySP(nullptr) {
+	mObstacleSP(nullptr) {
 
 }
 
@@ -57,15 +56,6 @@ Fluid3DCalculator::~Fluid3DCalculator() {
 		delete [] mVelocitySP;
 		mVelocitySP = nullptr;
 	}
-	if (mObstacleSP) {
-		delete [] mObstacleSP;
-		mObstacleSP = nullptr;
-	}
-	if (mVorticitySP) {
-		delete [] mVorticitySP;
-		mVorticitySP = nullptr;
-	}
-
 	pD3dGraphicsObj = nullptr;
 }
 
@@ -93,6 +83,14 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 	UpdateDissipationBuffer(VELOCITY);
 	UpdateDissipationBuffer(DENSITY);
 	UpdateDissipationBuffer(TEMPERATURE);
+
+	// create obstacle shader for generating the static obstacle field
+	ObstacleShader obstacleShader(mFluidSettings.dimensions);
+	result = obstacleShader.Initialize(pD3dGraphicsObj->GetDevice(), hwnd);
+	if (!result) {
+		return false;
+	}
+	obstacleShader.Compute(pD3dGraphicsObj->GetDeviceContext(), mObstacleSP.get());
 
 	return true;
 }
@@ -198,26 +196,24 @@ bool Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 		}
 	}
 
-	// Create the vorticity shader params
-	CComPtr<ID3D11Texture3D> vorticityText[2];
-	mVorticitySP = new ShaderParams[2];
-	for (int i = 0; i < 2; ++i) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &vorticityText[i]);
-		if (FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the vorticity Texture Object", L"Error", MB_OK);
-			return false;
-		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(vorticityText[i], NULL, &mVorticitySP[i].mSRV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the vorticity SRV", L"Error", MB_OK);
-			return false;
+	// Create the obstacle shader params
+	CComPtr<ID3D11Texture3D> obstacleText;
+	mObstacleSP = unique_ptr<ShaderParams>(new ShaderParams());	
+	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &obstacleText);
+	if (FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the obstacle Texture Object", L"Error", MB_OK);
+		return false;
+	}
+	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(obstacleText, NULL, &mObstacleSP->mSRV);
+	if(FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the obstacle SRV", L"Error", MB_OK);
+		return false;
 
-		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(vorticityText[i], NULL, &mVorticitySP[i].mUAV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the vorticity UAV", L"Error", MB_OK);
-			return false;
-		}
+	}
+	hresult = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(obstacleText, NULL, &mObstacleSP->mUAV);
+	if(FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the obstacle UAV", L"Error", MB_OK);
+		return false;
 	}
 
 	// Create the density shader params
@@ -266,10 +262,30 @@ bool Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 		}
 	}
 
+	// Create the vorticity shader params
+	CComPtr<ID3D11Texture3D> vorticityText;
+	mVorticitySP = unique_ptr<ShaderParams>(new ShaderParams());	
+	hresult = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &vorticityText);
+	if (FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the vorticity Texture Object", L"Error", MB_OK);
+		return false;
+	}
+	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(vorticityText, NULL, &mVorticitySP->mSRV);
+	if(FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the vorticity SRV", L"Error", MB_OK);
+		return false;
+
+	}
+	hresult = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(vorticityText, NULL, &mVorticitySP->mUAV);
+	if(FAILED(hresult)) {
+		MessageBox(hwnd, L"Could not create the vorticity UAV", L"Error", MB_OK);
+		return false;
+	}
+
 	// Create divergence shader params
 	CComPtr<ID3D11Texture3D> divergenceText;
 	mDivergenceSP = unique_ptr<ShaderParams>(new ShaderParams());
-	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &divergenceText);
+	hresult = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &divergenceText);
 	// Create the SRV and UAV.
 	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(divergenceText, NULL, &mDivergenceSP->mSRV);
 	if(FAILED(hresult)) {
@@ -367,6 +383,9 @@ void Fluid3DCalculator::Process() {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 	context->CSSetSamplers(0,1,&(mSampleState.p));
 
+	// Set the obstacle texture - it is constant throughout the execution step
+	context->CSSetShaderResources(4, 1, &(mObstacleSP->mSRV.p));
+
 	// Set all the buffers to the context
 	ID3D11Buffer *const pProcessConstantBuffers[3] = {mInputBufferGeneral, mInputBufferVelocityDissipation, mInputBufferImpulse};
 	context->CSSetConstantBuffers(0, 3, pProcessConstantBuffers);
@@ -436,11 +455,8 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 void Fluid3DCalculator::ComputeVorticityConfinement() {
 	ID3D11DeviceContext* context = pD3dGraphicsObj->GetDeviceContext();
 
-	mVorticityShader->Compute(context, &mVelocitySP[READ], &mVorticitySP[WRITE]);
-	swap(mVorticitySP[READ], mVorticitySP[WRITE]);
-
-	mConfinementShader->Compute(context, &mVelocitySP[READ], &mVorticitySP[READ], &mVelocitySP[WRITE]);
-
+	mVorticityShader->Compute(context, &mVelocitySP[READ], mVorticitySP.get());
+	mConfinementShader->Compute(context, &mVelocitySP[READ], mVorticitySP.get(), &mVelocitySP[WRITE]);
 	swap(mVelocitySP[READ], mVelocitySP[WRITE]);
 }
 

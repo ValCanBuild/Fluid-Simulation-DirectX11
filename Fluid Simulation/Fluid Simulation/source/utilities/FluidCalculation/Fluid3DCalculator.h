@@ -78,12 +78,12 @@ private:
 	std::unique_ptr<SubtractGradientShader>		mSubtractGradientShader;
 	std::unique_ptr<BuoyancyShader>				mBuoyancyShader;
 
-	ShaderParams* mVorticitySP;
 	ShaderParams* mVelocitySP;
 	ShaderParams* mDensitySP;
 	ShaderParams* mTemperatureSP;
 	ShaderParams* mPressureSP;
-	ShaderParams* mObstacleSP;
+	std::unique_ptr<ShaderParams>			mObstacleSP;
+	std::unique_ptr<ShaderParams>			mVorticitySP;
 	std::unique_ptr<ShaderParams>			mDivergenceSP;
 	CComPtr<ID3D11RenderTargetView>			mPressureRenderTargets[2];
 

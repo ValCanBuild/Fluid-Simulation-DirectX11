@@ -131,6 +131,17 @@ private:
 	ShaderDescription GetShaderDescription();
 };
 
+class ObstacleShader : public BaseFluid3DShader {
+public:
+	ObstacleShader(Vector3 dimensions);
+	~ObstacleShader();
+
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* obstacleResult);
+
+private:
+	ShaderDescription GetShaderDescription();
+};
+
 }// End namespace Fluid3D
 
 #endif

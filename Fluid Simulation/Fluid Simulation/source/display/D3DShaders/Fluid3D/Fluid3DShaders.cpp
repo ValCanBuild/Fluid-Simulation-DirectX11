@@ -8,9 +8,9 @@ Date: 09/11/2013
 #include "Fluid3DShaders.h"
 
 // Thread number defines based on values from cFluid3D.hlsl
-#define NUM_THREADS_X 16
-#define NUM_THREADS_Y 4
-#define NUM_THREADS_Z 4
+#define NUM_THREADS_X 8
+#define NUM_THREADS_Y 8
+#define NUM_THREADS_Z 8
 
 using namespace Fluid3D;
 
@@ -326,3 +326,33 @@ ShaderDescription ConfinementShader::GetShaderDescription() {
 	return shaderDescription;
 }
 ///////CONFINEMENT SHADER END////////
+
+///////OBSTACLE SHADER BEGIN////////
+ObstacleShader::ObstacleShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
+
+}
+
+ObstacleShader::~ObstacleShader() {
+
+}
+
+void ObstacleShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* obstacleResult) {
+	// Set the parameters inside the pixel shader
+	context->CSSetUnorderedAccessViews(0, 1, &(obstacleResult->mUAV.p), nullptr);
+
+	Dispatch(context);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+}
+
+ShaderDescription ObstacleShader::GetShaderDescription() {
+	ShaderDescription shaderDescription;
+
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid3D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "ObstaclesComputeShader";
+
+	return shaderDescription;
+}
+///////OBSTACLE SHADER END////////
