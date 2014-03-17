@@ -22,9 +22,6 @@ Date: 18/2/2014
 namespace BufferDirtyFlags
 {
 	const int General						= 0x01;
-	const int DensityDissipation			= 0x02;
-	const int TemperatureDissipation		= 0x04;
-	const int VelocityDissipation			= 0x08;
 }
 
 using namespace Fluid3D;
@@ -544,16 +541,6 @@ void Fluid3DCalculator::SetFluidSettings(const FluidSettings &fluidSettings) {
 
 int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) const {
 	int dirtyFlags = 0;
-
-	if (newSettings.velocityDissipation != mFluidSettings.velocityDissipation) {
-		dirtyFlags |= BufferDirtyFlags::VelocityDissipation;
-	}
-	if (newSettings.temperatureDissipation != mFluidSettings.temperatureDissipation) {
-		dirtyFlags |= BufferDirtyFlags::TemperatureDissipation;
-	}
-	if (newSettings.densityDissipation != mFluidSettings.densityDissipation) {
-		dirtyFlags |= BufferDirtyFlags::DensityDissipation;
-	}
 
 	if (newSettings.timeStep != mFluidSettings.timeStep || newSettings.densityBuoyancy != mFluidSettings.densityBuoyancy
 		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions
