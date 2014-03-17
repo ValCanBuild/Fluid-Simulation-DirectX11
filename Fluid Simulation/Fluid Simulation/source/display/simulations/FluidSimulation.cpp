@@ -16,7 +16,7 @@ using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-FluidSimulation::FluidSimulation() : mUpdatePaused(false) {
+FluidSimulation::FluidSimulation() : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f) {
 	FluidSettings fluidSettings;
 	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
@@ -24,7 +24,7 @@ FluidSimulation::FluidSimulation() : mUpdatePaused(false) {
 }
 
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false)
+	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f)
 {
 
 }
@@ -49,26 +49,38 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hw
 }
 
 bool FluidSimulation::Render(const ICamera &camera) {
-	DirectX::BoundingFrustum boundingFrustum = camera.GetBoundingFrustum();
-
-	// Perform a frustum - bounding box containment test
-	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
-	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
-	if (cType != DISJOINT) {
+	mIsVisible = IsVisibleByCamera(camera);
+	if (mIsVisible) {
 		mVolumeRenderer->Render(camera);
-		return true;
 	}
-	return false;
+	return mIsVisible;
 }
 
-bool FluidSimulation::Update(float dt) const {
+bool FluidSimulation::Update(float dt) {
 	mVolumeRenderer->Update();
 
-	if (!mUpdatePaused) {
-		mFluidCalculator->Process();
+	bool canUpdate = !mUpdatePaused && mIsVisible;
+
+	if (canUpdate) {
+		if (mTimeSinceLastProcess > 0.0f) {
+			FluidSettings settings = mFluidCalculator->GetFluidSettings();
+			float prevTimeStep = settings.timeStep;
+			settings.timeStep = mTimeSinceLastProcess;
+			mFluidCalculator->SetFluidSettings(settings);
+			mFluidCalculator->Process();
+			settings.timeStep = prevTimeStep;
+			mFluidCalculator->SetFluidSettings(settings);
+			mTimeSinceLastProcess = 0.0f;
+		}
+		else {
+			mFluidCalculator->Process();
+		}
+	} 
+	else {
+		mTimeSinceLastProcess += dt;
 	}
 
-	return !mUpdatePaused;
+	return canUpdate;
 }
 
 void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
@@ -101,4 +113,13 @@ void TW_CALL FluidSimulation::SetFluidSettings(const void *value, void *clientDa
 	Fluid3DCalculator* fluidCalculator = static_cast<Fluid3DCalculator *>(clientData);
 	FluidSettings fluidSettings = *static_cast<const FluidSettings *>(value);
 	fluidCalculator->SetFluidSettings(fluidSettings);
+}
+
+bool FluidSimulation::IsVisibleByCamera(const ICamera &camera) const {
+	DirectX::BoundingFrustum boundingFrustum = camera.GetBoundingFrustum();
+
+	// Perform a frustum - bounding box containment test
+	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
+	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
+	return cType != DISJOINT;
 }

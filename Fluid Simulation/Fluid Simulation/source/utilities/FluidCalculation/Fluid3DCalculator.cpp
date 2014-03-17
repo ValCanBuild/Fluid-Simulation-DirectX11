@@ -80,9 +80,6 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 
 	// Update buffers with values
 	UpdateGeneralBuffer();
-	UpdateDissipationBuffer(VELOCITY);
-	UpdateDissipationBuffer(DENSITY);
-	UpdateDissipationBuffer(TEMPERATURE);
 
 	// create obstacle shader for generating the static obstacle field
 	ObstacleShader obstacleShader(mFluidSettings.dimensions);
@@ -98,14 +95,8 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 	ID3D11Device *device = pD3dGraphicsObj->GetDevice();
 
-	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD, mFluidSettings.dimensions));
-	bool result = mForwardAdvectionShader->Initialize(device,hwnd);
-	if (!result) {
-		return false;
-	}
-
-	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_BACKWARD, mFluidSettings.dimensions));
-	result = mBackwardAdvectionShader->Initialize(device,hwnd);
+	mAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_NORMAL, mFluidSettings.dimensions));
+	bool result = mAdvectionShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
@@ -337,15 +328,7 @@ bool Fluid3DCalculator::InitBuffersAndSamplers() {
 	if (!result) {
 		return false;
 	}
-	result = BuildDynamicBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferDensityDissipation);
-	if (!result) {
-		return false;
-	}
-	result = BuildDynamicBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferVelocityDissipation);
-	if (!result) {
-		return false;
-	}
-	result = BuildDynamicBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferTemperatureDissipation);
+	result = BuildDynamicBuffer<InputBufferAdvection>(pD3dGraphicsObj->GetDevice(), &mInputBufferAdvection);
 	if (!result) {
 		return false;
 	}
@@ -387,24 +370,17 @@ void Fluid3DCalculator::Process() {
 	context->CSSetShaderResources(4, 1, &(mObstacleSP->mSRV.p));
 
 	// Set all the buffers to the context
-	ID3D11Buffer *const pProcessConstantBuffers[3] = {mInputBufferGeneral, mInputBufferVelocityDissipation, mInputBufferImpulse};
+	ID3D11Buffer *const pProcessConstantBuffers[3] = {mInputBufferGeneral, mInputBufferAdvection, mInputBufferImpulse};
 	context->CSSetConstantBuffers(0, 3, pProcessConstantBuffers);
 
 	//Advect temperature against velocity
-	context->CSSetConstantBuffers(1, 1, &(mInputBufferTemperatureDissipation.p));
-	Advect(mTemperatureSP);
+	Advect(mTemperatureSP, NORMAL, mFluidSettings.temperatureDissipation);
 
 	// Advect density against velocity
-	context->CSSetConstantBuffers(1, 1, &(mInputBufferDensityDissipation.p));
-	Advect(mDensitySP);
+	Advect(mDensitySP, mFluidSettings.advectionType, mFluidSettings.densityDissipation);
 
 	// Advect velocity against itself
-	Advect(mVelocitySP);
-
-	int resultBuffer = mFluidSettings.advectionType == MACCORMARCK ? WRITE : WRITE2;
-	swap(mVelocitySP[READ],mVelocitySP[resultBuffer]);
-	swap(mTemperatureSP[READ],mTemperatureSP[resultBuffer]);
-	swap(mDensitySP[READ],mDensitySP[resultBuffer]);
+	Advect(mVelocitySP, NORMAL, mFluidSettings.velocityDissipation);
 
 	//Determine how the temperature of the fluid changes the velocity
 	mBuoyancyShader->Compute(context,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
@@ -426,15 +402,31 @@ void Fluid3DCalculator::Process() {
 	std::swap(mVelocitySP[READ],mVelocitySP[WRITE]);
 }
 
-void Fluid3DCalculator::Advect(ShaderParams *target) {
+void Fluid3DCalculator::Advect(ShaderParams *target, SystemAdvectionType_t advectionType, float dissipation) {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+	int bufferToSwap;
+	switch (advectionType) {
+	case NORMAL:
+		UpdateAdvectionBuffer(dissipation, 1.0f);
+		bufferToSwap = WRITE2;
+		break;
+	case MACCORMARCK:
+		UpdateAdvectionBuffer(1.0f, 1.0f);
+		bufferToSwap = WRITE;
+		break;
+	}
+	mAdvectionShader->Compute(context,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
 
-	mForwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
-	if (mFluidSettings.advectionType == MACCORMARCK) {
-		mBackwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
+	if (advectionType == MACCORMARCK) {
+		// advect backwards a step
+		UpdateAdvectionBuffer(1.0f, -1.0f);
+		mAdvectionShader->Compute(context,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
 		ShaderParams advectArrayDens[3] = {target[WRITE2], target[WRITE3], target[READ]};
+		// proceed with MacCormack advection
+		UpdateAdvectionBuffer(dissipation, 1.0f);
 		mMacCormarckAdvectionShader->Compute(context,&mVelocitySP[READ],advectArrayDens,&target[WRITE]);
 	}
+	swap(target[READ],target[bufferToSwap]);
 }
 
 void Fluid3DCalculator::RefreshConstantImpulse() {
@@ -500,39 +492,23 @@ void Fluid3DCalculator::UpdateGeneralBuffer() {
 	context->Unmap(mInputBufferGeneral,0);
 }
 
-void Fluid3DCalculator::UpdateDissipationBuffer(DissipationBufferType_t bufferType) {
+void Fluid3DCalculator::UpdateAdvectionBuffer(float dissipation, float timeModifier) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBufferDissipation* dataPtr;
-	ID3D11Buffer* bufferToMap;
-	float dissipationValue = 0.0f;
-
-	switch (bufferType) {
-	case DENSITY:
-		bufferToMap = mInputBufferDensityDissipation;
-		dissipationValue = mFluidSettings.densityDissipation;
-		break;
-	case VELOCITY:
-		bufferToMap = mInputBufferVelocityDissipation;
-		dissipationValue = mFluidSettings.velocityDissipation;
-		break;
-	case TEMPERATURE:
-		bufferToMap = mInputBufferTemperatureDissipation;
-		dissipationValue = mFluidSettings.temperatureDissipation;
-		break;
-	}
-
+	InputBufferAdvection* dataPtr;
+	
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
 	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(bufferToMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	HRESULT result = context->Map(mInputBufferAdvection, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result)) {
 		throw std::runtime_error(std::string("Fluid3DEffect: failed to map buffer in UpdateDissipationBuffer function"));
 	}
 
-	dataPtr = (InputBufferDissipation*)mappedResource.pData;
-	dataPtr->fDissipation = dissipationValue;
+	dataPtr = (InputBufferAdvection*)mappedResource.pData;
+	dataPtr->fDissipation = dissipation;
+	dataPtr->fTimeStepModifier = timeModifier;
 
-	context->Unmap(bufferToMap,0);
+	context->Unmap(mInputBufferAdvection,0);
 }
 
 void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, float amount, float radius) {
@@ -555,29 +531,12 @@ void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, float amount, float 
 	context->Unmap(mInputBufferImpulse,0);
 }
 
-ID3D11ShaderResourceView * Fluid3DCalculator::GetVolumeTexture() const {
-	return mDensitySP[READ].mSRV;
-}
-
-const FluidSettings &Fluid3DCalculator::GetFluidSettings() const {
-	return mFluidSettings;
-}
-
 void Fluid3DCalculator::SetFluidSettings(const FluidSettings &fluidSettings) {
 	// Update buffers if needed
 	int dirtyFlags = GetUpdateDirtyFlags(fluidSettings);
 
 	mFluidSettings = fluidSettings;
 
-	if (dirtyFlags & BufferDirtyFlags::VelocityDissipation) {
-		UpdateDissipationBuffer(VELOCITY);
-	}
-	if (dirtyFlags & BufferDirtyFlags::TemperatureDissipation) {
-		UpdateDissipationBuffer(TEMPERATURE);
-	}
-	if (dirtyFlags & BufferDirtyFlags::DensityDissipation) {
-		UpdateDissipationBuffer(DENSITY);
-	}
 	if (dirtyFlags & BufferDirtyFlags::General) {
 		UpdateGeneralBuffer();
 	}
@@ -608,4 +567,12 @@ int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) con
 
 FluidSettings * const Fluid3D::Fluid3DCalculator::GetFluidSettingsPointer() const {
 	return const_cast<FluidSettings*>(&mFluidSettings);
+}
+
+const FluidSettings &Fluid3DCalculator::GetFluidSettings() const {
+	return mFluidSettings;
+}
+
+ID3D11ShaderResourceView * Fluid3DCalculator::GetVolumeTexture() const {
+	return mDensitySP[READ].mSRV;
 }

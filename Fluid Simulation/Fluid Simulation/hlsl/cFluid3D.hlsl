@@ -22,9 +22,10 @@ cbuffer InputBufferGeneral : register (b0) {
 	// 16 bytes //
 };
 
-cbuffer InputBufferDissipation : register (b1) {
+cbuffer InputBufferAdvection : register (b1) {
 	float fDissipation;			// Used for AdvectComputeShader
-	float3 padding1;			// pad to 16 bytes
+	float fTimeStepModifier;
+	float2 padding1;			// pad to 16 bytes
 }
 
 cbuffer InputBufferImpulse : register (b2) {
@@ -98,36 +99,18 @@ void AdvectComputeShader( uint3 i : SV_DispatchThreadID ) {
 	// check obstacles
 	if (IsObstacleCell(i)) {
 		advectionResult[i] = float3(0,0,0);
+		return;
 	}
 
 	uint3 dimensions = GetDimensionsFloat3(velocity);
 
 	// advect by trace back
-	float3 prevPos = i - fTimeStep * velocity[i];
+	float3 prevPos = i - fTimeStepModifier * fTimeStep * velocity[i];
 	prevPos = (prevPos+0.5f)/dimensions;
 
 	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
-	advectionResult[i] = result;//*fDissipation;
-}
-
-[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
-// Advect the speed by sampling at pos + deltaTime*velocity
-void AdvectBackwardComputeShader( uint3 i : SV_DispatchThreadID ) {
-	// check obstacles
-	if (IsObstacleCell(i)) {
-		advectionResult[i] = float3(0,0,0);
-	}
-
-	uint3 dimensions = GetDimensionsFloat3(velocity);
-
-	// advect by trace forward
-	float3 prevPos = i + fTimeStep * velocity[i];
-	prevPos = (prevPos+0.5f)/dimensions;
-
-	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
-
-	advectionResult[i] = result;
+	advectionResult[i] = result*fDissipation;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
@@ -136,6 +119,7 @@ void AdvectMacCormackComputeShader( uint3 i : SV_DispatchThreadID ) {
 	// check obstacles
 	if (IsObstacleCell(i)) {
 		advectionResult[i] = float3(0,0,0);
+		return;
 	}
 	
 	uint3 dimensions = GetDimensionsFloat3(velocity);
@@ -340,6 +324,7 @@ void JacobiComputeShader( uint3 i : SV_DispatchThreadID ) {
 void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 	if(IsObstacleCell(i)) {
 		velocityResult[i] = GetObstacleVelocity(i);
+		return;
 	}
 
 	uint3 dimensions = GetDimensionsFloat(pressure);

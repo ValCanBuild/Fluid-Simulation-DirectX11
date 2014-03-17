@@ -20,9 +20,10 @@ namespace Fluid3D {
 		float fVorticityStrength; 
 	};
 
-	struct InputBufferDissipation {
+	struct InputBufferAdvection {
 		float fDissipation;
-		Vector3 padding1;
+		float fTimeStepModifier;
+		Vector2 padding1;
 	};
 
 	struct InputBufferImpulse {

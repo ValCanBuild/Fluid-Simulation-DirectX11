@@ -48,7 +48,7 @@ private:
 	bool InitShaderParams(HWND hwnd);
 	bool InitBuffersAndSamplers();
 
-	void Advect(ShaderParams *target);
+	void Advect(ShaderParams *target, SystemAdvectionType_t advectionType, float dissipation);
 	void RefreshConstantImpulse();
 	void ApplyBuoyancy();
 	void ComputeVorticityConfinement();
@@ -57,7 +57,7 @@ private:
 	enum DissipationBufferType_t {
 		DENSITY, VELOCITY, TEMPERATURE
 	};
-	void UpdateDissipationBuffer(DissipationBufferType_t bufferType);
+	void UpdateAdvectionBuffer(float dissipation, float timeModifier);
 	void UpdateGeneralBuffer();
 	void UpdateImpulseBuffer(Vector3& point, float amount, float radius);
 
@@ -67,8 +67,7 @@ private:
 
 	FluidSettings mFluidSettings;
 
-	std::unique_ptr<AdvectionShader>			mForwardAdvectionShader;
-	std::unique_ptr<AdvectionShader>			mBackwardAdvectionShader;
+	std::unique_ptr<AdvectionShader>			mAdvectionShader;
 	std::unique_ptr<AdvectionShader>			mMacCormarckAdvectionShader;
 	std::unique_ptr<ImpulseShader>				mImpulseShader;
 	std::unique_ptr<VorticityShader>			mVorticityShader;
@@ -89,9 +88,7 @@ private:
 
 	CComPtr<ID3D11Buffer>					mInputBufferGeneral;
 	CComPtr<ID3D11Buffer>					mInputBufferImpulse;
-	CComPtr<ID3D11Buffer>					mInputBufferDensityDissipation;
-	CComPtr<ID3D11Buffer>					mInputBufferVelocityDissipation;
-	CComPtr<ID3D11Buffer>					mInputBufferTemperatureDissipation;
+	CComPtr<ID3D11Buffer>					mInputBufferAdvection;
 	CComPtr<ID3D11SamplerState>				mSampleState;
 };
 

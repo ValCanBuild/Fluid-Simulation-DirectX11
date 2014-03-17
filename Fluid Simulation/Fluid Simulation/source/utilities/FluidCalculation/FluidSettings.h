@@ -27,7 +27,7 @@ Date: 3/3/2014
 #define AMBIENT_TEMPERATURE 0.0f
 #define CONSTANT_TEMPERATURE 3.0f
 #define CONSTANT_DENSITY 1.0f
-#define VORTICITY_STRENGTH 0.5f
+#define VORTICITY_STRENGTH 0.9f
 
 enum SystemAdvectionType_t {
 	NORMAL, 

@@ -31,8 +31,7 @@ private:
 class AdvectionShader : public BaseFluid3DShader {
 public:
 	enum AdvectionShaderType_t {
-		ADVECTION_TYPE_FORWARD,
-		ADVECTION_TYPE_BACKWARD,
+		ADVECTION_TYPE_NORMAL,
 		ADVECTION_TYPE_MACCORMARCK
 	};
 

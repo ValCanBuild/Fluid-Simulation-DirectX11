@@ -34,7 +34,7 @@ public:
 	bool Render(const ICamera &camera);
 
 	// Returns true if this simulation is updated and false if it wasn't
-	bool Update(float dt) const;
+	bool Update(float dt);
 
 	void DisplayInfoOnBar(CTwBar * const pBar);
 	bool IntersectsRay(Ray &ray, float &distance) const;
@@ -45,12 +45,15 @@ private:
 	static void __stdcall GetFluidSettings(void *value, void *clientData);
 	static void __stdcall SetFluidSettings(const void *value, void *clientData);
 
+	bool IsVisibleByCamera(const ICamera &camera) const;
 private:
 	std::unique_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
 	std::shared_ptr<VolumeRenderer> mVolumeRenderer;
 
-
+	// track the time since the Process function was last called on the FluidCalculator
+	float mTimeSinceLastProcess;
 	bool mUpdatePaused;
+	bool mIsVisible;
 };
 
 #endif

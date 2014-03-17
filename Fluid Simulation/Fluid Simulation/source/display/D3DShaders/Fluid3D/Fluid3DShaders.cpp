@@ -75,11 +75,8 @@ ShaderDescription AdvectionShader::GetShaderDescription() {
 
 	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid3D.hlsl";
 	switch (mAdvectionType) {
-		case ADVECTION_TYPE_FORWARD:
+		case ADVECTION_TYPE_NORMAL:
 			shaderDescription.computeShaderDesc.shaderFunctionName = "AdvectComputeShader";
-			break;
-		case ADVECTION_TYPE_BACKWARD:
-			shaderDescription.computeShaderDesc.shaderFunctionName = "AdvectBackwardComputeShader";
 			break;
 		case ADVECTION_TYPE_MACCORMARCK:
 			shaderDescription.computeShaderDesc.shaderFunctionName = "AdvectMacCormackComputeShader";
