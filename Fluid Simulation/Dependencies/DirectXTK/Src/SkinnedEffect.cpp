@@ -40,6 +40,8 @@ struct SkinnedEffectConstants
     XMVECTOR bones[SkinnedEffect::MaxBones][3];
 };
 
+static_assert( ( sizeof(SkinnedEffectConstants) % 16 ) == 0, "CB size not padded correctly" );
+
 
 // Traits type describes our characteristics to the EffectBase template.
 struct SkinnedEffectTraits
@@ -63,7 +65,7 @@ public:
 
     EffectLights lights;
 
-    int GetCurrentShaderPermutation();
+    int GetCurrentShaderPermutation() const;
 
     void Apply(_In_ ID3D11DeviceContext* deviceContext);
 };
@@ -72,6 +74,23 @@ public:
 // Include the precompiled shader code.
 namespace
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedVertexLightingOneBone.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedVertexLightingTwoBones.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedVertexLightingFourBones.inc"
+
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedOneLightOneBone.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedOneLightTwoBones.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedOneLightFourBones.inc"
+
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedPixelLightingOneBone.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedPixelLightingTwoBones.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_VSSkinnedPixelLightingFourBones.inc"
+
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_PSSkinnedVertexLighting.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_PSSkinnedVertexLightingNoFog.inc"
+    #include "Shaders/Compiled/XboxOneSkinnedEffect_PSSkinnedPixelLighting.inc"
+#else
     #include "Shaders/Compiled/SkinnedEffect_VSSkinnedVertexLightingOneBone.inc"
     #include "Shaders/Compiled/SkinnedEffect_VSSkinnedVertexLightingTwoBones.inc"
     #include "Shaders/Compiled/SkinnedEffect_VSSkinnedVertexLightingFourBones.inc"
@@ -87,6 +106,7 @@ namespace
     #include "Shaders/Compiled/SkinnedEffect_PSSkinnedVertexLighting.inc"
     #include "Shaders/Compiled/SkinnedEffect_PSSkinnedVertexLightingNoFog.inc"
     #include "Shaders/Compiled/SkinnedEffect_PSSkinnedPixelLighting.inc"
+#endif
 }
 
 
@@ -174,6 +194,11 @@ SkinnedEffect::Impl::Impl(_In_ ID3D11Device* device)
     preferPerPixelLighting(false),
     weightsPerVertex(4)
 {
+    static_assert( _countof(EffectBase<SkinnedEffectTraits>::VertexShaderIndices) == SkinnedEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<SkinnedEffectTraits>::VertexShaderBytecode) == SkinnedEffectTraits::VertexShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<SkinnedEffectTraits>::PixelShaderBytecode) == SkinnedEffectTraits::PixelShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<SkinnedEffectTraits>::PixelShaderIndices) == SkinnedEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+
     lights.InitializeConstants(constants.specularColorAndPower, constants.lightDirection, constants.lightDiffuseColor, constants.lightSpecularColor);
 
     for (int i = 0; i < MaxBones; i++)
@@ -185,7 +210,7 @@ SkinnedEffect::Impl::Impl(_In_ ID3D11Device* device)
 }
 
 
-int SkinnedEffect::Impl::GetCurrentShaderPermutation()
+int SkinnedEffect::Impl::GetCurrentShaderPermutation() const
 {
     int permutation = 0;
 
@@ -231,9 +256,11 @@ void SkinnedEffect::Impl::Apply(_In_ ID3D11DeviceContext* deviceContext)
     lights.SetConstants(dirtyFlags, matrices, constants.world, constants.worldInverseTranspose, constants.eyePosition, constants.diffuseColor, constants.emissiveColor, true);
 
     // Set the texture.
-    ID3D11ShaderResourceView* textures[1] = { texture.Get() };
+    auto textures = texture.Get();
+    if ( !textures )
+        textures = GetDefaultTexture();
 
-    deviceContext->PSSetShaderResources(0, 1, textures);
+    deviceContext->PSSetShaderResources(0, 1, &textures );
     
     // Set shaders and constant buffers.
     ApplyShaders(deviceContext, GetCurrentShaderPermutation());
@@ -337,6 +364,15 @@ void SkinnedEffect::SetSpecularPower(float value)
     pImpl->dirtyFlags |= EffectDirtyFlags::ConstantBuffer;
 }
 
+void SkinnedEffect::DisableSpecular()
+{
+    // Set specular color to black, power to 1
+    // Note: Don't use a power of 0 or the shader will generate strange highlights on non-specular materials
+
+    pImpl->constants.specularColorAndPower = g_XMIdentityR3; 
+
+    pImpl->dirtyFlags |= EffectDirtyFlags::ConstantBuffer;
+}
 
 void SkinnedEffect::SetAlpha(float value)
 {
@@ -468,6 +504,23 @@ void SkinnedEffect::SetBoneTransforms(_In_reads_(count) XMMATRIX const* value, s
         boneConstant[i][0] = boneMatrix.r[0];
         boneConstant[i][1] = boneMatrix.r[1];
         boneConstant[i][2] = boneMatrix.r[2];
+    }
+
+    pImpl->dirtyFlags |= EffectDirtyFlags::ConstantBuffer;
+}
+
+
+void SkinnedEffect::ResetBoneTransforms()
+{
+    auto boneConstant = pImpl->constants.bones;
+
+    XMMATRIX id = XMMatrixIdentity();
+
+    for(size_t i = 0; i < MaxBones; ++i)
+    {
+        boneConstant[i][0] = g_XMIdentityR0;
+        boneConstant[i][1] = g_XMIdentityR1;
+        boneConstant[i][2] = g_XMIdentityR2;
     }
 
     pImpl->dirtyFlags |= EffectDirtyFlags::ConstantBuffer;

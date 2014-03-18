@@ -13,9 +13,7 @@
 
 #pragma once
 
-#include <d3d11.h>
-#include <exception>
-
+#include "DirectXHelpers.h"
 #include "PlatformHelpers.h"
 
 
@@ -27,7 +25,14 @@ namespace DirectX
     {
     public:
         // Constructor.
+        ConstantBuffer() {}
         explicit ConstantBuffer(_In_ ID3D11Device* device)
+        {
+            Create( device );
+        }
+
+
+        void Create(_In_ ID3D11Device* device)
         {
             D3D11_BUFFER_DESC desc = { 0 };
 
@@ -37,7 +42,7 @@ namespace DirectX
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
             ThrowIfFailed(
-                device->CreateBuffer(&desc, nullptr, &mConstantBuffer)
+                device->CreateBuffer(&desc, nullptr, mConstantBuffer.ReleaseAndGetAddressOf() )
             );
 
             SetDebugObjectName(mConstantBuffer.Get(), "DirectXTK");
@@ -47,6 +52,8 @@ namespace DirectX
         // Writes new data into the constant buffer.
         void SetData(_In_ ID3D11DeviceContext* deviceContext, T const& value)
         {
+            assert( mConstantBuffer.Get() != 0 );
+
             D3D11_MAPPED_SUBRESOURCE mappedResource;
             
             ThrowIfFailed(

@@ -21,7 +21,14 @@
 #define NOMINMAX
 #endif
 
-#include <d3d11.h>
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+#include <d3d11_x.h>
+#define DCOMMON_H_INCLUDED
+#define NO_D3D11_DEBUG_NAME
+#else
+#include <d3d11_1.h>
+#endif
+
 #include <DirectXMath.h>
 
 #include <algorithm>
@@ -34,6 +41,7 @@
 #include <string>
 #include <vector>
 
+// VS 2010's stdint.h conflicts with intsafe.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <stdint.h>
@@ -41,10 +49,6 @@
 #pragma warning(pop)
 
 #include <wrl.h>
-
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) && !defined(DXGI_1_2_FORMATS)
-#define DXGI_1_2_FORMATS
-#endif
 
 namespace DirectX
 {

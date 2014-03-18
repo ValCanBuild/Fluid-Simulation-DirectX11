@@ -13,7 +13,12 @@
 
 #pragma once
 
-#include <d3d11.h>
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+#include <d3d11_x.h>
+#else
+#include <d3d11_1.h>
+#endif
+
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 #include <functional>
@@ -72,6 +77,10 @@ namespace DirectX
         // Draw overloads specifying position as a RECT.
         void XM_CALLCONV Draw(_In_ ID3D11ShaderResourceView* texture, RECT const& destinationRectangle, FXMVECTOR color = Colors::White);
         void XM_CALLCONV Draw(_In_ ID3D11ShaderResourceView* texture, RECT const& destinationRectangle, _In_opt_ RECT const* sourceRectangle, FXMVECTOR color = Colors::White, float rotation = 0, XMFLOAT2 const& origin = Float2Zero, SpriteEffects effects = SpriteEffects_None, float layerDepth = 0);
+
+        // Rotation mode to be applied to the sprite transformation
+        void SetRotation( DXGI_MODE_ROTATION mode );
+        DXGI_MODE_ROTATION GetRotation() const;
 
     private:
         // Private implementation.

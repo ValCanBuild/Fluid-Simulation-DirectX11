@@ -13,13 +13,10 @@
 
 #pragma once
 
-#pragma warning(disable : 4324)
+#pragma warning(disable : 4324 4481)
 
 #include <exception>
 
-#if defined(_DEBUG) || defined(PROFILE)
-#pragma comment(lib,"dxguid.lib")
-#endif
 
 namespace DirectX
 {
@@ -33,16 +30,19 @@ namespace DirectX
     }
 
 
-    // Helper sets a D3D resource name string (used by PIX and debug layer leak reporting).
-    template<UINT TNameLength>
-    inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_z_ const char (&name)[TNameLength])
+    // Helper for output debug tracing
+    inline void DebugTrace( _In_z_ _Printf_format_string_ const char* format, ... )
     {
-        #if defined(_DEBUG) || defined(PROFILE)
-            resource->SetPrivateData(WKPDID_D3DDebugObjectName, TNameLength - 1, name);
-        #else
-            UNREFERENCED_PARAMETER(resource);
-            UNREFERENCED_PARAMETER(name);
-        #endif
+#ifdef _DEBUG
+        va_list args;
+        va_start( args, format );
+
+        char buff[1024]={0};
+        vsprintf_s( buff, format, args );
+        OutputDebugStringA( buff );
+#else
+        UNREFERENCED_PARAMETER( format );
+#endif
     }
 
 
@@ -52,37 +52,6 @@ namespace DirectX
     typedef public std::unique_ptr<void, handle_closer> ScopedHandle;
 
     inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? 0 : h; }
-
-
-    template<class T> class ScopedObject
-    {
-    public:
-        explicit ScopedObject( T *p = 0 ) : _pointer(p) {}
-        ~ScopedObject()
-        {
-            if ( _pointer )
-            {
-                _pointer->Release();
-                _pointer = nullptr;
-            }
-        }
-
-        bool IsNull() const { return (!_pointer); }
-
-        T& operator*() { return *_pointer; }
-        T* operator->() { return _pointer; }
-        T** operator&() { return &_pointer; }
-
-        void Reset(T *p = 0) { if ( _pointer ) { _pointer->Release(); } _pointer = p; }
-
-        T* Get() const { return _pointer; }
-
-    private:
-        ScopedObject(const ScopedObject&);
-        ScopedObject& operator=(const ScopedObject&);
-        
-        T* _pointer;
-    };
 }
 
 

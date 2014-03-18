@@ -5,12 +5,12 @@ Author: Valentin Hinov
 Date: 04/09/2013
 Version: 1.0
 **************************************************************/
+#include "D3DTexture.h"
+
 #include <string>
 #include <wrl.h>
-
-#include "D3DTexture.h"
-#include "WICTextureLoader.h"
-#include "DDSTextureLoader.h"
+#include <DDSTextureLoader.h>
+#include <WICTextureLoader.h>
 
 using namespace Microsoft::WRL;
 
@@ -28,10 +28,10 @@ bool D3DTexture::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, 
 	// Load the texture in.
 	HRESULT result;
 	if (IsDDSTextureFile(filename)) {
-		result = CreateDDSTextureFromFile(device,filename,nullptr,&mTexture);
+		result = DirectX::CreateDDSTextureFromFile(device,filename,nullptr,&mTexture);
 	}
 	else {
-		result = CreateWICTextureFromFile(device,context,filename,nullptr,&mTexture);
+		result = DirectX::CreateWICTextureFromFile(device,context,filename,nullptr,&mTexture);
 	}
 	if(FAILED(result)) {
 		std::wstring name = filename;

@@ -27,6 +27,8 @@ struct DualTextureEffectConstants
     XMMATRIX worldViewProj;
 };
 
+static_assert( ( sizeof(DualTextureEffectConstants) % 16 ) == 0, "CB size not padded correctly" );
+
 
 // Traits type describes our characteristics to the EffectBase template.
 struct DualTextureEffectTraits
@@ -51,7 +53,7 @@ public:
 
     ComPtr<ID3D11ShaderResourceView> texture2;
 
-    int GetCurrentShaderPermutation();
+    int GetCurrentShaderPermutation() const;
 
     void Apply(_In_ ID3D11DeviceContext* deviceContext);
 };
@@ -60,6 +62,15 @@ public:
 // Include the precompiled shader code.
 namespace
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    #include "Shaders/Compiled/XboxOneDualTextureEffect_VSDualTexture.inc"
+    #include "Shaders/Compiled/XboxOneDualTextureEffect_VSDualTextureNoFog.inc"
+    #include "Shaders/Compiled/XboxOneDualTextureEffect_VSDualTextureVc.inc"
+    #include "Shaders/Compiled/XboxOneDualTextureEffect_VSDualTextureVcNoFog.inc"
+
+    #include "Shaders/Compiled/XboxOneDualTextureEffect_PSDualTexture.inc"
+    #include "Shaders/Compiled/XboxOneDualTextureEffect_PSDualTextureNoFog.inc"
+#else
     #include "Shaders/Compiled/DualTextureEffect_VSDualTexture.inc"
     #include "Shaders/Compiled/DualTextureEffect_VSDualTextureNoFog.inc"
     #include "Shaders/Compiled/DualTextureEffect_VSDualTextureVc.inc"
@@ -67,6 +78,7 @@ namespace
 
     #include "Shaders/Compiled/DualTextureEffect_PSDualTexture.inc"
     #include "Shaders/Compiled/DualTextureEffect_PSDualTextureNoFog.inc"
+#endif
 }
 
 
@@ -115,10 +127,14 @@ DualTextureEffect::Impl::Impl(_In_ ID3D11Device* device)
   : EffectBase(device),
     vertexColorEnabled(false)
 {
+    static_assert( _countof(EffectBase<DualTextureEffectTraits>::VertexShaderIndices) == DualTextureEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<DualTextureEffectTraits>::VertexShaderBytecode) == DualTextureEffectTraits::VertexShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<DualTextureEffectTraits>::PixelShaderBytecode) == DualTextureEffectTraits::PixelShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<DualTextureEffectTraits>::PixelShaderIndices) == DualTextureEffectTraits::ShaderPermutationCount, "array/max mismatch" );
 }
 
 
-int DualTextureEffect::Impl::GetCurrentShaderPermutation()
+int DualTextureEffect::Impl::GetCurrentShaderPermutation() const
 {
     int permutation = 0;
 

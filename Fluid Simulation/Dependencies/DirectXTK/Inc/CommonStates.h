@@ -13,7 +13,12 @@
 
 #pragma once
 
-#include <d3d11.h>
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+#include <d3d11_x.h>
+#else
+#include <d3d11_1.h>
+#endif
+
 #include <memory>
 
 
