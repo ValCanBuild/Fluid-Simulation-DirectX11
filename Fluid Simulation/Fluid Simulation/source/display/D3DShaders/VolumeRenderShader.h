@@ -28,8 +28,6 @@ public:
 	VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject);
 	~VolumeRenderShader();
 
-	void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) override;
-
 	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
 	void SetTransform(const Transform &transform) const;
 	void SetCameraPosition(const Vector3 &camPos) const;
@@ -41,7 +39,7 @@ public:
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
-	D3D11_INPUT_ELEMENT_DESC *GetInputElementDescription();
+	void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) override;
 private:
 	const D3DGraphicsObject * pD3dGraphicsObject;
 

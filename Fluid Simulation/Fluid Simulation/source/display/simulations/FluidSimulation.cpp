@@ -59,17 +59,10 @@ bool FluidSimulation::Render(const ICamera &camera) {
 bool FluidSimulation::Update(float dt) {
 	mVolumeRenderer->Update();
 
-	bool canUpdate = !mUpdatePaused && mIsVisible;
+	bool canUpdate = !mUpdatePaused;
 
 	if (canUpdate) {
 		if (mTimeSinceLastProcess > 0.0f) {
-			FluidSettings settings = mFluidCalculator->GetFluidSettings();
-			float prevTimeStep = settings.timeStep;
-			settings.timeStep = mTimeSinceLastProcess;
-			mFluidCalculator->SetFluidSettings(settings);
-			mFluidCalculator->Process();
-			settings.timeStep = prevTimeStep;
-			mFluidCalculator->SetFluidSettings(settings);
 			mTimeSinceLastProcess = 0.0f;
 		}
 		else {

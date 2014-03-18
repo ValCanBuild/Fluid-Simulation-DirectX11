@@ -112,6 +112,9 @@
     <Filter Include="Source Files\Utilities\Camera">
       <UniqueIdentifier>{f60b5147-93f8-4f1c-8673-c81220a9c930}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HLSL\Skymap">
+      <UniqueIdentifier>{f525350c-a6ef-4aec-91c4-24cd770485cf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -239,6 +242,12 @@
     </ClCompile>
     <ClCompile Include="source\utilities\CameraImpl.cpp">
       <Filter>Source Files\Utilities\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\SkyObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\SkyShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -407,6 +416,12 @@
     <ClInclude Include="source\utilities\ICamera.h">
       <Filter>Header Files\Utilities\Camera</Filter>
     </ClInclude>
+    <ClInclude Include="source\objects\SkyObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\SkyShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -438,6 +453,12 @@
     </None>
     <None Include="hlsl\vVolumeRender.vsh">
       <Filter>HLSL\VolumeRender</Filter>
+    </None>
+    <None Include="hlsl\pSkymap.psh">
+      <Filter>HLSL\Skymap</Filter>
+    </None>
+    <None Include="hlsl\vSkymap.vsh">
+      <Filter>HLSL\Skymap</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

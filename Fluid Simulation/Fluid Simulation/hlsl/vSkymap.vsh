@@ -15,22 +15,22 @@ struct VertexInputType {
 
 struct PixelInputType {
 	float4 position : SV_POSITION;
-	float3 worldPosition: TEXCOORD0;
+	float3 texCoord : TEXCOORD0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vertex Shader
 ////////////////////////////////////////////////////////////////////////////////
-PixelInputType VolumeRenderVertexShader(VertexInputType input) {
+PixelInputType SkymapVertexShader(VertexInputType input) {
 	PixelInputType output;
 	
 	// Change the position vector to be 4 units for proper matrix calculations.
 	input.position.w = 1.0f;
 	
-	// calculate against world matrix to perform any movement/scaling
-	output.position = mul(input.position, wvpMatrix);
+	//Set Pos to xyww instead of xyzw, so that z will always be 1 (furthest from camera)
+	output.position = mul(input.position, wvpMatrix).xyww;
 
-	output.worldPosition = mul(input.position, worldMatrix).xyz;
+	output.texCoord = input.position.xyz;
 
 	return output;
 }

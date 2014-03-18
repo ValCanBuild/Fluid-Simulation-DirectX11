@@ -10,6 +10,7 @@ Version: 1.0
 
 #include "D3DTexture.h"
 #include "WICTextureLoader.h"
+#include "DDSTextureLoader.h"
 
 using namespace Microsoft::WRL;
 
@@ -25,8 +26,13 @@ D3DTexture::~D3DTexture() {
 
 bool D3DTexture::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, WCHAR* filename, HWND hwnd) {
 	// Load the texture in.
-	
-	HRESULT result = CreateWICTextureFromFile(device,context,filename,nullptr,&mTexture);
+	HRESULT result;
+	if (IsDDSTextureFile(filename)) {
+		result = CreateDDSTextureFromFile(device,filename,nullptr,&mTexture);
+	}
+	else {
+		result = CreateWICTextureFromFile(device,context,filename,nullptr,&mTexture);
+	}
 	if(FAILED(result)) {
 		std::wstring name = filename;
 		std::wstring text = L"Error creating texture " + name;
@@ -62,4 +68,10 @@ void D3DTexture::GetTextureSize(int &width, int &height) {
 	// Convert to vector format.
 	width = desc.Width;
 	height = desc.Height;
+}
+
+bool D3DTexture::IsDDSTextureFile(WCHAR* filename) const {
+	WCHAR * dds = L".dds";
+	WCHAR * contains = wcsstr(filename, dds);
+	return contains != nullptr;
 }

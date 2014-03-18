@@ -19,6 +19,7 @@ class CameraImpl;
 class D3DGraphicsObject;
 class InputSystem;
 class FluidSimulation;
+class SkyObject;
 struct CTwBar;
 
 using namespace std;
@@ -47,6 +48,7 @@ private:
 
 private:
 	unique_ptr<CameraImpl>	mCamera;
+	unique_ptr<SkyObject>	mSkyObject;
 	
 	shared_ptr<FluidSimulation> pPickedSimulation;
 	vector<shared_ptr<FluidSimulation>> mSimulations;

@@ -16,7 +16,7 @@ Date: 24/10/2013
 #include "../../system/ServiceProvider.h"
 #include "../../objects/VolumeRenderer.h"
 #include "../simulations/FluidSimulation.h"
-
+#include "../../objects/SkyObject.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
@@ -76,6 +76,12 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	// hide bar initially
 	string command = " '" + barName + "' iconified=true ";
 	TwDefine(command.c_str());
+
+	mSkyObject = unique_ptr<SkyObject>(new SkyObject());
+	result = mSkyObject->Initialize(pD3dGraphicsObj, L"data/textures/skybox/ame_bluefreeze.dds", hwnd);
+	if (!result) {
+		return false;
+	}
 
 	return result;
 }
@@ -140,6 +146,8 @@ void Fluid3DScene::Update(float delta) {
 
 bool Fluid3DScene::Render() {
 	mNumRenderedFluids = 0;
+
+	mSkyObject->Render(*mCamera);
 
 	for (PrimitiveGameObject &object : mPrimitiveObjects) {
 		object.Render(*mCamera);
