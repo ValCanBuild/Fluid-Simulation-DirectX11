@@ -2,6 +2,8 @@
 ## Project Specific
 #################
 *.jpg
+*.dds
+*.tga
 
 #################
 ## Eclipse
@@ -219,3 +221,5 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+*.shader
+Fluid Simulation/Fluid Simulation/data/textures/skybox/readme
