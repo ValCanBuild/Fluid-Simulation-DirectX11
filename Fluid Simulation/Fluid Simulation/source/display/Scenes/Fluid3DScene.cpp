@@ -18,6 +18,7 @@ Date: 24/10/2013
 #include "../simulations/FluidSimulation.h"
 #include "../../objects/SkyObject.h"
 
+
 using namespace Fluid3D;
 using namespace DirectX;
 
@@ -36,7 +37,8 @@ struct FluidSimulationDepthSort {
 	}
 };
 
-Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), pPickedSimulation(nullptr) {
+Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), 
+	pPickedSimulation(nullptr) {
 	
 }
 
@@ -50,6 +52,7 @@ Fluid3DScene::~Fluid3DScene() {
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
 	pPickedSimulation = nullptr;
+	pAppTimer = nullptr;
 	mPrimitiveObjects.clear();
 	mSimulations.clear();
 }
@@ -65,6 +68,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	}
 
 	pInputSystem = ServiceProvider::Instance().GetInputSystem();
+	pAppTimer = ServiceProvider::Instance().GetAppTimer();
 
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar(barName.c_str());
@@ -87,7 +91,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 1; i++) {
 		FluidSettings fluidSettings;
 		fluidSettings.dimensions = Vector3(64,128,64);
 		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation(fluidSettings));

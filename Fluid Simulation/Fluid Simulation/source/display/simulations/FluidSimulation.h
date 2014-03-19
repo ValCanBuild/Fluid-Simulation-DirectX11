@@ -55,6 +55,7 @@ private:
 	// track the time since the Process function was last called on the FluidCalculator
 	float mTimeSinceLastProcess;
 	float mTimeBetweenProcesses;
+	float mTimeSinceProcessStart;
 	bool mUpdatePaused;
 	bool mIsVisible;
 };

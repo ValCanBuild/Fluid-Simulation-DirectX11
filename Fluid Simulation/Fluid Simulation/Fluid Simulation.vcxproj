@@ -131,7 +131,7 @@
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
     <ClCompile Include="source\system\ServiceProvider.cpp" />
-    <ClCompile Include="source\utilities\AppTimer.cpp" />
+    <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp" />
     <ClCompile Include="source\utilities\CameraImpl.cpp" />
     <ClCompile Include="source\utilities\CollisionManager.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
@@ -187,7 +187,8 @@
     <ClInclude Include="source\system\InputSystem.h" />
     <ClInclude Include="source\system\MainSystem.h" />
     <ClInclude Include="source\system\ServiceProvider.h" />
-    <ClInclude Include="source\utilities\AppTimer.h" />
+    <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h" />
+    <ClInclude Include="source\utilities\AppTimer\IAppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
     <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h" />
     <ClInclude Include="source\utilities\ICamera.h" />

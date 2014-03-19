@@ -1,15 +1,15 @@
 /***************************************************************
-AppTimer.cpp: Provides methods for interfacing with time
+AppTimerImpl.cpp: Implementation of AppTimerImpl
 
 Author: Valentin Hinov, based on GameTimer from Frank Luna
 Date: 10/09/2013
 **************************************************************/
 
-#include "AppTimer.h"
+#include "AppTimerImpl.h"
 #include <windows.h>
 
 
-AppTimer::AppTimer()
+AppTimerImpl::AppTimerImpl()
 : mSecondsPerCount(0.0), mDeltaTime(-1.0), mBaseTime(0), 
   mPausedTime(0), mPrevTime(0), mCurrTime(0), mStopped(false) {
 	__int64 countsPerSec;
@@ -19,7 +19,7 @@ AppTimer::AppTimer()
 
 // Returns the total time elapsed since reset() was called, NOT counting any
 // time when the clock is stopped.
-float AppTimer::GetGameTime() const {
+float AppTimerImpl::GetGameTime() const {
 	// If we are stopped, do not count the time that has passed since we stopped.
 	//
 	// ----*---------------*------------------------------*------> time
@@ -44,15 +44,15 @@ float AppTimer::GetGameTime() const {
 	}
 }
 
-int AppTimer::GetFps() const {
+int AppTimerImpl::GetFps() const {
 	return mFps;
 }
 
-float AppTimer::GetDeltaTime() const {
+float AppTimerImpl::GetDeltaTime() const {
 	return (float)mDeltaTime;
 }
 
-void AppTimer::Reset() {
+void AppTimerImpl::Reset() {
 	__int64 currTime;
 	QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
 
@@ -62,7 +62,7 @@ void AppTimer::Reset() {
 	mStopped  = false;
 }
 
-void AppTimer::Start() {
+void AppTimerImpl::Start() {
 	__int64 startTime;
 	QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
 
@@ -82,7 +82,7 @@ void AppTimer::Start() {
 	}
 }
 
-void AppTimer::Stop() {
+void AppTimerImpl::Stop() {
 	if( !mStopped ) {
 		__int64 currTime;
 		QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
@@ -92,7 +92,7 @@ void AppTimer::Stop() {
 	}
 }
 
-long AppTimer::GetCurrTime() const {
+long AppTimerImpl::GetCurrTime() const {
 	if( !mStopped ) {
 		__int64 currTime;
 		QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
@@ -101,7 +101,7 @@ long AppTimer::GetCurrTime() const {
 	return 0;
 }
 
-void AppTimer::Tick() {
+void AppTimerImpl::Tick() {
 	if( mStopped ) {
 		mDeltaTime = 0.0;
 		return;
@@ -128,7 +128,7 @@ void AppTimer::Tick() {
 	}
 }
 
-void AppTimer::Frame() {
+void AppTimerImpl::Frame() {
 	static int frameCnt = 0;
 	static float t_base = 0.0f;
 

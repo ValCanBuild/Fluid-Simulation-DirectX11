@@ -16,7 +16,10 @@ using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-FluidSimulation::FluidSimulation() : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f), mTimeBetweenProcesses(0.1f) {
+FluidSimulation::FluidSimulation() : 
+	mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f), mTimeBetweenProcesses(0.1f),
+	mTimeSinceProcessStart(0.0f)
+{
 	FluidSettings fluidSettings;
 	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
 	//fluidSettings.constantInputPosition = Vector3(0.5f,0,0);
@@ -24,14 +27,16 @@ FluidSimulation::FluidSimulation() : mUpdatePaused(false), mIsVisible(true), mTi
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
-FluidSimulation::FluidSimulation(FluidSettings fluidSettings) : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f), mTimeBetweenProcesses(0.1f) {
+FluidSimulation::FluidSimulation(FluidSettings fluidSettings) : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f),
+	mTimeBetweenProcesses(0.1f), mTimeSinceProcessStart(0.0f)
+{
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
 	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f),
-	mTimeBetweenProcesses(0.1f)
+	mTimeBetweenProcesses(0.1f), mTimeSinceProcessStart(0.0f)
 {
 
 }

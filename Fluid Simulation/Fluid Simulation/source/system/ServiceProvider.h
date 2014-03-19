@@ -12,6 +12,7 @@ Version: 1.0
 #include <memory>
 #include "InputSystem.h"
 #include "IGraphicsSystem.h"
+#include "../utilities/AppTimer/IAppTimer.h"
 
 class ServiceProvider {
 public:		
@@ -23,18 +24,20 @@ public:
 		return *mSingleton;
 	}
 
-	void Initialize(InputSystem* inputSystem, IGraphicsSystem* graphicsSystem) {
+	void Initialize(InputSystem* inputSystem, IGraphicsSystem* graphicsSystem, IAppTimer* appTimer) {
 		if (mInitialized)
 			return;
 
 		pInputSystem = inputSystem;
 		pGraphicsSystem = graphicsSystem;
+		pAppTimer = appTimer;
 
 		mInitialized = true;
 	}
 
-	InputSystem* GetInputSystem() { return pInputSystem; };
-	IGraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; };
+	InputSystem* GetInputSystem() { return pInputSystem; }
+	IGraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; }
+	IAppTimer* GetAppTimer() { return pAppTimer; }
 
 	~ServiceProvider() {
 		pInputSystem = nullptr;
@@ -49,6 +52,7 @@ private:
 	bool mInitialized;
 	InputSystem* pInputSystem;
 	IGraphicsSystem* pGraphicsSystem;
+	IAppTimer* pAppTimer;
 };
 
 #endif

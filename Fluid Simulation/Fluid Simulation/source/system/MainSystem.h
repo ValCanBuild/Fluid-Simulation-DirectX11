@@ -14,7 +14,7 @@ Version: 1.0
 #include <memory>
 
 #include "ServiceProvider.h"
-#include "../utilities/AppTimer.h"
+#include "../utilities/AppTimer/AppTimerImpl.h"
 #include "../utilities/PerformanceMonitor.h"
 
 using namespace std;
@@ -44,7 +44,7 @@ private:
 	HINSTANCE mHInstance;
 	HWND mHwnd;
 
-	AppTimer			mAppTimer;
+	AppTimerImpl		mAppTimer;
 	PerformanceMonitor	mPerfMonitor;
 	
 	unique_ptr<InputSystemImpl> mInput;

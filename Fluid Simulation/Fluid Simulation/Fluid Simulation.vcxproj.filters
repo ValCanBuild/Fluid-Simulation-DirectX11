@@ -115,6 +115,12 @@
     <Filter Include="HLSL\Skymap">
       <UniqueIdentifier>{f525350c-a6ef-4aec-91c4-24cd770485cf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities\AppTimer">
+      <UniqueIdentifier>{d55142e2-dd21-4c37-a167-10947d2b1939}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\AppTimer">
+      <UniqueIdentifier>{fe173478-435a-4c51-a85f-96fa57fe863c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -154,9 +160,6 @@
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
     <ClCompile Include="source\utilities\Console.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="source\utilities\AppTimer.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp">
@@ -252,6 +255,9 @@
     <ClCompile Include="source\utilities\FluidCalculation\FluidResources.cpp">
       <Filter>Source Files\Utilities\FluidCalculation</Filter>
     </ClCompile>
+    <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp">
+      <Filter>Source Files\Utilities\AppTimer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\utilities\D3dIncludes.h">
@@ -303,9 +309,6 @@
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
     <ClInclude Include="source\utilities\Console.h">
-      <Filter>Header Files\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\AppTimer.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="source\display\Scenes\IScene.h">
@@ -430,6 +433,12 @@
     </ClInclude>
     <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h">
       <Filter>Header Files\Utilities\FluidCalculation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AppTimer\IAppTimer.h">
+      <Filter>Header Files\Utilities\AppTimer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h">
+      <Filter>Header Files\Utilities\AppTimer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

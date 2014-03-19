@@ -20,6 +20,7 @@ class D3DGraphicsObject;
 class InputSystem;
 class FluidSimulation;
 class SkyObject;
+class IAppTimer;
 struct CTwBar;
 
 using namespace std;
@@ -58,7 +59,7 @@ private:
 
 	CTwBar *mTwBar;
 	InputSystem *pInputSystem;
-
+	IAppTimer *pAppTimer;
 private:
 	int  mNumRenderedFluids;
 	int  mNumFluidsUpdating;

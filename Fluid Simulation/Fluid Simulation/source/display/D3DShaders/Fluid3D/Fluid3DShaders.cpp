@@ -58,12 +58,12 @@ void AdvectionShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderPara
 		context->CSSetShaderResources(0, 2, pSRV);
 	}
 
-	context->CSSetUnorderedAccessViews(0, 1, &(advectResult->mUAV.p),nullptr);
+	context->CSSetUnorderedAccessViews(0, 1, &(advectResult->mUAV.p), nullptr);
 
 	Dispatch(context);
 
 	// To use for flushing shader parameters out of the shaders
-	ID3D11ShaderResourceView *const pSRVNULL[4] = {nullptr,nullptr,nullptr,nullptr};
+	ID3D11ShaderResourceView *const pSRVNULL[4] = {nullptr, nullptr, nullptr, nullptr};
 	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
 
 	context->CSSetShaderResources(0, 4, pSRVNULL);

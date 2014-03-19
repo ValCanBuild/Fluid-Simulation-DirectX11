@@ -1,23 +1,26 @@
 /***************************************************************
-AppTimer.h: Provides methods for interfacing with time
+AppTimerImpl.h: Implementation of IAppTimer interface. Provides
+additional methods for controlling time functionality
 
 Author: Valentin Hinov, based on GameTimer from Frank Luna
 Date: 10/09/2013
 **************************************************************/
 
-#ifndef _APPTIMER_H
-#define _APPTIMER_H
+#ifndef _APPTIMERIMPL_H
+#define _APPTIMERIMPL_H
 
-class AppTimer
+#include "IAppTimer.h"
+
+class AppTimerImpl : public IAppTimer
 {
 public:
-	AppTimer();
+	AppTimerImpl();
 
-	float GetGameTime() const;  // in seconds
-	float GetDeltaTime() const; // in seconds
+	float GetGameTime() const override;  // in seconds
+	float GetDeltaTime() const override; // in seconds
 	
-	int	  GetFps() const;
-	long  GetCurrTime() const;  // in millis
+	int	  GetFps() const override;
+	long  GetCurrTime() const override;  // in millis
 
 	void Reset(); // Call before message loop.
 	void Start(); // Call when unpaused.
