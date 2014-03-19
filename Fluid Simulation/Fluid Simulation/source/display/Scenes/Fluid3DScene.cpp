@@ -87,12 +87,20 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 1; i++) {
-		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation());
+	for (int i = 0; i < 2; i++) {
+		FluidSettings fluidSettings;
+		fluidSettings.dimensions = Vector3(64,128,64);
+		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation(fluidSettings));
 		mSimulations.push_back(fluidSimulation);
 		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-		volumeRenderer->transform->position.y = 1.2f;
-		volumeRenderer->transform->position.x = 0.0f + 1.0f*i;
+		if (i == 0) {
+			volumeRenderer->transform->position.y = 1.8f;
+			volumeRenderer->transform->position.x = 0.0f;
+		}
+		else {
+			volumeRenderer->transform->position.y = 1.2f;
+			volumeRenderer->transform->position.x = 0.0f - 3.0f*i;
+		}
 		volumeRenderer->transform->scale = Vector3(1,2,1);
 	}
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
@@ -114,15 +122,21 @@ void Fluid3DScene::InitCamera() {
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
 	mCamera = CameraImpl::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
-	mCamera->SetPosition(0,0.5f,-4);
+	mCamera->SetPosition(0,1.0f,-4);
 }
 
 void Fluid3DScene::InitGameObjects() {
 	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false));
 	planeObject.transform->position = Vector3(0.0f,0.0f,0.0f);
 	planeObject.transform->scale = Vector3(70.0f,0.1f,70.0f);
-
+	planeObject.SetColor(Colors::BurlyWood.v);
 	mPrimitiveObjects.push_back(planeObject);
+
+	PrimitiveGameObject teapotObject = PrimitiveGameObject(GeometricPrimitive::CreateTeapot(pD3dGraphicsObj->GetDeviceContext(), 1.0f, 16U, false));
+	teapotObject.transform->position = Vector3(0.8f,0.505f,0.07f);
+	teapotObject.transform->qRotation = Quaternion::CreateFromAxisAngle(Vector3(0,1,0), 1.5f);
+	teapotObject.SetColor(Colors::PaleTurquoise.v);
+	mPrimitiveObjects.push_back(teapotObject);
 }
 
 void Fluid3DScene::Update(float delta) {
@@ -164,10 +178,10 @@ bool Fluid3DScene::Render() {
 
 void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont) {
 	wstring text = L"Fluids Rendered: " + std::to_wstring(mNumRenderedFluids);
-	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,110));
 
 	text = L"Fluids Updating: " + std::to_wstring(mNumFluidsUpdating);
-	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {

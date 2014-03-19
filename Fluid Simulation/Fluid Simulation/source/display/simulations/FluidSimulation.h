@@ -12,6 +12,7 @@ Date: 3/3/2014
 #include <memory>
 #include "../../utilities/AtlInclude.h"
 #include "../D3DGraphicsObject.h"
+#include "../../utilities/FluidCalculation/FluidSettings.h"
 
 class VolumeRenderer;
 class ICamera;
@@ -25,6 +26,7 @@ class FluidSimulation {
 public:
 	// Creates a fluid simulation with a default fluid calculator and volume renderer
 	FluidSimulation();
+	FluidSimulation(FluidSettings fluidSettings);
 	FluidSimulation(std::unique_ptr<Fluid3D::Fluid3DCalculator> fluidCalculator, std::shared_ptr<VolumeRenderer> volumeRenderer);
 	~FluidSimulation();
 
@@ -52,6 +54,7 @@ private:
 
 	// track the time since the Process function was last called on the FluidCalculator
 	float mTimeSinceLastProcess;
+	float mTimeBetweenProcesses;
 	bool mUpdatePaused;
 	bool mIsVisible;
 };

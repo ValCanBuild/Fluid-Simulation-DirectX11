@@ -22,6 +22,7 @@ using namespace DirectX;
 #include "../display/Scenes/RigidBodyScene3D.h"
 #include "../utilities/Screen.h"
 #include "../utilities/Physics.h"
+#include "../utilities/StringUtils.h"
 
 /// ANT TWEAK BAR CALLBACKS ///
 void TW_CALL ResetCallback(void *clientData) {
@@ -102,6 +103,14 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	TwAddVarRW(twBar,"Pause Scene Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
 	TwAddButton(twBar,"Single Physics Step", SingleStepPhysics, this, " key=space ");
 
+	// Get video card info
+	int cardMemory = 0;
+	char cardName[128];
+	mGraphicsObj->GetVideoCardInfo(cardName, cardMemory);
+	string cardNameString = cardName;
+	mCardName = StrToWidestr(cardNameString);
+	mVideoMemory = to_wstring(cardMemory);
+
 	mSceneFixedUpdatePaused = true;
 
 	return true;
@@ -163,9 +172,16 @@ bool GraphicsSystemImpl::RenderOverlay() const {
 		wstring text = L"FPS: " + std::to_wstring(mFps);
 		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,10));
 
+		// Display Card Name
+		mSpriteFont->DrawString(mSpriteBatch.get(),mCardName.c_str(),XMFLOAT2(10,35));
+
+		// Display Card Memory
+		text = L"Video Memory: " + mVideoMemory + L"MB";
+		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
+
 		// Display CPU usage
 		text = L"CPU Usage: " + std::to_wstring(mCpuUsage) + L"%";
-		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,35));
+		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
 
 		// Allow the current scene to render any additional overlay items
 		mCurrentScene->RenderOverlay(mSpriteBatch, mSpriteFont);

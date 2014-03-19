@@ -138,6 +138,7 @@
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\FluidResources.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp" />
     <ClCompile Include="source\utilities\GeometryBuilder.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="source\system\ServiceProvider.h" />
     <ClInclude Include="source\utilities\AppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h" />
     <ClInclude Include="source\utilities\ICamera.h" />
     <ClInclude Include="source\utilities\CameraImpl.h" />
     <ClInclude Include="source\utilities\CollisionManager.h" />
@@ -202,6 +204,7 @@
     <ClInclude Include="source\utilities\PerformanceMonitor.h" />
     <ClInclude Include="source\utilities\Physics.h" />
     <ClInclude Include="source\utilities\Screen.h" />
+    <ClInclude Include="source\utilities\StringUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pFluid2DTexture.psh" />

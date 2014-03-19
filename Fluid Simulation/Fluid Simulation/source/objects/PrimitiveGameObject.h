@@ -22,10 +22,15 @@ public:
 	virtual ~PrimitiveGameObject();
 
 	void Update();
+	// color only used if using PrimitiveGameObject::Render
+	void SetColor(Color color);
 	virtual void Render(const ICamera &camera);
 
 protected:
 	std::shared_ptr<DirectX::GeometricPrimitive> primitive;
+
+private:
+	Color mColor;
 };
 
 #endif

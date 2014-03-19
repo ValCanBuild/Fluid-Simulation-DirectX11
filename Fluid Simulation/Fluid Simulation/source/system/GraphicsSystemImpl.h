@@ -76,7 +76,7 @@ private:
 	shared_ptr<DirectX::CommonStates>  mCommonStates;
 
 	int	mFps, mCpuUsage;
-	wstring	mCardName;
+	wstring mCardName;
 	wstring mVideoMemory;
 
 	bool mSceneFixedUpdatePaused; // pause physics update for the active scene

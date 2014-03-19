@@ -16,7 +16,7 @@ using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-FluidSimulation::FluidSimulation() : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f) {
+FluidSimulation::FluidSimulation() : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f), mTimeBetweenProcesses(0.1f) {
 	FluidSettings fluidSettings;
 	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
 	//fluidSettings.constantInputPosition = Vector3(0.5f,0,0);
@@ -24,8 +24,14 @@ FluidSimulation::FluidSimulation() : mUpdatePaused(false), mIsVisible(true), mTi
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
+FluidSimulation::FluidSimulation(FluidSettings fluidSettings) : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f), mTimeBetweenProcesses(0.1f) {
+	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
+	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
+}
+
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f)
+	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f),
+	mTimeBetweenProcesses(0.1f)
 {
 
 }
@@ -61,14 +67,13 @@ bool FluidSimulation::Update(float dt) {
 	mVolumeRenderer->Update();
 
 	bool canUpdate = !mUpdatePaused;
+	if (canUpdate && !mIsVisible) {
+		canUpdate = mTimeSinceLastProcess > mTimeBetweenProcesses;
+	}
 
 	if (canUpdate) {
-		if (mTimeSinceLastProcess > 0.0f) {
-			mTimeSinceLastProcess = 0.0f;
-		}
-		else {
-			mFluidCalculator->Process();
-		}
+		mFluidCalculator->Process();
+		mTimeSinceLastProcess = 0.0f;
 	} 
 	else {
 		mTimeSinceLastProcess += dt;
@@ -85,6 +90,7 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	// Add fluid calculator settings
 	TwAddVarCB(pBar,"Simulation", GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
 	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
+	TwAddVarRW(pBar,"Time Between Processes", TW_TYPE_FLOAT, &mTimeBetweenProcesses, "");
 
 	// Add volume renderer settings
 	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);

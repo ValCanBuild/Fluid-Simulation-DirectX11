@@ -9,14 +9,17 @@ Date: 18/2/2014
 #ifndef _FLUID3DCALCULATOR_H
 #define _FLUID3DCALCULATOR_H
 
-#include <vector>
+#include <map>
+#include <array>
 #include <memory>
 #include "../AtlInclude.h"
 
 #include "../../display/D3DGraphicsObject.h"
 #include "FluidSettings.h"
+#include "FluidResources.h"
 
 struct ShaderParams;
+struct ShaderParamsRT;
 
 namespace Fluid3D {
 
@@ -45,18 +48,14 @@ public:
 
 private:
 	bool InitShaders(HWND hwnd);
-	bool InitShaderParams(HWND hwnd);
 	bool InitBuffersAndSamplers();
 
-	void Advect(ShaderParams *target, SystemAdvectionType_t advectionType, float dissipation);
+	void Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation);
 	void RefreshConstantImpulse();
 	void ApplyBuoyancy();
 	void ComputeVorticityConfinement();
 	void CalculatePressureGradient();
 
-	enum DissipationBufferType_t {
-		DENSITY, VELOCITY, TEMPERATURE
-	};
 	void UpdateAdvectionBuffer(float dissipation, float timeModifier);
 	void UpdateGeneralBuffer();
 	void UpdateImpulseBuffer(Vector3& point, float amount, float radius);
@@ -77,14 +76,16 @@ private:
 	std::unique_ptr<SubtractGradientShader>		mSubtractGradientShader;
 	std::unique_ptr<BuoyancyShader>				mBuoyancyShader;
 
-	ShaderParams* mVelocitySP;
-	ShaderParams* mDensitySP;
-	ShaderParams* mTemperatureSP;
-	ShaderParams* mPressureSP;
-	std::unique_ptr<ShaderParams>			mObstacleSP;
-	std::unique_ptr<ShaderParams>			mVorticitySP;
-	std::unique_ptr<ShaderParams>			mDivergenceSP;
-	CComPtr<ID3D11RenderTargetView>			mPressureRenderTargets[2];
+	// Resources per object
+	FluidResourcesPerObject mFluidResources;
+
+	// Resources that can be shared
+	CommonFluidResources mCommonResources;
+
+	// Resources that can be shared between simulations are mapped by a Vector3 holding the size of the domain
+	// If fluid calculation domains are of the same size, they can share the same common resources
+	static std::map<Vector3, CommonFluidResources> commonResourcesMap;
+
 
 	CComPtr<ID3D11Buffer>					mInputBufferGeneral;
 	CComPtr<ID3D11Buffer>					mInputBufferImpulse;

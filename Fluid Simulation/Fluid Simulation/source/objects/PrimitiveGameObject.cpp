@@ -14,6 +14,7 @@ using namespace DirectX;
 PrimitiveGameObject::PrimitiveGameObject() {
 	transform = std::shared_ptr<Transform>(new Transform(this));
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
+	mColor = Color(Colors::White.f);
 }
 
 PrimitiveGameObject::PrimitiveGameObject(std::unique_ptr<GeometricPrimitive> primitiveModel) :
@@ -21,6 +22,7 @@ PrimitiveGameObject::PrimitiveGameObject(std::unique_ptr<GeometricPrimitive> pri
 {
 	transform = std::shared_ptr<Transform>(new Transform(this));
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
+	mColor = Color(Colors::White.f);
 }
 
 PrimitiveGameObject::PrimitiveGameObject(const PrimitiveGameObject &other) {
@@ -29,7 +31,7 @@ PrimitiveGameObject::PrimitiveGameObject(const PrimitiveGameObject &other) {
 	this->transform->position = other.transform->position;
 	this->transform->qRotation = other.transform->qRotation;
 	this->transform->scale = other.transform->scale;
-
+	this->mColor = other.mColor;
 	primitive = other.primitive;
 
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
@@ -46,5 +48,9 @@ void PrimitiveGameObject::Update() {
 void PrimitiveGameObject::Render(const ICamera &camera) {
 	Matrix worldMatrix;
 	transform->GetTransformMatrixQuaternion(worldMatrix);
-	primitive->Draw(worldMatrix, camera.GetViewMatrix(), camera.GetProjectionMatrix());
+	primitive->Draw(worldMatrix, camera.GetViewMatrix(), camera.GetProjectionMatrix(), mColor);
+}
+
+void PrimitiveGameObject::SetColor(Color color) {
+	mColor = color;
 }
