@@ -111,6 +111,7 @@
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\SkyShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\TerrainTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\TextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
@@ -130,6 +131,7 @@
     <ClCompile Include="source\objects\PrimitiveGameObject.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
     <ClCompile Include="source\objects\SkyObject.cpp" />
+    <ClCompile Include="source\objects\TerrainObject.cpp" />
     <ClCompile Include="source\objects\VolumeRenderer.cpp" />
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
@@ -145,6 +147,8 @@
     <ClCompile Include="source\utilities\FluidCalculation\FluidResources.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp" />
     <ClCompile Include="source\utilities\GeometryBuilder.cpp" />
+    <ClCompile Include="source\utilities\HeightMap.cpp" />
+    <ClCompile Include="source\utilities\HeightmapParser.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
     <ClCompile Include="source\utilities\Physics.cpp" />
     <ClCompile Include="source\utilities\Screen.cpp" />
@@ -161,6 +165,7 @@
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />
     <ClInclude Include="source\display\D3DShaders\SkyShader.h" />
+    <ClInclude Include="source\display\D3DShaders\TerrainTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h" />
     <ClInclude Include="source\display\D3DShaders\TextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
@@ -184,6 +189,7 @@
     <ClInclude Include="source\objects\PrimitiveGameObject.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\SkyObject.h" />
+    <ClInclude Include="source\objects\TerrainObject.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\objects\VolumeRenderer.h" />
     <ClInclude Include="source\system\GraphicsSystemImpl.h" />
@@ -196,6 +202,8 @@
     <ClInclude Include="source\utilities\AppTimer\IAppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
     <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h" />
+    <ClInclude Include="source\utilities\HeightMap.h" />
+    <ClInclude Include="source\utilities\HeightmapParser.h" />
     <ClInclude Include="source\utilities\ICamera.h" />
     <ClInclude Include="source\utilities\CameraImpl.h" />
     <ClInclude Include="source\utilities\CollisionManager.h" />
@@ -211,10 +219,12 @@
     <ClInclude Include="source\utilities\Physics.h" />
     <ClInclude Include="source\utilities\Screen.h" />
     <ClInclude Include="source\utilities\StringUtils.h" />
+    <ClInclude Include="source\utilities\TgaHeader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pFluid2DTexture.psh" />
     <None Include="hlsl\pSkymap.psh" />
+    <None Include="hlsl\pTerrainTexture.psh" />
     <None Include="hlsl\pVolumeRender.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VolumeRenderPixelShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -244,6 +254,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </None>
     <None Include="hlsl\vSkymap.vsh" />
+    <None Include="hlsl\vTerrainTexture.vsh" />
     <None Include="hlsl\vTexture.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TextureVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>

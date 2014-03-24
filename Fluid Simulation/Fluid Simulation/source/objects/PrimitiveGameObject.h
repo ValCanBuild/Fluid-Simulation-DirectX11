@@ -17,20 +17,14 @@ class ICamera;
 class PrimitiveGameObject : public GameObject {
 public:
 	PrimitiveGameObject();
-	PrimitiveGameObject(std::unique_ptr<DirectX::GeometricPrimitive> primitiveModel);
 	PrimitiveGameObject(const PrimitiveGameObject &other);
 	virtual ~PrimitiveGameObject();
 
 	void Update();
-	// color only used if using PrimitiveGameObject::Render
-	void SetColor(Color color);
-	virtual void Render(const ICamera &camera);
+	virtual void Render(const ICamera &camera) = 0;
 
 protected:
 	std::shared_ptr<DirectX::GeometricPrimitive> primitive;
-
-private:
-	Color mColor;
 };
 
 #endif

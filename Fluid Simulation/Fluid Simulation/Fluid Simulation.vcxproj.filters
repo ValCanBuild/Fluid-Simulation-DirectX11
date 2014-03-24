@@ -130,6 +130,12 @@
     <Filter Include="Models\campfire">
       <UniqueIdentifier>{264db9fc-8699-47c8-af38-c4320cb7f767}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities\Heightmap">
+      <UniqueIdentifier>{9929f503-dae6-47ed-82db-fae6e79e9058}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\Heightmap">
+      <UniqueIdentifier>{6ca25863-fa9c-4869-bccd-e218bef5a268}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -231,9 +237,6 @@
     <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
-    <ClCompile Include="source\objects\PrimitiveGameObject.cpp">
-      <Filter>Source Files\Objects</Filter>
-    </ClCompile>
     <ClCompile Include="source\objects\VolumeRenderer.cpp">
       <Filter>Source Files\Objects</Filter>
     </ClCompile>
@@ -269,6 +272,21 @@
     </ClCompile>
     <ClCompile Include="source\objects\ModelGameObject.cpp">
       <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\PrimitiveGameObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\TerrainObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\HeightmapParser.cpp">
+      <Filter>Source Files\Utilities\Heightmap</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\HeightMap.cpp">
+      <Filter>Source Files\Utilities\Heightmap</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\TerrainTextureShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -401,9 +419,6 @@
     <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\objects\PrimitiveGameObject.h">
-      <Filter>Header Files\Objects</Filter>
-    </ClInclude>
     <ClInclude Include="source\objects\VolumeRenderer.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
@@ -455,6 +470,24 @@
     <ClInclude Include="source\objects\ModelGameObject.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
+    <ClInclude Include="source\objects\PrimitiveGameObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\TgaHeader.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\TerrainObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\HeightMap.h">
+      <Filter>Header Files\Utilities\Heightmap</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\HeightmapParser.h">
+      <Filter>Header Files\Utilities\Heightmap</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\TerrainTextureShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -492,6 +525,12 @@
     </None>
     <None Include="hlsl\vSkymap.vsh">
       <Filter>HLSL\Skymap</Filter>
+    </None>
+    <None Include="hlsl\pTerrainTexture.psh">
+      <Filter>HLSL\Texture</Filter>
+    </None>
+    <None Include="hlsl\vTerrainTexture.vsh">
+      <Filter>HLSL\Texture</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

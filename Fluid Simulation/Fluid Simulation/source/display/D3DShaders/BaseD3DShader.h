@@ -57,7 +57,7 @@ class BaseD3DShader : public DirectX::IEffect {
 public:
 	~BaseD3DShader() {}
 
-	bool Initialize (ID3D11Device* device, HWND hwnd);	
+	bool Initialize (ID3D11Device* device, HWND hwnd = nullptr);	
 
 	// IEffect methods.
 	void Apply(_In_ ID3D11DeviceContext* deviceContext) override;

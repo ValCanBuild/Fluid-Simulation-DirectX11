@@ -18,7 +18,9 @@ Date: 24/10/2013
 #include "../../objects/VolumeRenderer.h"
 #include "../simulations/FluidSimulation.h"
 #include "../../objects/SkyObject.h"
+#include "../../objects/TerrainObject.h"
 #include "../../objects/ModelGameObject.h"
+#include "../../utilities/HeightmapParser.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
@@ -53,7 +55,6 @@ Fluid3DScene::~Fluid3DScene() {
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
 	pPickedSimulation = nullptr;
-	mPrimitiveObjects.clear();
 	mSimulations.clear();
 	mModelObjects.clear();
 }
@@ -97,8 +98,8 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	fluidSettings.densityDissipation = 0.99f;
 	shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation(fluidSettings));
 	shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-	volumeRenderer->transform->scale = Vector3(2,4,2);
-	volumeRenderer->transform->position = Vector3(-0.1f,8.08f,6.43f);
+	volumeRenderer->transform->scale = Vector3(4,8,4);
+	volumeRenderer->transform->position = Vector3(-0.15f,10.08f,6.43f);
 	mSimulations.push_back(fluidSimulation);
 
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
@@ -124,18 +125,12 @@ void Fluid3DScene::InitCamera() {
 }
 
 void Fluid3DScene::InitGameObjects() {
-	PrimitiveGameObject planeObject = PrimitiveGameObject(GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false));
-	planeObject.transform->position = Vector3(0.0f,0.0f,0.0f);
-	planeObject.transform->scale = Vector3(70.0f,0.1f,70.0f);
-	planeObject.SetColor(Colors::BurlyWood.v);
-	mPrimitiveObjects.push_back(planeObject);
-
 	// House
 	DGSLEffectFactory fx(pD3dGraphicsObj->GetDevice());
 	fx.SetDirectory(L"data/models/house");
 	shared_ptr<ModelGameObject> house = unique_ptr<ModelGameObject>(new ModelGameObject(Model::CreateFromCMO(pD3dGraphicsObj->GetDevice(), L"data/models/house/English_thatched_house.cmo", fx, false)));
 	auto houseTransform = house->transform;
-	houseTransform->position = Vector3(0,0,6);
+	houseTransform->position = Vector3(0,0.15f,6);
 	houseTransform->scale = Vector3(0.5f);
 	houseTransform->qRotation = Quaternion::CreateFromAxisAngle(Vector3(1,0,0), -1.57f);
 	houseTransform->qRotation *= Quaternion::CreateFromAxisAngle(Vector3(0,1,0), -1.57f);
@@ -147,6 +142,13 @@ void Fluid3DScene::InitGameObjects() {
 	auto fireTransform = campfire->transform;
 	fireTransform->scale = Vector3(0.2f);
 	mModelObjects.push_back(campfire);
+
+	// Terrain
+	HeightMap heightMap = HeightmapParser::GenerateFromTGA("data/heightmap1.tga");
+	heightMap.SmoothHeights(0.75f);
+	heightMap.SmoothHeights(0.75f);
+	heightMap.ScaleHeights(0.3f);
+	mTerrainObject = TerrainObject::CreateFromHeightMap(heightMap, pD3dGraphicsObj);
 }
 
 void Fluid3DScene::Update(float delta) {
@@ -157,10 +159,6 @@ void Fluid3DScene::Update(float delta) {
 
 	for (auto modelObject : mModelObjects) {
 		modelObject->Update();
-	}
-
-	for (PrimitiveGameObject &object : mPrimitiveObjects) {
-		object.Update();
 	}
 
 	if (!mPaused) {
@@ -177,13 +175,12 @@ bool Fluid3DScene::Render() {
 	const ICamera &camera = *mCamera;
 	ID3D11DeviceContext * const context = pD3dGraphicsObj->GetDeviceContext();
 	mSkyObject->Render(camera);
+
+	// draw the terrain
+	mTerrainObject->Render(camera);
 	
 	for (auto modelObject : mModelObjects) {
 		modelObject->Render(camera, context);
-	}
-
-	for (PrimitiveGameObject &object : mPrimitiveObjects) {
-		object.Render(camera);
 	}
 
 	for (auto simulation : mSimulations) {

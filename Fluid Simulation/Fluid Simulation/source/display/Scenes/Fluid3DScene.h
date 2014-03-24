@@ -13,7 +13,6 @@ Date: 24/10/2013
 #include <vector>
 #include <memory>
 #include "IScene.h"
-#include "../../objects/PrimitiveGameObject.h"
 
 class CameraImpl;
 class D3DGraphicsObject;
@@ -21,7 +20,9 @@ class InputSystem;
 class FluidSimulation;
 class SkyObject;
 class ModelGameObject;
+class TerrainObject;
 struct CTwBar;
+
 
 using namespace std;
 
@@ -50,11 +51,11 @@ private:
 private:
 	unique_ptr<CameraImpl>	mCamera;
 	unique_ptr<SkyObject>	mSkyObject;
+	unique_ptr<TerrainObject> mTerrainObject;
 	
 	shared_ptr<FluidSimulation> pPickedSimulation;
 	vector<shared_ptr<FluidSimulation>> mSimulations;
 	vector<shared_ptr<ModelGameObject>> mModelObjects;
-	vector<PrimitiveGameObject>	mPrimitiveObjects;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 

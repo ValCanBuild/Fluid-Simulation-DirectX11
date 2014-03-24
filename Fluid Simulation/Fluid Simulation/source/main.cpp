@@ -18,7 +18,6 @@ Version: 1.0
 #endif
 
 #include "system\MainSystem.h"
-
 #include "utilities\Console.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow) {

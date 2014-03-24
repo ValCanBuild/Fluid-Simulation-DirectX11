@@ -28,10 +28,10 @@ public:
 	VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject);
 	~VolumeRenderShader();
 
-	void SetVertexBufferValues(Matrix &wvpMatrix, Matrix &worldMatrix) const;
+	void SetVertexBufferValues(const Matrix &wvpMatrix, const Matrix &worldMatrix) const;
 	void SetTransform(const Transform &transform) const;
 	void SetCameraPosition(const Vector3 &camPos) const;
-	void SetSmokeProperties(SmokeProperties &smokeProperties) const;
+	void SetSmokeProperties(const SmokeProperties &smokeProperties) const;
 
 	void SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues);
 	void ApplySamplers();

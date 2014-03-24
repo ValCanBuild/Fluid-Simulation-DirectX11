@@ -6,6 +6,7 @@ Date: 18/03/2014
 **************************************************************/
 
 #include "SkyShader.h"
+#include <VertexTypes.h>
 #include "../D3DGraphicsObject.h"
 
 SkyShader::SkyShader(const D3DGraphicsObject * const d3dGraphicsObject) : pD3dGraphicsObject(d3dGraphicsObject), pSkyTexture(nullptr) {
@@ -25,33 +26,12 @@ ShaderDescription SkyShader::GetShaderDescription() {
 	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pSkymap.psh";
 	shaderDescription.pixelShaderDesc.shaderFunctionName = "SkymapPixelShader";
 
-	shaderDescription.numLayoutElements = 3;
-
+	shaderDescription.numLayoutElements = DirectX::VertexPositionNormalTexture::InputElementCount;
 	shaderDescription.polygonLayout = new D3D11_INPUT_ELEMENT_DESC[shaderDescription.numLayoutElements];
 
-	shaderDescription.polygonLayout[0].SemanticName = "SV_Position";
-	shaderDescription.polygonLayout[0].SemanticIndex = 0;
-	shaderDescription.polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	shaderDescription.polygonLayout[0].InputSlot = 0;
-	shaderDescription.polygonLayout[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	shaderDescription.polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	shaderDescription.polygonLayout[0].InstanceDataStepRate = 0;
-
-	shaderDescription.polygonLayout[1].SemanticName = "NORMAL";
-	shaderDescription.polygonLayout[1].SemanticIndex = 0;
-	shaderDescription.polygonLayout[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	shaderDescription.polygonLayout[1].InputSlot = 0;
-	shaderDescription.polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	shaderDescription.polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	shaderDescription.polygonLayout[1].InstanceDataStepRate = 0;
-
-	shaderDescription.polygonLayout[2].SemanticName = "TEXCOORD";
-	shaderDescription.polygonLayout[2].SemanticIndex = 0;
-	shaderDescription.polygonLayout[2].Format = DXGI_FORMAT_R32G32_FLOAT;
-	shaderDescription.polygonLayout[2].InputSlot = 0;
-	shaderDescription.polygonLayout[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	shaderDescription.polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	shaderDescription.polygonLayout[2].InstanceDataStepRate = 0;
+	for (int i = 0; i < shaderDescription.numLayoutElements; ++i) {
+		shaderDescription.polygonLayout[i] = DirectX::VertexPositionNormalTexture::InputElements[i];
+	}
 
 	return shaderDescription;
 }
