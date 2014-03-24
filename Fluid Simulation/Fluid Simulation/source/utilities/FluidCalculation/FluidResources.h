@@ -17,7 +17,6 @@ struct CommonFluidResources {
 	ShaderParams divergenceSP;
 	std::array<ShaderParams, 2>	pressureSP;
 	std::array<ShaderParams, 2>	tempSP;
-	CComPtr<ID3D11RenderTargetView>	pressureRT;	
 
 	static CommonFluidResources CreateResources(ID3D11Device * device, Vector3 textureSize, HWND hwnd);
 };

@@ -20,7 +20,7 @@ class D3DGraphicsObject;
 class InputSystem;
 class FluidSimulation;
 class SkyObject;
-class IAppTimer;
+class ModelGameObject;
 struct CTwBar;
 
 using namespace std;
@@ -53,13 +53,13 @@ private:
 	
 	shared_ptr<FluidSimulation> pPickedSimulation;
 	vector<shared_ptr<FluidSimulation>> mSimulations;
+	vector<shared_ptr<ModelGameObject>> mModelObjects;
 	vector<PrimitiveGameObject>	mPrimitiveObjects;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	CTwBar *mTwBar;
 	InputSystem *pInputSystem;
-	IAppTimer *pAppTimer;
 private:
 	int  mNumRenderedFluids;
 	int  mNumFluidsUpdating;

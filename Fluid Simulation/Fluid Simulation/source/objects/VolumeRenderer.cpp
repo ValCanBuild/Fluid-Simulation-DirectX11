@@ -17,7 +17,7 @@ Date: 19/2/2014
 using namespace std;
 using namespace DirectX;
 
-static Color defaultSmokeColor = Color(0.447f, 0.42f, 0.42f, 1.0f);
+static Color defaultSmokeColor = RGBA2Color(200,193,193,255);
 static float defaultSmokeAbsorption = 60.0f;
 static int   defaultNumSamples = 64;
 
@@ -102,7 +102,7 @@ void VolumeRenderer::SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV) {
 
 void VolumeRenderer::DisplayRenderInfoOnBar(TwBar * const pBar) {
 	TwAddVarRW(pBar,"Rendering", smokePropertiesTwType, mSmokeProperties.get(), "");
-	TwAddButton(pBar, "Update", SetSmokePropertiesCallback, this, "label='Apply Changes' group=Rendering");
+	TwAddButton(pBar, "Apply Changes", SetSmokePropertiesCallback, this, "label='Apply Changes' group=Rendering");
 }
 
 void VolumeRenderer::RefreshSmokeProperties() {

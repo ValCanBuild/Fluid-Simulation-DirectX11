@@ -23,7 +23,7 @@ CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device
 	textureDesc.MipLevels = 1;
 	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
@@ -44,17 +44,9 @@ CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device
 		if(FAILED(hr)) {
 			MessageBox(hwnd, L"Could not create the pressure UAV", L"Error", MB_OK);
 		}
-		// Create the pressure render target - there is only one, associated with the READ value
-		if (i == 0) {
-			hr = device->CreateRenderTargetView(pressureText[i], NULL, &resources.pressureRT);
-			if (FAILED(hr)) {
-				MessageBox(hwnd, L"Could not create the pressure Render Target", L"Error", MB_OK);
-			}
-		}
 	}
 
 	// Create divergence shader params
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 	CComPtr<ID3D11Texture3D> divergenceText;
 	hr = device->CreateTexture3D(&textureDesc, NULL, &divergenceText);
 	// Create the SRV and UAV.

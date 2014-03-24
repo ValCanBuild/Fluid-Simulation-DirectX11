@@ -18,9 +18,6 @@ Date: 18/2/2014
 #include "FluidSettings.h"
 #include "FluidResources.h"
 
-struct ShaderParams;
-struct ShaderParamsRT;
-
 namespace Fluid3D {
 
 class AdvectionShader;
@@ -37,7 +34,7 @@ public:
 	Fluid3DCalculator(FluidSettings fluidSettings);
 	~Fluid3DCalculator();
 
-	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
+	bool Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd);
 	void Process();
 
 	ID3D11ShaderResourceView * GetVolumeTexture() const;

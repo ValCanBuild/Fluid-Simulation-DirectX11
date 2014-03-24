@@ -30,7 +30,7 @@ public:
 	FluidSimulation(std::unique_ptr<Fluid3D::Fluid3DCalculator> fluidCalculator, std::shared_ptr<VolumeRenderer> volumeRenderer);
 	~FluidSimulation();
 
-	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
+	bool Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd);
 
 	// Returns true if this simulation is rendered, and false if it is culled away
 	bool Render(const ICamera &camera);
@@ -39,7 +39,7 @@ public:
 	bool Update(float dt);
 
 	void DisplayInfoOnBar(CTwBar * const pBar);
-	bool IntersectsRay(Ray &ray, float &distance) const;
+	bool IntersectsRay(const Ray &ray, float &distance) const;
 
 	std::shared_ptr<VolumeRenderer> GetVolumeRenderer() const;
 
@@ -53,10 +53,12 @@ private:
 	std::shared_ptr<VolumeRenderer> mVolumeRenderer;
 
 	// track the time since the Process function was last called on the FluidCalculator
-	float mTimeSinceLastProcess;
-	float mTimeBetweenProcesses;
+	int mFramesSinceLastProcess;
+	int mFramesToSkip;
 	float mTimeSinceProcessStart;
-	bool mUpdatePaused;
+	bool mUpdateEnabled;
+	bool mRenderEnabled;
+	//bool mRender
 	bool mIsVisible;
 };
 

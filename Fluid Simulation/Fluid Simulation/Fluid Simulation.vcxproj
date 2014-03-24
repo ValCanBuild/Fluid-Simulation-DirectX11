@@ -30,6 +30,9 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.props" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\MeshContentTask.props" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ShaderGraphContentTask.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -123,6 +126,7 @@
     <ClCompile Include="source\objects\Component.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
+    <ClCompile Include="source\objects\ModelGameObject.cpp" />
     <ClCompile Include="source\objects\PrimitiveGameObject.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
     <ClCompile Include="source\objects\SkyObject.cpp" />
@@ -176,6 +180,7 @@
     <ClInclude Include="source\objects\D2DTexQuad.h" />
     <ClInclude Include="source\objects\GameObject.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
+    <ClInclude Include="source\objects\ModelGameObject.h" />
     <ClInclude Include="source\objects\PrimitiveGameObject.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
     <ClInclude Include="source\objects\SkyObject.h" />
@@ -283,7 +288,48 @@
       <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <MeshContentTask Include="data\models\campfire\campfire.fbx">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
+    <MeshContentTask Include="data\models\house\English_thatched_house.FBX">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/house/%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\campfire\bark_1.jpg">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\rock_1.jpg">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\rock_2.jpg">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\rock_4.jpg">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\campfire\wood_stump.jpg">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\house\english_house_texture.bmp">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/house/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.targets" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\MeshContentTask.targets" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ShaderGraphContentTask.targets" />
   </ImportGroup>
 </Project>

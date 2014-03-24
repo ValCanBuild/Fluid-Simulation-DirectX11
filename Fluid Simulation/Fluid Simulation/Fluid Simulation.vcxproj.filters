@@ -121,6 +121,15 @@
     <Filter Include="Source Files\Utilities\AppTimer">
       <UniqueIdentifier>{fe173478-435a-4c51-a85f-96fa57fe863c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{9fb27a0c-beb1-4063-b213-a2c7d6956559}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\house">
+      <UniqueIdentifier>{47f5224d-1139-4e02-91d2-1511a96cad55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\campfire">
+      <UniqueIdentifier>{264db9fc-8699-47c8-af38-c4320cb7f767}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -257,6 +266,9 @@
     </ClCompile>
     <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp">
       <Filter>Source Files\Utilities\AppTimer</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\ModelGameObject.cpp">
+      <Filter>Source Files\Objects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -440,6 +452,9 @@
     <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h">
       <Filter>Header Files\Utilities\AppTimer</Filter>
     </ClInclude>
+    <ClInclude Include="source\objects\ModelGameObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -486,5 +501,33 @@
     <FxCompile Include="hlsl\cFluid3D.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MeshContentTask Include="data\models\house\English_thatched_house.FBX">
+      <Filter>Models\house</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="data\models\campfire\campfire.fbx">
+      <Filter>Models\campfire</Filter>
+    </MeshContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\campfire\bark_1.jpg">
+      <Filter>Models\campfire</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\rock_1.jpg">
+      <Filter>Models\campfire</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\rock_2.jpg">
+      <Filter>Models\campfire</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\rock_4.jpg">
+      <Filter>Models\campfire</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\campfire\wood_stump.jpg">
+      <Filter>Models\campfire</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\house\english_house_texture.bmp">
+      <Filter>Models\house</Filter>
+    </ImageContentTask>
   </ItemGroup>
 </Project>

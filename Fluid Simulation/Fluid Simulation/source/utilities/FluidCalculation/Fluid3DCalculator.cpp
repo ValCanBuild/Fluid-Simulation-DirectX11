@@ -37,7 +37,7 @@ Fluid3DCalculator::~Fluid3DCalculator() {
 	pD3dGraphicsObj = nullptr;
 }
 
-bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
+bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd) {
 	pD3dGraphicsObj = d3dGraphicsObj;
 	ID3D11Device *pDevice = pD3dGraphicsObj->GetDevice();
 	bool result = InitShaders(hwnd);
@@ -246,13 +246,15 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
 	Vector3 impulsePos = mFluidSettings.dimensions * mFluidSettings.constantInputPosition;
+	float size = mFluidSettings.dimensions.x + mFluidSettings.dimensions.y + mFluidSettings.dimensions.z;
+	float inputRadius = mFluidSettings.constantInputRadius * size;
 
 	//refresh the impulse of the density and temperature
-	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, mFluidSettings.constantInputRadius);
+	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius);
 	mImpulseShader->Compute(context, &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
 	swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
 
-	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantTemperature, mFluidSettings.constantInputRadius);
+	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantTemperature, inputRadius);
 	mImpulseShader->Compute(context, &mFluidResources.temperatureSP[READ], &mFluidResources.temperatureSP[WRITE]);
 	swap(mFluidResources.temperatureSP[READ], mFluidResources.temperatureSP[WRITE]);
 }
@@ -270,7 +272,7 @@ void Fluid3DCalculator::CalculatePressureGradient() {
 
 	// clear pressure texture to prepare for Jacobi
 	float clearCol[4] = {0.0f,0.0f,0.0f,0.0f};
-	context->ClearRenderTargetView(mCommonResources.pressureRT, clearCol);
+	context->ClearUnorderedAccessViewFloat(mCommonResources.pressureSP[READ].mUAV, clearCol);
 	ShaderParams *pDivergence = &mCommonResources.divergenceSP;
 	// perform Jacobi on pressure field
 	int i;

@@ -223,3 +223,8 @@ pip-log.txt
 .mr.developer.cfg
 *.shader
 Fluid Simulation/Fluid Simulation/data/textures/skybox/readme
+*.cso
+*.mat
+*.cmo
+*.fbx
+*.bmp

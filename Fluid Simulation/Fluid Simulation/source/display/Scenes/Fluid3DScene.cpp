@@ -10,6 +10,7 @@ Date: 24/10/2013
 #include "Fluid3DScene.h"
 #include <algorithm>
 #include <AntTweakBar.h>
+#include <Effects.h>
 
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/CameraImpl.h"
@@ -17,7 +18,7 @@ Date: 24/10/2013
 #include "../../objects/VolumeRenderer.h"
 #include "../simulations/FluidSimulation.h"
 #include "../../objects/SkyObject.h"
-
+#include "../../objects/ModelGameObject.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
@@ -52,9 +53,9 @@ Fluid3DScene::~Fluid3DScene() {
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
 	pPickedSimulation = nullptr;
-	pAppTimer = nullptr;
 	mPrimitiveObjects.clear();
 	mSimulations.clear();
+	mModelObjects.clear();
 }
 
 bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
@@ -68,7 +69,6 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	}
 
 	pInputSystem = ServiceProvider::Instance().GetInputSystem();
-	pAppTimer = ServiceProvider::Instance().GetAppTimer();
 
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar(barName.c_str());
@@ -87,26 +87,20 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		return false;
 	}
 
+	
 	return result;
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	for (int i = 0; i < 1; i++) {
-		FluidSettings fluidSettings;
-		fluidSettings.dimensions = Vector3(64,128,64);
-		shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation(fluidSettings));
-		mSimulations.push_back(fluidSimulation);
-		shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-		if (i == 0) {
-			volumeRenderer->transform->position.y = 1.8f;
-			volumeRenderer->transform->position.x = 0.0f;
-		}
-		else {
-			volumeRenderer->transform->position.y = 1.2f;
-			volumeRenderer->transform->position.x = 0.0f - 3.0f*i;
-		}
-		volumeRenderer->transform->scale = Vector3(1,2,1);
-	}
+	FluidSettings fluidSettings;
+	fluidSettings.dimensions = Vector3(64,128,64);
+	fluidSettings.densityDissipation = 0.99f;
+	shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation(fluidSettings));
+	shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
+	volumeRenderer->transform->scale = Vector3(2,4,2);
+	volumeRenderer->transform->position = Vector3(-0.1f,8.08f,6.43f);
+	mSimulations.push_back(fluidSimulation);
+
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
 		if (!result) {
@@ -126,7 +120,7 @@ void Fluid3DScene::InitCamera() {
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
 	mCamera = CameraImpl::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
-	mCamera->SetPosition(0,1.0f,-4);
+	mCamera->SetPosition(0,3.0f,-4.5);
 }
 
 void Fluid3DScene::InitGameObjects() {
@@ -136,11 +130,23 @@ void Fluid3DScene::InitGameObjects() {
 	planeObject.SetColor(Colors::BurlyWood.v);
 	mPrimitiveObjects.push_back(planeObject);
 
-	PrimitiveGameObject teapotObject = PrimitiveGameObject(GeometricPrimitive::CreateTeapot(pD3dGraphicsObj->GetDeviceContext(), 1.0f, 16U, false));
-	teapotObject.transform->position = Vector3(0.8f,0.505f,0.07f);
-	teapotObject.transform->qRotation = Quaternion::CreateFromAxisAngle(Vector3(0,1,0), 1.5f);
-	teapotObject.SetColor(Colors::PaleTurquoise.v);
-	mPrimitiveObjects.push_back(teapotObject);
+	// House
+	DGSLEffectFactory fx(pD3dGraphicsObj->GetDevice());
+	fx.SetDirectory(L"data/models/house");
+	shared_ptr<ModelGameObject> house = unique_ptr<ModelGameObject>(new ModelGameObject(Model::CreateFromCMO(pD3dGraphicsObj->GetDevice(), L"data/models/house/English_thatched_house.cmo", fx, false)));
+	auto houseTransform = house->transform;
+	houseTransform->position = Vector3(0,0,6);
+	houseTransform->scale = Vector3(0.5f);
+	houseTransform->qRotation = Quaternion::CreateFromAxisAngle(Vector3(1,0,0), -1.57f);
+	houseTransform->qRotation *= Quaternion::CreateFromAxisAngle(Vector3(0,1,0), -1.57f);
+	mModelObjects.push_back(house);
+
+	// Campfire
+	fx.SetDirectory(L"data/models/campfire");
+	shared_ptr<ModelGameObject> campfire = unique_ptr<ModelGameObject>(new ModelGameObject(Model::CreateFromCMO(pD3dGraphicsObj->GetDevice(), L"data/models/campfire/campfire.cmo", fx, false)));
+	auto fireTransform = campfire->transform;
+	fireTransform->scale = Vector3(0.2f);
+	mModelObjects.push_back(campfire);
 }
 
 void Fluid3DScene::Update(float delta) {
@@ -149,12 +155,16 @@ void Fluid3DScene::Update(float delta) {
 
 	mNumFluidsUpdating = 0;
 
+	for (auto modelObject : mModelObjects) {
+		modelObject->Update();
+	}
+
 	for (PrimitiveGameObject &object : mPrimitiveObjects) {
 		object.Update();
 	}
 
 	if (!mPaused) {
-		for (shared_ptr<FluidSimulation> simulation : mSimulations) {
+		for (auto simulation : mSimulations) {
 			if (simulation->Update(delta)) {
 				++mNumFluidsUpdating;
 			}
@@ -164,15 +174,20 @@ void Fluid3DScene::Update(float delta) {
 
 bool Fluid3DScene::Render() {
 	mNumRenderedFluids = 0;
-
-	mSkyObject->Render(*mCamera);
-
-	for (PrimitiveGameObject &object : mPrimitiveObjects) {
-		object.Render(*mCamera);
+	const ICamera &camera = *mCamera;
+	ID3D11DeviceContext * const context = pD3dGraphicsObj->GetDeviceContext();
+	mSkyObject->Render(camera);
+	
+	for (auto modelObject : mModelObjects) {
+		modelObject->Render(camera, context);
 	}
 
-	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
-		if (simulation->Render(*mCamera)) {
+	for (PrimitiveGameObject &object : mPrimitiveObjects) {
+		object.Render(camera);
+	}
+
+	for (auto simulation : mSimulations) {
+		if (simulation->Render(camera)) {
 			++mNumRenderedFluids;
 		}
 	}

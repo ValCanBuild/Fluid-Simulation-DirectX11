@@ -21,7 +21,7 @@ void InitType() {
 		{ "Constant Density", TW_TYPE_FLOAT, offsetof(FluidSettings, constantDensityAmount), "min=0.0 max=100.0 step=0.01" },
 		{ "Density Weight", TW_TYPE_FLOAT, offsetof(FluidSettings, densityWeight), "min=0.001 max=10.0 step=0.001" },
 		{ "Density Buoyancy", TW_TYPE_FLOAT, offsetof(FluidSettings, densityBuoyancy), "min=0.0 max=100.0 step=0.001" },
-		{ "Input Radius", TW_TYPE_FLOAT, offsetof(FluidSettings, constantInputRadius), "min=0.05 max=50.0 step=0.1" }
+		{ "Input Radius", TW_TYPE_FLOAT, offsetof(FluidSettings, constantInputRadius), "min=0.005 max=1.0 step=0.01" }
 	};
 
 	int numMembers = sizeof(fluidSettingsStructMembers)/sizeof(fluidSettingsStructMembers[0]);

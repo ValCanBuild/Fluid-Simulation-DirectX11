@@ -16,8 +16,10 @@ using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
+#define DEFAULT_FRAMES_TO_SKIP 0
+
 FluidSimulation::FluidSimulation() : 
-	mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f), mTimeBetweenProcesses(0.1f),
+	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesSinceLastProcess(0), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP),
 	mTimeSinceProcessStart(0.0f)
 {
 	FluidSettings fluidSettings;
@@ -27,16 +29,17 @@ FluidSimulation::FluidSimulation() :
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
-FluidSimulation::FluidSimulation(FluidSettings fluidSettings) : mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f),
-	mTimeBetweenProcesses(0.1f), mTimeSinceProcessStart(0.0f)
+FluidSimulation::FluidSimulation(FluidSettings fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
+	mFramesSinceLastProcess(0), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP), mTimeSinceProcessStart(0.0f)
 {
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), mUpdatePaused(false), mIsVisible(true), mTimeSinceLastProcess(0.0f),
-	mTimeBetweenProcesses(0.1f), mTimeSinceProcessStart(0.0f)
+	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), 
+	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP),
+	mFramesSinceLastProcess(0), mTimeSinceProcessStart(0.0f)
 {
 
 }
@@ -44,7 +47,7 @@ FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, 
 FluidSimulation::~FluidSimulation() {
 }
 
-bool FluidSimulation::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
+bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd) {
 	bool result = mVolumeRenderer->Initialize(d3dGraphicsObj, hwnd);
 	if (!result) {
 		return false;
@@ -62,7 +65,7 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hw
 
 bool FluidSimulation::Render(const ICamera &camera) {
 	mIsVisible = IsVisibleByCamera(camera);
-	if (mIsVisible) {
+	if (mIsVisible && mRenderEnabled) {
 		mVolumeRenderer->Render(camera);
 	}
 	return mIsVisible;
@@ -71,37 +74,41 @@ bool FluidSimulation::Render(const ICamera &camera) {
 bool FluidSimulation::Update(float dt) {
 	mVolumeRenderer->Update();
 
-	bool canUpdate = !mUpdatePaused;
-	if (canUpdate && !mIsVisible) {
-		canUpdate = mTimeSinceLastProcess > mTimeBetweenProcesses;
+	bool canUpdate = mUpdateEnabled;
+
+	if (canUpdate) {
+		canUpdate = mFramesToSkip <= 0 || mFramesSinceLastProcess > mFramesToSkip;
 	}
 
 	if (canUpdate) {
 		mFluidCalculator->Process();
-		mTimeSinceLastProcess = 0.0f;
+		mFramesSinceLastProcess = 0;
 	} 
 	else {
-		mTimeSinceLastProcess += dt;
+		++mFramesSinceLastProcess;
 	}
 
 	return canUpdate;
 }
 
 void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
-	TwAddVarRW(pBar,"Active", TW_TYPE_BOOLCPP, &mUpdatePaused, nullptr);
+	TwAddVarRW(pBar,"Update", TW_TYPE_BOOLCPP, &mUpdateEnabled, nullptr);
+	TwAddVarRW(pBar,"Render", TW_TYPE_BOOLCPP, &mRenderEnabled, nullptr);
 
 	FluidSettings *settings = mFluidCalculator->GetFluidSettingsPointer();
 
 	// Add fluid calculator settings
 	TwAddVarCB(pBar,"Simulation", GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
 	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
-	TwAddVarRW(pBar,"Time Between Processes", TW_TYPE_FLOAT, &mTimeBetweenProcesses, "");
 
 	// Add volume renderer settings
 	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
+
+	// Add LOD settings
+	TwAddVarRW(pBar,"Frames to skip", TW_TYPE_INT32, &mFramesToSkip, "group=LOD min=0 max=10");
 }
 
-bool FluidSimulation::IntersectsRay(Ray &ray, float &distance) const {
+bool FluidSimulation::IntersectsRay(const Ray &ray, float &distance) const {
 	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
 	return ray.Intersects(*boundingBox, distance);
 }

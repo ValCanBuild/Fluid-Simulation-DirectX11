@@ -34,6 +34,10 @@ inline UINT ARGB2ABGR(UINT argb) {
 	return (A << 24) | (B << 16) | (G << 8) | (R << 0);
 }
 
+inline Color RGBA2Color(UINT r, UINT g, UINT b, UINT a) {
+	return Color(r/255.0f, g/255.0f, b/255.0f, a/255.0f);
+}
+
 // Returns random float in [0, 1).
 inline float RandF() {
 	return (float)(rand()) / (float)RAND_MAX;

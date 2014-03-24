@@ -389,11 +389,11 @@ void ObstaclesComputeShader( uint3 i : SV_DispatchThreadID ) {
 	if(i.z-1 < 0) obstacle = 1;
 	if(i.z+1 > (int)dimensions.z-1) obstacle = 1;
 
-	float3 center = dimensions/2;
-	float radius = 5;
-
-	if (distance(center, i) <= radius)
-		obstacle = 1;
+	//float3 center = dimensions/2;
+	//float radius = 5;
+	//
+	//if (distance(center, i) <= radius)
+	//	obstacle = 1;
 
 	// rgb stores velocity, a stores whether there is an obstacle or not
 	obstaclesResult[i] = float4(0,0,0,obstacle);
