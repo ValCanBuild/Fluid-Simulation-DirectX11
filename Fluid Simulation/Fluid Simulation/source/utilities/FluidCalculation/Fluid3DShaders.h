@@ -8,8 +8,8 @@ Date: 09/11/2013
 #ifndef _FLUID3DSHADERS_H
 #define _FLUID3DSHADERS_H
 
-#include "../BaseD3DShader.h"
-#include "../ShaderParams.h"
+#include "../../display/D3DShaders/BaseD3DShader.h"
+#include "../../display/D3DShaders/ShaderParams.h"
 
 namespace Fluid3D {
 
@@ -55,6 +55,18 @@ public:
 	~ImpulseShader();
 
 	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
+
+private:
+	ShaderDescription GetShaderDescription();
+};
+
+
+class ExtinguishmentImpulseShader : public BaseFluid3DShader {
+public:
+	ExtinguishmentImpulseShader(Vector3 dimensions);
+	~ExtinguishmentImpulseShader();
+
+	void Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* reactionField, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult);
 
 private:
 	ShaderDescription GetShaderDescription();

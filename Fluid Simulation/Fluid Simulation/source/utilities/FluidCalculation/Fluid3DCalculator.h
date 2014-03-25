@@ -22,7 +22,8 @@ namespace Fluid3D {
 
 class AdvectionShader;
 class ImpulseShader;
-class JacobiShader ;
+class ExtinguishmentImpulseShader;
+class JacobiShader;
 class DivergenceShader;
 class SubtractGradientShader;
 class BuoyancyShader;
@@ -63,15 +64,16 @@ private:
 
 	FluidSettings mFluidSettings;
 
-	std::unique_ptr<AdvectionShader>			mAdvectionShader;
-	std::unique_ptr<AdvectionShader>			mMacCormarckAdvectionShader;
-	std::unique_ptr<ImpulseShader>				mImpulseShader;
-	std::unique_ptr<VorticityShader>			mVorticityShader;
-	std::unique_ptr<ConfinementShader>			mConfinementShader;
-	std::unique_ptr<JacobiShader>				mJacobiShader;
-	std::unique_ptr<DivergenceShader>			mDivergenceShader;
-	std::unique_ptr<SubtractGradientShader>		mSubtractGradientShader;
-	std::unique_ptr<BuoyancyShader>				mBuoyancyShader;
+	std::unique_ptr<AdvectionShader>				mAdvectionShader;
+	std::unique_ptr<AdvectionShader>				mMacCormarckAdvectionShader;
+	std::unique_ptr<ImpulseShader>					mImpulseShader;
+	std::unique_ptr<ExtinguishmentImpulseShader>	mExtinguishmentImpulseShader;
+	std::unique_ptr<VorticityShader>				mVorticityShader;
+	std::unique_ptr<ConfinementShader>				mConfinementShader;
+	std::unique_ptr<JacobiShader>					mJacobiShader;
+	std::unique_ptr<DivergenceShader>				mDivergenceShader;
+	std::unique_ptr<SubtractGradientShader>			mSubtractGradientShader;
+	std::unique_ptr<BuoyancyShader>					mBuoyancyShader;
 
 	// Resources per object
 	FluidResourcesPerObject mFluidResources;

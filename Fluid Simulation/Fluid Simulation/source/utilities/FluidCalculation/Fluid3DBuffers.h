@@ -9,7 +9,7 @@ Date: 5/3/2014
 #ifndef _FLUID3DBUFFERS_H
 #define _FLUID3DBUFFERS_H
 
-#include "../../../utilities/D3dIncludes.h"
+#include "../D3dIncludes.h"
 
 namespace Fluid3D {
 
@@ -30,7 +30,8 @@ namespace Fluid3D {
 		Vector3 vPoint;				
 		float fRadius;
 		float fAmount;
-		Vector3 padding2;	
+		float fExtinguishment;
+		Vector2 padding2;	
 	};
 }
 

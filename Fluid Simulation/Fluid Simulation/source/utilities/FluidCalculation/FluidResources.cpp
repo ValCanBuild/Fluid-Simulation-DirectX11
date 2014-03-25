@@ -9,7 +9,7 @@ Date: 19/3/2014
 
 using namespace std;
 
-CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device, Vector3 textureSize, HWND hwnd) {
+CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd) {
 	HRESULT hr;
 
 	CommonFluidResources resources;
@@ -81,7 +81,7 @@ CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device
 	return resources;
 }
 
-FluidResourcesPerObject FluidResourcesPerObject::CreateResources(ID3D11Device * device, Vector3 textureSize, HWND hwnd) {
+FluidResourcesPerObject FluidResourcesPerObject::CreateResources(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd) {
 	FluidResourcesPerObject resources;
 
 	// Create the velocity shader params

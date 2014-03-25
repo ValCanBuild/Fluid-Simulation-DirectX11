@@ -6,7 +6,7 @@ Author: Valentin Hinov
 Date: 11/09/2013
 **************************************************************/
 #include "Fluid2DShaders.h"
-#include "../D3DGraphicsObject.h"
+#include "../../display/D3DGraphicsObject.h"
 
 using namespace Fluid2D;
 

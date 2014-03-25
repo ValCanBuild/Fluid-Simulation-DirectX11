@@ -28,6 +28,9 @@ Date: 3/3/2014
 #define CONSTANT_TEMPERATURE 3.0f
 #define CONSTANT_DENSITY 1.0f
 #define VORTICITY_STRENGTH 0.9f
+#define CONSTANT_REACTION 1.0f
+#define REACTION_DECAY 0.001f
+#define REACTION_EXTINGUISHMENT 0.01f
 
 enum SystemAdvectionType_t {
 	NORMAL, 
@@ -50,6 +53,11 @@ struct FluidSettings {
 	float vorticityStrength;
 	Vector3 constantInputPosition;	// location of permanent density and temperature input as % of dimensions
 
+	// fire only settings
+	float constantReactionAmount;
+	float reactionDecay;
+	float reactionExtinguishment;
+
 	FluidSettings() {
 		jacobiIterations = JACOBI_ITERATIONS;
 		timeStep = TIME_STEP;
@@ -65,6 +73,11 @@ struct FluidSettings {
 		constantInputRadius = CONSTANT_INPUT_RADIUS;
 		vorticityStrength = VORTICITY_STRENGTH;
 		constantInputPosition = Vector3(0.5f,0.0f,0.5f);
+
+		// fire only settings
+		constantReactionAmount = CONSTANT_REACTION;
+		reactionDecay = REACTION_DECAY;
+		reactionExtinguishment = REACTION_EXTINGUISHMENT;
 	}
 };
 

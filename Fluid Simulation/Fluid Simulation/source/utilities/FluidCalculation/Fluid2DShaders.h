@@ -8,8 +8,8 @@ Date: 18/09/2013
 #ifndef _FLUID2DSHADERS_H
 #define _FLUID2DSHADERS_H
 
-#include "BaseD3DShader.h"
-#include "ShaderParams.h"
+#include "../../display/D3DShaders/BaseD3DShader.h"
+#include "../../display/D3DShaders/ShaderParams.h"
 
 class D3DGraphicsObject;
 

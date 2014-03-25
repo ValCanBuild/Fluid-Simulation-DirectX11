@@ -18,7 +18,7 @@ struct CommonFluidResources {
 	std::array<ShaderParams, 2>	pressureSP;
 	std::array<ShaderParams, 2>	tempSP;
 
-	static CommonFluidResources CreateResources(ID3D11Device * device, Vector3 textureSize, HWND hwnd);
+	static CommonFluidResources CreateResources(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd);
 };
 
 struct FluidResourcesPerObject {
@@ -28,7 +28,7 @@ struct FluidResourcesPerObject {
 	ShaderParams obstacleSP;
 	ShaderParams vorticitySP;
 
-	static FluidResourcesPerObject CreateResources(ID3D11Device * device, Vector3 textureSize, HWND hwnd);
+	static FluidResourcesPerObject CreateResources(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd);
 };
 
 #endif

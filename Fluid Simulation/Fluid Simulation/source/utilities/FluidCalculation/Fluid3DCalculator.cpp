@@ -7,8 +7,8 @@ Date: 18/2/2014
 *********************************************************************/
 
 #include "Fluid3DCalculator.h"
-#include "../../display/D3DShaders/Fluid3D/Fluid3DShaders.h"
-#include "../../display/D3DShaders/Fluid3D/Fluid3DBuffers.h"
+#include "Fluid3DShaders.h"
+#include "Fluid3DBuffers.h"
 
 #define READ 0
 #define WRITE 1

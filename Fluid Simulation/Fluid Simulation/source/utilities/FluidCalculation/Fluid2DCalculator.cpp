@@ -8,7 +8,7 @@ Date: 18/2/2014
 *********************************************************************/
 
 #include "Fluid2DCalculator.h"
-#include "../../display/D3DShaders/Fluid2DShaders.h"
+#include "Fluid2DShaders.h"
 
 #define READ 0
 #define WRITE 1

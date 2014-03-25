@@ -121,6 +121,40 @@ ShaderDescription ImpulseShader::GetShaderDescription() {
 ///////IMPULSE SHADER END////////
 
 
+///////EXTINGUISHMENT IMPULSE SHADER BEGIN////////
+ExtinguishmentImpulseShader::ExtinguishmentImpulseShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
+}
+
+ExtinguishmentImpulseShader::~ExtinguishmentImpulseShader() {
+}
+
+void ExtinguishmentImpulseShader::Compute(_In_ ID3D11DeviceContext* context, _In_ ShaderParams* reactionField, _In_ ShaderParams* impulseInitial, _In_ ShaderParams* impulseResult) {
+	// Set the parameters inside the compute shader	
+	ID3D11ShaderResourceView *const pSRV[2] = {impulseInitial->mSRV, reactionField->mSRV};
+	context->CSSetShaderResources(0, 2, pSRV);
+	context->CSSetUnorderedAccessViews(0, 1, &(impulseResult->mUAV.p), nullptr);
+
+	Dispatch(context);
+
+	// To use for flushing shader parameters out of the shaders
+	ID3D11ShaderResourceView *const pSRVNULL[2] = {nullptr, nullptr};
+	ID3D11UnorderedAccessView *const pUAVNULL[1] = {nullptr};
+
+	context->CSSetShaderResources(0, 2, pSRVNULL);
+	context->CSSetUnorderedAccessViews(0, 1, pUAVNULL, nullptr);
+}
+
+ShaderDescription ExtinguishmentImpulseShader::GetShaderDescription() {
+	ShaderDescription shaderDescription;
+
+	shaderDescription.computeShaderDesc.shaderFilename = L"hlsl/cFluid3D.hlsl";
+	shaderDescription.computeShaderDesc.shaderFunctionName = "ExtinguishmentImpulseComputeShader";
+
+	return shaderDescription;
+}
+///////EXTINGUISHMENT IMPULSE SHADER END////////
+
+
 ///////JACOBI SHADER BEGIN////////
 JacobiShader::JacobiShader(Vector3 dimensions) : BaseFluid3DShader(dimensions) {
 }

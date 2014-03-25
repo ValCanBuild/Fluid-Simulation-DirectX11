@@ -106,8 +106,6 @@
     <ClCompile Include="source\display\D3DGraphicsObject.cpp" />
     <ClCompile Include="source\display\D3DRenderer.cpp" />
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\SkyShader.cpp" />
@@ -143,7 +141,9 @@
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DShaders.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DShaders.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\FluidResources.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp" />
     <ClCompile Include="source\utilities\GeometryBuilder.cpp" />
@@ -158,9 +158,6 @@
     <ClInclude Include="source\display\D3DGraphicsObject.h" />
     <ClInclude Include="source\display\D3DRenderer.h" />
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DBuffers.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />
@@ -201,6 +198,9 @@
     <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h" />
     <ClInclude Include="source\utilities\AppTimer\IAppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DShaders.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DBuffers.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DShaders.h" />
     <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h" />
     <ClInclude Include="source\utilities\HeightMap.h" />
     <ClInclude Include="source\utilities\HeightmapParser.h" />

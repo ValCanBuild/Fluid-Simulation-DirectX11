@@ -32,7 +32,8 @@ cbuffer InputBufferImpulse : register (b2) {
 	float3 vPoint;				// Used for ImpulseComputeShader
 	float  fRadius;				// Used for ImpulseComputeShader
 	float  fAmount;				// Used for ImpulseComputeShader
-	float3 padding2;			// pad to 32 bytes
+	float  fExtinguishment;		// Used for ExtinguishmentImpulseComputeShader
+	float2 padding2;			// pad to 32 bytes
 }
 
 
@@ -50,8 +51,9 @@ Texture3D<float>	temperature : register (t1); // Used for BuoyancyComputeShader
 Texture3D<float>	density : register (t2); // Used for BuoyancyComputeShader
 RWTexture3D<float3> buoyancyResult : register (u0); // Used for BuoyancyComputeShader
 
-Texture3D<float>   impulseInitial : register (t0); // Used for ImpulseComputeShader
-RWTexture3D<float> impulseResult : register (u0); // Used for ImpulseComputeShader
+Texture3D<float>   impulseInitial : register (t0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
+Texture3D<float>   reaction : register(t1); // Used for ExtinguishmentImpulseComputeShader
+RWTexture3D<float> impulseResult : register (u0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
 
 Texture3D<float3>   vorticity : register (t1); // Used for ConfinementComputeShader
 RWTexture3D<float3> vorticityResult : register (u0); // Used for VorticityComputeShader
@@ -66,6 +68,7 @@ RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradient
 
 Texture3D<float4>  obstacles : register (t4); // DivergenceComputeShader, AdvectComputeShader, AdvectBackwardComputeShader, ConfinementComputeShader, JacobiComputeShader, SubtractGradientComputeShader, AdvectMacCormackComputeShader
 RWTexture3D<float4>  obstaclesResult : register (u0); // Used for ObstacleComputeShader
+
 
 uint3 GetDimensionsFloat4RW(RWTexture3D<float4> tex) {
 	uint3 dimensions;
@@ -180,7 +183,19 @@ void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
 	mag *= mag;
 	float rad2 = fRadius*fRadius;
 
-	float amount = exp(-mag/rad2) * fAmount.r * fTimeStep;
+	float amount = exp(-mag/rad2) * fAmount * fTimeStep;
+	impulseResult[i] = impulseInitial[i] + amount;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+void ExtinguishmentImpulseComputeShader(uint3 i : SV_DispatchThreadID) {	
+	float amount = 0.0f;
+	float reactionAmount = reaction[i];
+	
+	// can this be optimized?
+	if (reactionAmount > 0.0f && reactionAmount < fExtinguishment) {
+		amount = fAmount * reactionAmount;
+	}
 	impulseResult[i] = impulseInitial[i] + amount;
 }
 
