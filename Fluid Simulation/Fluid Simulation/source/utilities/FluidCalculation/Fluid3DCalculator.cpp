@@ -19,7 +19,7 @@ Date: 18/2/2014
 
 namespace BufferDirtyFlags
 {
-	const int General						= 0x01;
+	const int General = 0x01;
 }
 
 using namespace Fluid3D;
@@ -27,7 +27,7 @@ using namespace Fluid3D;
 // Declare statics
 map<Vector3, CommonFluidResources> Fluid3DCalculator::commonResourcesMap;
 
-Fluid3DCalculator::Fluid3DCalculator(FluidSettings fluidSettings) : pD3dGraphicsObj(nullptr), 
+Fluid3DCalculator::Fluid3DCalculator(const FluidSettings &fluidSettings) : pD3dGraphicsObj(nullptr), 
 	mFluidSettings(fluidSettings)
 {
 
@@ -45,7 +45,14 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND
 		return false;
 	}
 
-	mFluidResources = FluidResourcesPerObject::CreateResources(pDevice, mFluidSettings.dimensions, hwnd);
+	switch (mFluidSettings.GetFluidType()) {
+	case SMOKE:
+		mFluidResources = FluidResourcesPerObject::CreateResourcesSmoke(pDevice, mFluidSettings.dimensions, hwnd);
+		break;
+	case FIRE:
+		mFluidResources = FluidResourcesPerObject::CreateResourcesFire(pDevice, mFluidSettings.dimensions, hwnd);
+		break;
+	}
 
 	if (commonResourcesMap.count(mFluidSettings.dimensions) == 0) {
 		mCommonResources = CommonFluidResources::CreateResources(pDevice, mFluidSettings.dimensions, hwnd);
@@ -53,7 +60,7 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND
 			return false;
 		}
 		commonResourcesMap[mFluidSettings.dimensions] = mCommonResources;
-	}
+	} 
 	else {
 		mCommonResources = commonResourcesMap[mFluidSettings.dimensions];
 	}
@@ -135,6 +142,15 @@ bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 		return false;
 	}
 
+	// only initialize ExtinguishmentImpulseShader if fluid type is fire
+	if (mFluidSettings.GetFluidType() == FIRE) {
+		mExtinguishmentImpulseShader = unique_ptr<ExtinguishmentImpulseShader>(new ExtinguishmentImpulseShader(mFluidSettings.dimensions));
+		result = mExtinguishmentImpulseShader->Initialize(device,hwnd);
+		if (!result) {
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -190,10 +206,15 @@ void Fluid3DCalculator::Process() {
 	context->CSSetConstantBuffers(0, 3, pProcessConstantBuffers);
 
 	//Advect temperature against velocity
-	Advect(mFluidResources.temperatureSP, mFluidSettings.advectionType, mFluidSettings.temperatureDissipation);
+	Advect(mFluidResources.temperatureSP, NORMAL, mFluidSettings.temperatureDissipation);
 
 	// Advect density against velocity
 	Advect(mFluidResources.densitySP, mFluidSettings.advectionType, mFluidSettings.densityDissipation);
+
+	// Advect the reaction field against velocity
+	if (mFluidSettings.GetFluidType() == FIRE) {
+		Advect(mFluidResources.reactionSP, NORMAL, 1.0f, mFluidSettings.reactionDecay);
+	}
 
 	// Advect velocity against itself
 	Advect(mFluidResources.velocitySP, mFluidSettings.advectionType, mFluidSettings.velocityDissipation);
@@ -218,25 +239,26 @@ void Fluid3DCalculator::Process() {
 	std::swap(mFluidResources.velocitySP[READ], mFluidResources.velocitySP[WRITE]);
 }
 
-void Fluid3DCalculator::Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation) {
+void Fluid3DCalculator::Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation, float decay) {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 	switch (advectionType) {
 	case NORMAL:
-		UpdateAdvectionBuffer(dissipation, 1.0f);
+		UpdateAdvectionBuffer(dissipation, 1.0f, decay);
+		mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &target[READ], &target[WRITE]);
 		break;
 	case MACCORMARCK:
-		UpdateAdvectionBuffer(1.0f, 1.0f);
+		UpdateAdvectionBuffer(1.0f, 1.0f, 0.0f);
+		mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &target[READ], &mCommonResources.tempSP[0]);
 		break;
 	}
-	mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &target[READ], &mCommonResources.tempSP[0]);
 
 	if (advectionType == MACCORMARCK) {
 		// advect backwards a step
-		UpdateAdvectionBuffer(1.0f, -1.0f);
+		UpdateAdvectionBuffer(1.0f, -1.0f, 0.0f);
 		mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &mCommonResources.tempSP[0], &mCommonResources.tempSP[1]);
 		ShaderParams advectArrayDens[3] = {mCommonResources.tempSP[0], mCommonResources.tempSP[1], target[READ]};
 		// proceed with MacCormack advection
-		UpdateAdvectionBuffer(dissipation, 1.0f);
+		UpdateAdvectionBuffer(dissipation, 1.0f, decay);
 		mMacCormarckAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], advectArrayDens, &target[WRITE]);
 	}
 	swap(target[READ],target[WRITE]);
@@ -250,9 +272,24 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 	float inputRadius = mFluidSettings.constantInputRadius * size;
 
 	//refresh the impulse of the density and temperature
-	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius);
-	mImpulseShader->Compute(context, &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
-	swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
+	switch (mFluidSettings.GetFluidType()) {
+	case SMOKE:
+		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius);
+		mImpulseShader->Compute(context, &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
+		swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
+		break;
+	case FIRE:
+		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantReactionAmount, inputRadius);
+		mImpulseShader->Compute(context, &mFluidResources.reactionSP[READ], &mFluidResources.reactionSP[WRITE]);
+		swap(mFluidResources.reactionSP[READ], mFluidResources.reactionSP[WRITE]);
+
+		// Smoke forms as fire is extinguished
+		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius, mFluidSettings.reactionExtinguishment);
+		mExtinguishmentImpulseShader->Compute(context, &mFluidResources.reactionSP[READ], &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
+		swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
+		break;
+	}
+	
 
 	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantTemperature, inputRadius);
 	mImpulseShader->Compute(context, &mFluidResources.temperatureSP[READ], &mFluidResources.temperatureSP[WRITE]);
@@ -307,7 +344,7 @@ void Fluid3DCalculator::UpdateGeneralBuffer() {
 	context->Unmap(mInputBufferGeneral,0);
 }
 
-void Fluid3DCalculator::UpdateAdvectionBuffer(float dissipation, float timeModifier) {
+void Fluid3DCalculator::UpdateAdvectionBuffer(float dissipation, float timeModifier, float decay) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	InputBufferAdvection* dataPtr;
 	
@@ -322,11 +359,12 @@ void Fluid3DCalculator::UpdateAdvectionBuffer(float dissipation, float timeModif
 	dataPtr = (InputBufferAdvection*)mappedResource.pData;
 	dataPtr->fDissipation = dissipation;
 	dataPtr->fTimeStepModifier = timeModifier;
+	dataPtr->fDecay = decay;
 
 	context->Unmap(mInputBufferAdvection,0);
 }
 
-void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, float amount, float radius) {
+void Fluid3DCalculator::UpdateImpulseBuffer(const Vector3& point, float amount, float radius, float extinguishment) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	InputBufferImpulse* dataPtr;
 
@@ -339,9 +377,10 @@ void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, float amount, float 
 	}
 
 	dataPtr = (InputBufferImpulse*)mappedResource.pData;
-	dataPtr->vPoint	    = point;
-	dataPtr->fRadius    = radius;	
-	dataPtr->fAmount	= amount;
+	dataPtr->vPoint				= point;
+	dataPtr->fRadius			= radius;	
+	dataPtr->fAmount			= amount;
+	dataPtr->fExtinguishment	= extinguishment;
 
 	context->Unmap(mInputBufferImpulse,0);
 }
@@ -380,4 +419,8 @@ const FluidSettings &Fluid3DCalculator::GetFluidSettings() const {
 
 ID3D11ShaderResourceView * Fluid3DCalculator::GetVolumeTexture() const {
 	return mFluidResources.densitySP[READ].mSRV;
+}
+
+ID3D11ShaderResourceView * Fluid3DCalculator::GetReactionTexture() const {
+	return mFluidResources.reactionSP[READ].mSRV;
 }

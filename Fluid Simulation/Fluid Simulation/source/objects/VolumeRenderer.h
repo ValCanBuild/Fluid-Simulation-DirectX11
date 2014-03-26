@@ -17,9 +17,11 @@ Date: 19/2/2014
 #include "../display/D3DGraphicsObject.h"
 
 class ICamera;
-class VolumeRenderShader;
+class SmokeRenderShader;
 struct CTwBar;
 struct SmokeProperties;
+
+enum  FluidType_t;
 
 namespace DirectX 
 {
@@ -29,12 +31,14 @@ namespace DirectX
 class VolumeRenderer : public PrimitiveGameObject {
 public:
 	~VolumeRenderer();
-	VolumeRenderer(Vector3 &volumeSize);
+	VolumeRenderer(const Vector3 &volumeSize);
 
-	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd);
+	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd, const FluidType_t &fluidType);
 	void Render(const ICamera &camera) override;
 
 	void SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV);
+	void SetReactionTexture(ID3D11ShaderResourceView *reactionTexSRV);
+	void SetFireGradientTexture(ID3D11ShaderResourceView *gradientTexSRV);
 
 	void DisplayRenderInfoOnBar(CTwBar * const pBar);
 
@@ -45,11 +49,12 @@ private:
 private:	
 	Vector3 mVolumeSize;
 	Vector3 mPrevCameraPos;
+	FluidType_t mFluidType;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	std::unique_ptr<SmokeProperties>		mSmokeProperties;
-	std::unique_ptr<VolumeRenderShader>		mVolumeRenderShader;
+	std::unique_ptr<SmokeRenderShader>		mVolumeRenderShader;
 	std::shared_ptr<DirectX::CommonStates>	pCommonStates;	
 };
 

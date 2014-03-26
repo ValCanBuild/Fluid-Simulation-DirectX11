@@ -25,7 +25,8 @@ cbuffer InputBufferGeneral : register (b0) {
 cbuffer InputBufferAdvection : register (b1) {
 	float fDissipation;			// Used for AdvectComputeShader
 	float fTimeStepModifier;
-	float2 padding1;			// pad to 16 bytes
+	float fDecay;
+	float padding1;				// pad to 16 bytes
 }
 
 cbuffer InputBufferImpulse : register (b2) {
@@ -113,7 +114,12 @@ void AdvectComputeShader( uint3 i : SV_DispatchThreadID ) {
 
 	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
-	advectionResult[i] = result*fDissipation;
+	float3 finalResult = result*fDissipation;
+	if (fDecay > 0.0f) {
+		finalResult.x = max(0, finalResult.x - fDecay);
+	}
+
+	advectionResult[i] = finalResult;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
@@ -158,7 +164,12 @@ void AdvectMacCormackComputeShader( uint3 i : SV_DispatchThreadID ) {
 	// clamp results to desired range
 	s = clamp(s,lmin,lmax);
 
-	advectionResult[i] = s*fDissipation;
+	float3 finalResult = s*fDissipation;
+	if (fDecay > 0.0f) {
+		finalResult.x = max(0, finalResult.x - fDecay);
+	}
+
+	advectionResult[i] = finalResult;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]

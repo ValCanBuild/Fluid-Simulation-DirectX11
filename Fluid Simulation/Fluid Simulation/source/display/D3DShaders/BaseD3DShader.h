@@ -72,6 +72,9 @@ protected:
 	// Child classes supply this function to bind any constant buffers, samplers, etc... before rendering
 	virtual void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {};
 
+	// Child classes supply this function to clean up anything from the context
+	virtual void PostRenderCleanup(_In_ ID3D11DeviceContext* deviceContext) {};
+
 	// This renders an object using the provided Pixel and Vertex Shaders given the index count
 	void RenderShader(ID3D11DeviceContext* context, int indexCount);
 

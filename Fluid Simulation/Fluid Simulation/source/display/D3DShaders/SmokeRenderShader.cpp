@@ -1,32 +1,33 @@
 /*************************************************************
-VolumeRenderShader.cpp: Implementation of the volume render
+SmokeRenderShader.cpp: Implementation of the volume render
 shader
 
 Author: Valentin Hinov
 Date: 19/02/2014
 **************************************************************/
 
-#include "VolumeRenderShader.h"
+#include "SmokeRenderShader.h"
 #include <VertexTypes.h>
 #include "../D3DGraphicsObject.h"
 #include "../../objects/Transform.h"
 
-VolumeRenderShader::VolumeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject) : pD3dGraphicsObject(d3dGraphicsObject), pVolumeValuesTexture(nullptr) {
+SmokeRenderShader::SmokeRenderShader(const D3DGraphicsObject * const d3dGraphicsObject) : 
+	pD3dGraphicsObject(d3dGraphicsObject), pVolumeValuesTexture(nullptr) {
 }
 
-VolumeRenderShader::~VolumeRenderShader() {
+SmokeRenderShader::~SmokeRenderShader() {
 	pD3dGraphicsObject = nullptr;
 	pVolumeValuesTexture = nullptr;
 }
 
-ShaderDescription VolumeRenderShader::GetShaderDescription() {
+ShaderDescription SmokeRenderShader::GetShaderDescription() {
 	ShaderDescription shaderDescription;
 
 	shaderDescription.vertexShaderDesc.shaderFilename = L"hlsl/vVolumeRender.vsh";
 	shaderDescription.vertexShaderDesc.shaderFunctionName = "VolumeRenderVertexShader";
 
 	shaderDescription.pixelShaderDesc.shaderFilename = L"hlsl/pVolumeRender.psh";
-	shaderDescription.pixelShaderDesc.shaderFunctionName = "VolumeRenderPixelShader";
+	shaderDescription.pixelShaderDesc.shaderFunctionName = "SmokeVolumeRenderPixelShader";
 
 	shaderDescription.numLayoutElements = DirectX::VertexPositionNormalTexture::InputElementCount;
 	shaderDescription.polygonLayout = new D3D11_INPUT_ELEMENT_DESC[shaderDescription.numLayoutElements];
@@ -38,7 +39,7 @@ ShaderDescription VolumeRenderShader::GetShaderDescription() {
 	return shaderDescription;
 }
 
-void VolumeRenderShader::SetVertexBufferValues(const Matrix &wvpMatrix, const Matrix &worldMatrix) const {
+void SmokeRenderShader::SetVertexBufferValues(const Matrix &wvpMatrix, const Matrix &worldMatrix) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	VertexInputBuffer* dataPtr;
 
@@ -59,7 +60,7 @@ void VolumeRenderShader::SetVertexBufferValues(const Matrix &wvpMatrix, const Ma
 	// Set the buffer inside the vertex shader
 }
 
-void VolumeRenderShader::SetTransform(const Transform &transform) const {
+void SmokeRenderShader::SetTransform(const Transform &transform) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	PixelBufferPerObject* dataPtr;
 
@@ -78,7 +79,7 @@ void VolumeRenderShader::SetTransform(const Transform &transform) const {
 	context->Unmap(mPixelBufferPerObject,0);
 }
 
-void VolumeRenderShader::SetCameraPosition(const Vector3 &camPos) const {
+void SmokeRenderShader::SetCameraPosition(const Vector3 &camPos) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	PixelBufferPerFrame* dataPtr;
 
@@ -96,7 +97,7 @@ void VolumeRenderShader::SetCameraPosition(const Vector3 &camPos) const {
 	context->Unmap(mPixelBufferPerFrame,0);
 }
 
-void VolumeRenderShader::SetSmokeProperties(const SmokeProperties &smokeProperties) const {
+void SmokeRenderShader::SetSmokeProperties(const SmokeProperties &smokeProperties) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	PixelSmokePropertiesBuffer* dataPtr;
 
@@ -116,19 +117,16 @@ void VolumeRenderShader::SetSmokeProperties(const SmokeProperties &smokeProperti
 	// Set the buffer inside the pixel shader
 }
 
-void VolumeRenderShader::BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {
-	deviceContext->VSSetConstantBuffers(0,1,&(mVertexInputBuffer.p));
+void SmokeRenderShader::BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {
+	deviceContext->PSSetShaderResources(0, 1, &pVolumeValuesTexture);
+
 	ID3D11Buffer *const pPixelBuffers[3] = {mPixelBufferPerFrame, mPixelBufferPerObject, mPixelSmokePropertiesBuffer};
 	deviceContext->PSSetConstantBuffers(0,3,pPixelBuffers);
 
-	deviceContext->PSSetShaderResources(0,1,&pVolumeValuesTexture);
+	deviceContext->VSSetConstantBuffers(0, 1, &(mVertexInputBuffer.p));
 }
 
-void VolumeRenderShader::ApplySamplers() {
-	pD3dGraphicsObject->GetDeviceContext()->PSSetSamplers(0, 1, &(mSampleState.p));
-}
-
-bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
+bool SmokeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	// Create the vertex buffer
 	bool result = BuildDynamicBuffer<VertexInputBuffer>(device, &mVertexInputBuffer);
 	if (!result) {
@@ -153,27 +151,9 @@ bool VolumeRenderShader::SpecificInitialization(ID3D11Device* device) {
 		return false;
 	}
 
-	// Setup the sampler description
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	HRESULT hresult = device->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(hresult)) {
-		return false;
-	}
-
 	return true;
 }
 
-void VolumeRenderShader::SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues) {
+void SmokeRenderShader::SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues) {
 	pVolumeValuesTexture = volumeValues;
 }

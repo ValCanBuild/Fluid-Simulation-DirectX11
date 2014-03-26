@@ -109,8 +109,9 @@
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\SkyShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\SmokeRenderShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\TerrainTextureShader.cpp" />
-    <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\FireRenderShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\TextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
@@ -162,8 +163,9 @@
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />
     <ClInclude Include="source\display\D3DShaders\SkyShader.h" />
+    <ClInclude Include="source\display\D3DShaders\SmokeRenderShader.h" />
     <ClInclude Include="source\display\D3DShaders\TerrainTextureShader.h" />
-    <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h" />
+    <ClInclude Include="source\display\D3DShaders\FireRenderShader.h" />
     <ClInclude Include="source\display\D3DShaders\TextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
     <ClInclude Include="source\display\IFrameBuffer.h" />

@@ -11,12 +11,19 @@ Date: 3/3/2014
 #include "../../objects/VolumeRenderer.h"
 #include "../../utilities/FluidCalculation/Fluid3DCalculator.h"
 #include "../../utilities/ICamera.h"
+#include "../../utilities/D3DTexture.h"
 
 using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
 #define DEFAULT_FRAMES_TO_SKIP 0
+
+static D3DTexture fireTexture;
+
+void InitFireTexture(D3DGraphicsObject * d3dGraphicsObj) {
+	fireTexture.Initialize(d3dGraphicsObj->GetDevice(), d3dGraphicsObj->GetDeviceContext(), L"data/FireTransferFunction2.dds");
+}
 
 FluidSimulation::FluidSimulation() : 
 	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesSinceLastProcess(0), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP),
@@ -29,7 +36,7 @@ FluidSimulation::FluidSimulation() :
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
-FluidSimulation::FluidSimulation(FluidSettings fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
+FluidSimulation::FluidSimulation(const FluidSettings &fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
 	mFramesSinceLastProcess(0), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP), mTimeSinceProcessStart(0.0f)
 {
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
@@ -48,7 +55,8 @@ FluidSimulation::~FluidSimulation() {
 }
 
 bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd) {
-	bool result = mVolumeRenderer->Initialize(d3dGraphicsObj, hwnd);
+	const FluidSettings &settings = mFluidCalculator->GetFluidSettings();
+	bool result = mVolumeRenderer->Initialize(d3dGraphicsObj, hwnd, settings.GetFluidType());
 	if (!result) {
 		return false;
 	}
@@ -59,6 +67,13 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND h
 	}
 
 	mVolumeRenderer->SetSourceTexture(mFluidCalculator->GetVolumeTexture());
+	if (settings.GetFluidType() == FIRE) {
+		mVolumeRenderer->SetReactionTexture(mFluidCalculator->GetReactionTexture());
+		if (fireTexture.GetTexture() == nullptr) {
+			InitFireTexture(d3dGraphicsObj);
+		}
+		mVolumeRenderer->SetFireGradientTexture(fireTexture.GetTexture());
+	}
 
 	return true;
 }
@@ -98,7 +113,7 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	FluidSettings *settings = mFluidCalculator->GetFluidSettingsPointer();
 
 	// Add fluid calculator settings
-	TwAddVarCB(pBar,"Simulation", GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
+	TwAddVarCB(pBar,"Simulation", settings->GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
 	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
 
 	// Add volume renderer settings

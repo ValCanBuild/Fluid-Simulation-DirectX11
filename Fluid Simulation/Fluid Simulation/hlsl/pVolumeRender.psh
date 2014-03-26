@@ -23,11 +23,14 @@ cbuffer SmokePropertiesBuffer : register (b2) {
 	float4 vSmokeColor;
 
 	float fSmokeAbsorption;
+	float fFireAbsorption;
 	int iNumSamples;
-	float2 padding;		// 32 bytes
+	float padding;		// 32 bytes
 };
 
 Texture3D<float> volumeValues : register (t0);
+Texture3D<float> reactionValues : register (t1);
+Texture2D fireGradient : register(t2);
 
 // TODO - replace with point sampler?
 SamplerState linearSampler : register (s0);
@@ -65,6 +68,10 @@ float SampleDensity(float3 uv) {
 	return volumeValues.SampleLevel(linearSampler, uv, 0);
 }
 
+float SampleReaction(float3 uv) {
+	return reactionValues.SampleLevel(linearSampler, uv, 0);
+}
+
 float SampleBilinear(float3 uv) {
 	// Get the dimensions of the volume domain
 	uint3 vDimensions;
@@ -100,7 +107,7 @@ float SampleBilinear(float3 uv) {
 ////////////////////////////////////////////////////////////////////////////////
 // Pixel Shader
 ////////////////////////////////////////////////////////////////////////////////
-float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+float4 SmokeVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	float3 pos = vEyePos;
 
 	Ray r;
@@ -136,7 +143,7 @@ float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	float3 ds = normalize(rayStop - rayStart) * stepSize;
 	float alpha = 1.0f;
 
-	for(int i = 0; i < iNumSamples; i++, start += ds) {	 
+	for(int i = 0; i < iNumSamples; ++i, start += ds) {	 
 		float D = SampleDensity(start);	
 		alpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
 
@@ -146,4 +153,56 @@ float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	}
 	
 	return vSmokeColor * (1.0f - alpha);
+}
+
+float4 FireVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+	float3 pos = vEyePos;
+
+	Ray r;
+	r.origin = pos;
+	r.dir = normalize(input.worldPosition - pos);
+
+	AABB aabb;
+	aabb.Min = float3(-0.5f, -0.5f, -0.5f) * vScale + vTranslate;
+	aabb.Max = float3(0.5f, 0.5f, 0.5f) * vScale + vTranslate;
+
+	//figure out where ray from eye hit front of cube
+	float tnear, tfar;
+	IntersectBox(r, aabb, tnear, tfar);
+
+	//if eye is in cube then start ray at eye
+	if (tnear < 0.0f) {
+		tnear = 0.0f;
+	}
+
+	float3 rayStart = r.origin + r.dir * tnear;
+	float3 rayStop = r.origin + r.dir * tfar;
+
+	//convert to texture space
+	rayStart -= vTranslate;
+	rayStop -= vTranslate;
+	float3 halfScale = 0.5f * vScale;
+	rayStart = (rayStart + halfScale) / vScale;
+	rayStop = (rayStop + halfScale) / vScale;
+
+	float3 start = rayStart;
+	float dist = distance(rayStop, rayStart);
+	float stepSize = dist / float(iNumSamples);
+	float3 ds = normalize(rayStop - rayStart) * stepSize;
+	float smokeAlpha = 1.0f;
+	float fireAlpha = 1.0f;
+
+	for(int i = 0; i < iNumSamples; ++i, start += ds) {	 
+		float D = SampleDensity(start);	
+		float R = SampleReaction(start);
+		smokeAlpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
+		fireAlpha *= 1.0f - saturate(R * stepSize * fFireAbsorption);		
+
+		if (smokeAlpha <= 0.01f && fireAlpha <= 0.01f) {
+			break;
+		}
+	}
+	float4 smoke = vSmokeColor * (1.0f - smokeAlpha);
+	float4 fire = fireGradient.Sample(linearSampler, float2(fireAlpha, 0)) * (1.0f - fireAlpha);
+	return smoke + fire;
 }

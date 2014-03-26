@@ -26,7 +26,7 @@ class FluidSimulation {
 public:
 	// Creates a fluid simulation with a default fluid calculator and volume renderer
 	FluidSimulation();
-	FluidSimulation(FluidSettings fluidSettings);
+	FluidSimulation(const FluidSettings &fluidSettings);
 	FluidSimulation(std::unique_ptr<Fluid3D::Fluid3DCalculator> fluidCalculator, std::shared_ptr<VolumeRenderer> volumeRenderer);
 	~FluidSimulation();
 

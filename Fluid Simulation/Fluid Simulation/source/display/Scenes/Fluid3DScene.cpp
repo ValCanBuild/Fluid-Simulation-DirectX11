@@ -41,7 +41,7 @@ struct FluidSimulationDepthSort {
 };
 
 Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), 
-	pPickedSimulation(nullptr) {
+	pPickedSimulation(nullptr), mFireAngle(0.0f) {
 	
 }
 
@@ -93,14 +93,23 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	FluidSettings fluidSettings;
-	fluidSettings.dimensions = Vector3(64,128,64);
-	fluidSettings.densityDissipation = 0.99f;
-	shared_ptr<FluidSimulation> fluidSimulation(new FluidSimulation(fluidSettings));
-	shared_ptr<VolumeRenderer> volumeRenderer = fluidSimulation->GetVolumeRenderer();
-	volumeRenderer->transform->scale = Vector3(4,8,4);
-	volumeRenderer->transform->position = Vector3(-0.15f,10.08f,6.43f);
-	mSimulations.push_back(fluidSimulation);
+	FluidSettings fluidSettingsSmoke(SMOKE);
+	fluidSettingsSmoke.dimensions = Vector3(64,128,64);
+	fluidSettingsSmoke.densityDissipation = 0.99f;
+	shared_ptr<FluidSimulation> fluidSimulationSmoke(new FluidSimulation(fluidSettingsSmoke));
+	shared_ptr<VolumeRenderer> volumeRendererSmoke = fluidSimulationSmoke->GetVolumeRenderer();
+	volumeRendererSmoke->transform->scale = Vector3(4,8,4);
+	volumeRendererSmoke->transform->position = Vector3(-0.15f,10.08f,6.43f);
+	mSimulations.push_back(fluidSimulationSmoke);
+
+	FluidSettings fluidSettingsFire(FIRE);
+	fluidSettingsFire.dimensions = Vector3(64,32,64);
+	shared_ptr<FluidSimulation> fluidSimulationFire(new FluidSimulation(fluidSettingsFire));
+	shared_ptr<VolumeRenderer> volumeRendererFire = fluidSimulationFire->GetVolumeRenderer();
+	pFireTransform = volumeRendererFire->transform;
+	pFireTransform->scale = Vector3(1);
+	pFireTransform->position = Vector3(0,3.0f,0);
+	mSimulations.push_back(fluidSimulationFire);
 
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
@@ -157,6 +166,8 @@ void Fluid3DScene::Update(float delta) {
 
 	mNumFluidsUpdating = 0;
 
+	//UpdateFirePosition(delta);
+
 	for (auto modelObject : mModelObjects) {
 		modelObject->Update();
 	}
@@ -168,6 +179,12 @@ void Fluid3DScene::Update(float delta) {
 			}
 		}
 	}
+}
+
+void Fluid3DScene::UpdateFirePosition(float delta) {
+	mFireAngle += delta;
+	pFireTransform->position.x = cos(mFireAngle)*1.0f;
+	pFireTransform->position.z = -0.1f + sin(mFireAngle)*1.0f;
 }
 
 bool Fluid3DScene::Render() {
@@ -204,7 +221,7 @@ void Fluid3DScene::UpdateCamera(float delta) {
 	// Move camera with WASD 
 	float forwardAmount = 0.0f;
 	float rightAmount = 0.0f;
-	const float moveFactor = 2.0f;
+	const float moveFactor = 3.5f;
 
 	if (pInputSystem->IsKeyDown('W')) {
 		forwardAmount += delta;

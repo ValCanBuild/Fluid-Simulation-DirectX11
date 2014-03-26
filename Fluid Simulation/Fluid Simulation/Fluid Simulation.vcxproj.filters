@@ -237,9 +237,6 @@
     <ClCompile Include="source\utilities\GeometryBuilder.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp">
-      <Filter>Source Files\Display\D3DShaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\objects\VolumeRenderer.cpp">
       <Filter>Source Files\Objects</Filter>
     </ClCompile>
@@ -293,6 +290,12 @@
     </ClCompile>
     <ClCompile Include="source\utilities\FluidCalculation\Fluid3DShaders.cpp">
       <Filter>Source Files\Utilities\FluidCalculation\Fluid3D</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\FireRenderShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\SmokeRenderShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -419,9 +422,6 @@
     <ClInclude Include="source\utilities\GeometryBuilder.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
-      <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
     <ClInclude Include="source\objects\VolumeRenderer.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
@@ -493,6 +493,12 @@
     </ClInclude>
     <ClInclude Include="source\utilities\FluidCalculation\Fluid2DShaders.h">
       <Filter>Header Files\Utilities\FluidCalculation\Fluid2D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\FireRenderShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\SmokeRenderShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

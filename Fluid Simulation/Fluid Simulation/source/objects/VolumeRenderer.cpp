@@ -12,28 +12,33 @@ Date: 19/2/2014
 #include "../system/ServiceProvider.h"
 #include "../display/D3DShaders/ShaderParams.h"
 #include "../utilities/ICamera.h"
-#include "../display/D3DShaders/VolumeRenderShader.h"
+#include "../display/D3DShaders/FireRenderShader.h"
+#include "../utilities/FluidCalculation/FluidSettings.h"
 
 using namespace std;
 using namespace DirectX;
 
 static Color defaultSmokeColor = RGBA2Color(200,193,193,255);
 static float defaultSmokeAbsorption = 60.0f;
+static float defaultFireAbsorption = 40.0f;
 static int   defaultNumSamples = 64;
 
 TwType smokePropertiesTwType;
+TwType firePropertiesTwType;
 
-void DefineSmokePropertiesTwType() {
+void DefinePropertiesTwType() {
 	TwStructMember smokePropertiesStructMembers[] = {
+		{ "Number of Samples", TW_TYPE_INT32, offsetof(SmokeProperties, iNumSamples), "min=16 max=512 step=1" },
 		{ "Smoke Color", TW_TYPE_COLOR4F, offsetof(SmokeProperties, vSmokeColor), "" },
 		{ "Smoke Absorption", TW_TYPE_FLOAT, offsetof(SmokeProperties, fSmokeAbsorption), "min=0.0 max=200.0 step=0.5" },
-		{ "Number of Samples", TW_TYPE_INT32, offsetof(SmokeProperties, iNumSamples), "min=16 max=512 step=1" }
+		{ "Fire Absorption", TW_TYPE_FLOAT, offsetof(SmokeProperties, fFireAbsorption), "min=0.0 max=200.0 step=0.5" }
 	};
 
-	smokePropertiesTwType = TwDefineStruct("Render Properties", smokePropertiesStructMembers, 3, sizeof(SmokeProperties), nullptr, nullptr);
+	smokePropertiesTwType = TwDefineStruct("Smoke Render Properties", smokePropertiesStructMembers, 3, sizeof(SmokeProperties), nullptr, nullptr);
+	firePropertiesTwType = TwDefineStruct("Fire Render Properties", smokePropertiesStructMembers, 4, sizeof(SmokeProperties), nullptr, nullptr);
 }
 
-VolumeRenderer::VolumeRenderer(Vector3 &volumeSize) :
+VolumeRenderer::VolumeRenderer(const Vector3 &volumeSize) :
 	mVolumeSize(volumeSize), 
 	pD3dGraphicsObj(nullptr) 
 {
@@ -44,26 +49,34 @@ VolumeRenderer::~VolumeRenderer() {
 	pD3dGraphicsObj = nullptr;
 }
 
-bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
+bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd, const FluidType_t &fluidType) {
 	pD3dGraphicsObj = d3dGraphicsObj;
+	mFluidType = fluidType;
 
 	primitive = GeometricPrimitive::CreateCube(pD3dGraphicsObj->GetDeviceContext(), 1.0f, false);
 
-	mVolumeRenderShader = unique_ptr<VolumeRenderShader>(new VolumeRenderShader(d3dGraphicsObj));
+	switch (mFluidType){
+	case FIRE:
+		mVolumeRenderShader = unique_ptr<SmokeRenderShader>(new FireRenderShader(d3dGraphicsObj));
+		break;
+	case SMOKE:
+		mVolumeRenderShader = unique_ptr<SmokeRenderShader>(new SmokeRenderShader(d3dGraphicsObj));
+		break;
+	}
+
 	bool result = mVolumeRenderShader->Initialize(d3dGraphicsObj->GetDevice(), hwnd);
 	if (!result) {
 		return false;
 	}
 	
-	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultNumSamples));
-
+	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultFireAbsorption, defaultNumSamples));
 	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
 	mVolumeRenderShader->SetTransform(*transform);
 
 	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
 
 	if (smokePropertiesTwType == TW_TYPE_UNDEF) {
-		DefineSmokePropertiesTwType();
+		DefinePropertiesTwType();
 	}
 
 	return true;
@@ -78,13 +91,14 @@ void VolumeRenderer::Render(const ICamera &camera) {
 
 	Matrix wvpMatrix = objectMatrix*camera.GetViewMatrix()*camera.GetProjectionMatrix();
 	mVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
+	mVolumeRenderShader->SetTransform(*transform);
 
 	if (mPrevCameraPos != camPos) {
 		mVolumeRenderShader->SetCameraPosition(camPos);
 		mPrevCameraPos = camPos;
 	}
 
-	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+	auto context = pD3dGraphicsObj->GetDeviceContext();
 	primitive->Draw(mVolumeRenderShader.get(), mVolumeRenderShader->GetInputLayout(), false, false, [=] 
 		{
 			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
@@ -94,14 +108,28 @@ void VolumeRenderer::Render(const ICamera &camera) {
 			context->RSSetState(rasterizeState);
 		}
 	);
+
+	ID3D11ShaderResourceView *const pSRVNULL[3] = {nullptr, nullptr, nullptr};
+	context->PSSetShaderResources(0, 3, pSRVNULL);
 }
 
 void VolumeRenderer::SetSourceTexture(ID3D11ShaderResourceView *sourceTexSRV) {
 	mVolumeRenderShader->SetVolumeValuesTexture(sourceTexSRV);
 }
 
+void VolumeRenderer::SetReactionTexture(ID3D11ShaderResourceView *reactionTexSRV) {
+	auto fireRenderShader = static_cast<FireRenderShader*>(mVolumeRenderShader.get());
+	fireRenderShader->SetReactionValuesTexture(reactionTexSRV);
+}
+
+void VolumeRenderer::SetFireGradientTexture(ID3D11ShaderResourceView *gradientTexSRV) {
+	auto fireRenderShader = static_cast<FireRenderShader*>(mVolumeRenderShader.get());
+	fireRenderShader->SetFireGradientTexture(gradientTexSRV);
+}
+
 void VolumeRenderer::DisplayRenderInfoOnBar(TwBar * const pBar) {
-	TwAddVarRW(pBar,"Rendering", smokePropertiesTwType, mSmokeProperties.get(), "");
+	TwType typeToAdd = mFluidType == SMOKE ? smokePropertiesTwType : firePropertiesTwType;
+	TwAddVarRW(pBar,"Rendering", typeToAdd, mSmokeProperties.get(), "");
 	TwAddButton(pBar, "Apply Changes", SetSmokePropertiesCallback, this, "label='Apply Changes' group=Rendering");
 }
 

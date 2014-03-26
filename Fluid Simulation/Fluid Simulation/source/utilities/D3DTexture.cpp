@@ -16,7 +16,7 @@ using namespace Microsoft::WRL;
 
 using namespace DirectX;
 
-D3DTexture::D3DTexture() {
+D3DTexture::D3DTexture() : mTexture(nullptr) {
 
 }
 

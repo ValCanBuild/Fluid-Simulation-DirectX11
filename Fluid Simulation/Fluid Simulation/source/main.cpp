@@ -26,17 +26,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 	#endif
 
-	std::unique_ptr<MainSystem> mainSystem(new MainSystem());
+	MainSystem mainSystem;
 	
 	//ShowWin32Console();
 
-	if (!mainSystem)
-		return 0;
-
 	// Initialize and run the system object.
-	bool result = mainSystem->Initialize();
+	bool result = mainSystem.Initialize();
 	if(result) {
-		mainSystem->Run();
+		mainSystem.Run();
 	}
 
 	return 0;

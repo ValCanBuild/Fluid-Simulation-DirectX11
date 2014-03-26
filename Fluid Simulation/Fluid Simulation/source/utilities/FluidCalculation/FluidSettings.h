@@ -37,7 +37,15 @@ enum SystemAdvectionType_t {
 	MACCORMARCK
 };
 
-struct FluidSettings {
+enum FluidType_t {
+	SMOKE,
+	FIRE
+};
+
+enum ETwType;
+
+
+struct FluidSettings {	
 	Vector3 dimensions;	
 	int jacobiIterations;
 	float timeStep;
@@ -58,30 +66,13 @@ struct FluidSettings {
 	float reactionDecay;
 	float reactionExtinguishment;
 
-	FluidSettings() {
-		jacobiIterations = JACOBI_ITERATIONS;
-		timeStep = TIME_STEP;
-		advectionType = MACCORMARCK;
-		velocityDissipation = VEL_DISSIPATION;
-		temperatureDissipation = TEMPERATURE_DISSIPATION;
-		constantTemperature = CONSTANT_TEMPERATURE;
-		densityDissipation = DENSITY_DISSIPATION;
-		constantDensityAmount = CONSTANT_DENSITY;
-		densityWeight = SMOKE_WEIGHT;
-		densityBuoyancy = SMOKE_BUOYANCY;
-		dimensions = Vector3(DIMENSION);
-		constantInputRadius = CONSTANT_INPUT_RADIUS;
-		vorticityStrength = VORTICITY_STRENGTH;
-		constantInputPosition = Vector3(0.5f,0.0f,0.5f);
+	FluidSettings(FluidType_t fluidType = SMOKE);
+	inline FluidType_t GetFluidType() const { return mFluidType; }
+	ETwType GetFluidSettingsTwType(); // for use on an AntTweakBar
 
-		// fire only settings
-		constantReactionAmount = CONSTANT_REACTION;
-		reactionDecay = REACTION_DECAY;
-		reactionExtinguishment = REACTION_EXTINGUISHMENT;
-	}
+private:
+	FluidType_t mFluidType; // should not be changed after initialization
 };
 
-enum ETwType;
-ETwType GetFluidSettingsTwType(); // for use on an AntTweakBar
 
 #endif

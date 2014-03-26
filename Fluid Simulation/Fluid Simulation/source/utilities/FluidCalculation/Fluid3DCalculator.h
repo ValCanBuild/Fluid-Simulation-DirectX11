@@ -32,13 +32,15 @@ class ConfinementShader;
 
 class Fluid3DCalculator {
 public:
-	Fluid3DCalculator(FluidSettings fluidSettings);
+	Fluid3DCalculator(const FluidSettings &fluidSettings);
 	~Fluid3DCalculator();
 
 	bool Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd);
 	void Process();
 
 	ID3D11ShaderResourceView * GetVolumeTexture() const;
+	// If simulating fire - get the reaction values texture
+	ID3D11ShaderResourceView * GetReactionTexture() const;
 
 	const FluidSettings &GetFluidSettings() const;
 	FluidSettings * const GetFluidSettingsPointer() const;
@@ -48,15 +50,15 @@ private:
 	bool InitShaders(HWND hwnd);
 	bool InitBuffersAndSamplers();
 
-	void Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation);
+	void Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation, float decay = 0.0f);
 	void RefreshConstantImpulse();
 	void ApplyBuoyancy();
 	void ComputeVorticityConfinement();
 	void CalculatePressureGradient();
 
-	void UpdateAdvectionBuffer(float dissipation, float timeModifier);
+	void UpdateAdvectionBuffer(float dissipation, float timeModifier, float decay);
 	void UpdateGeneralBuffer();
-	void UpdateImpulseBuffer(Vector3& point, float amount, float radius);
+	void UpdateImpulseBuffer(const Vector3& point, float amount, float radius, float extinguishment = 0.0f);
 
 	int  GetUpdateDirtyFlags(const FluidSettings &newSettings) const;
 private:

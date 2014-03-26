@@ -81,7 +81,7 @@ CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device
 	return resources;
 }
 
-FluidResourcesPerObject FluidResourcesPerObject::CreateResources(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd) {
+FluidResourcesPerObject FluidResourcesPerObject::CreateResourcesSmoke(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd) {
 	FluidResourcesPerObject resources;
 
 	// Create the velocity shader params
@@ -184,6 +184,41 @@ FluidResourcesPerObject FluidResourcesPerObject::CreateResources(ID3D11Device * 
 		MessageBox(hwnd, L"Could not create the vorticity UAV", L"Error", MB_OK);
 	}
 
+
+	return resources;
+}
+
+FluidResourcesPerObject FluidResourcesPerObject::CreateResourcesFire(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd) {
+	FluidResourcesPerObject resources = CreateResourcesSmoke(device, textureSize, hwnd);
+
+	CComPtr<ID3D11Texture3D> reactionText[2];
+	D3D11_TEXTURE3D_DESC textureDesc;
+	ZeroMemory(&textureDesc, sizeof(D3D11_TEXTURE3D_DESC));
+	textureDesc.Width = (UINT) textureSize.x;
+	textureDesc.Height = (UINT) textureSize.y;
+	textureDesc.Depth = (UINT) textureSize.z;
+	textureDesc.MipLevels = 1;
+	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+
+	for (int i = 0; i < 2; ++i) {
+		HRESULT hr = device->CreateTexture3D(&textureDesc, NULL, &reactionText[i]);
+		if (FAILED(hr)) {
+			MessageBox(hwnd, L"Could not create the reaction Texture Object", L"Error", MB_OK);
+		}
+		hr = device->CreateShaderResourceView(reactionText[i], NULL, &resources.reactionSP[i].mSRV);
+		if(FAILED(hr)) {
+			MessageBox(hwnd, L"Could not create the reaction SRV", L"Error", MB_OK);
+
+		}
+		hr = device->CreateUnorderedAccessView(reactionText[i], NULL, &resources.reactionSP[i].mUAV);
+		if(FAILED(hr)) {
+			MessageBox(hwnd, L"Could not create the reaction UAV", L"Error", MB_OK);
+		}
+	}
 
 	return resources;
 }
