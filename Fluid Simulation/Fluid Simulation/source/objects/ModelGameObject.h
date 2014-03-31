@@ -22,14 +22,14 @@ namespace DirectX
 class ModelGameObject : public GameObject {
 public:
 	ModelGameObject();
-	ModelGameObject(std::unique_ptr<DirectX::Model> model);
+	ModelGameObject(std::shared_ptr<DirectX::Model> model);
 	~ModelGameObject();
 
 	void Update();
 	void Render(const ICamera &camera, ID3D11DeviceContext * const deviceContext);
 
 private:
-	std::unique_ptr<DirectX::Model> mModel;
+	std::shared_ptr<DirectX::Model> mModel;
 	std::shared_ptr<DirectX::CommonStates> pCommonStates;
 };
 

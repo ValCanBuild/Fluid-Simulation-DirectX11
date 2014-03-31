@@ -14,7 +14,7 @@ Version: 1.0
 using namespace DirectX;
 
 CameraImpl::CameraImpl(float fieldOfView, float screenAspect, float screenNear, float screenFar, bool rightHand) :
-mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0), mRightHanded(rightHand) {
+mDefaultUp(0,1,0), mDefaultLookAt(0,0,1), mDefaultRight(1,0,0), mPosition(0,0,0), mRightHanded(rightHand), mFieldOfView(fieldOfView) {
 	mYaw = mPitch = mRoll = 0.0f;
 
 	mHasChanged = true; // set to true so the camera gets updated the first time update loop is called
@@ -71,6 +71,8 @@ void CameraImpl::Update() {
 
 	// Finally create the view matrix from the three updated vectors.
 	mViewMatrix = mRightHanded ? Matrix::CreateLookAt(mPosition, mTarget, mUp) : XMMatrixLookAtLH(mPosition, mTarget, mUp);
+
+	mViewProjectionMatrix = mViewMatrix * mProjectionMatrix;
 
 	mUntransformedFrustum.Transform(mBoundingFrustum, mViewMatrix.Invert());
 }
@@ -156,7 +158,18 @@ const Matrix & CameraImpl::GetProjectionMatrix() const {
 	return mProjectionMatrix;
 }
 
+const Matrix & CameraImpl::GetViewProjectionMatrix() const {
+	return mViewProjectionMatrix;
+}
+
+void CameraImpl::GetViewProjectionMatrix(Matrix& viewProjMatrix) const {
+	viewProjMatrix = mViewProjectionMatrix;
+}
+
 const DirectX::BoundingFrustum &CameraImpl::GetBoundingFrustum() const {
 	return mBoundingFrustum;
 }
 
+float CameraImpl::GetFieldOfView() const {
+	return mFieldOfView;
+}

@@ -38,6 +38,10 @@ inline Color RGBA2Color(UINT r, UINT g, UINT b, UINT a) {
 	return Color(r/255.0f, g/255.0f, b/255.0f, a/255.0f);
 }
 
+inline float Deg2Rad(float deg) {
+	return deg * PI / 180;
+}
+
 // Returns random float in [0, 1).
 inline float RandF() {
 	return (float)(rand()) / (float)RAND_MAX;
@@ -73,7 +77,7 @@ inline T Clamp(const T& x, const T& low, const T& high) {
 }
 
 template <typename T, typename U> 
-inline T MapValue(T  x, T in_min, T in_max, U out_min, U out_max) {
+inline U MapValue(T  x, T in_min, T in_max, U out_min, U out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 

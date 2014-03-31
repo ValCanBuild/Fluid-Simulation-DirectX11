@@ -17,8 +17,11 @@ public:
 	
 	virtual const Matrix &GetProjectionMatrix() const = 0;
 	virtual const Matrix &GetViewMatrix() const = 0;
+	virtual const Matrix &GetViewProjectionMatrix() const = 0;
+	virtual float GetFieldOfView() const = 0;
 	virtual void GetProjectionMatrix(Matrix& projMatrix) const = 0;
 	virtual void GetViewMatrix(Matrix& viewMatrix) const = 0;
+	virtual void GetViewProjectionMatrix(Matrix& viewProjMatrix) const = 0;
 	virtual void GetRotationMatrix(Matrix& rotationMatrix) const = 0;
 
 	virtual Ray ScreenPointToRay(Vector2 position) const = 0;

@@ -18,8 +18,10 @@ cbuffer InputBufferGeneral : register (b0) {
 	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader	
 	float fDensityBuoyancy;		// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
-	float fVorticityStrength;  // Used for BuoyancyComputeShader
-	// 16 bytes //
+	float fVorticityStrength;  // Used for VorticityComputeShader
+	float3 vBuoyancyDirection; // Used for BuoyancyComputeShader
+	float padding0;
+	// 32 bytes //
 };
 
 cbuffer InputBufferAdvection : register (b1) {
@@ -181,7 +183,7 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 result = velocity[i];
 	float fAmbientTemperature = 0.0f;
 	if (temperatureVal > fAmbientTemperature) {
-		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, 1.0f, 0.0f);
+		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * vBuoyancyDirection;
 	}
 	buoyancyResult[i] = result;
 }
@@ -374,13 +376,13 @@ void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 vMask = float3(1,1,1);
 	float3 obstV = float3(0,0,0);
 
-	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity. 22126
-	if(IsObstacleCell(coordT)) { pT = pC; obstV.y = GetObstacleVelocity(coordT).y; vMask.y = 0; }
-	if(IsObstacleCell(coordB)) { pB = pC; obstV.y = GetObstacleVelocity(coordB).y; vMask.y = 0; }							  
-	if(IsObstacleCell(coordR)) { pR = pC; obstV.x = GetObstacleVelocity(coordR).x; vMask.x = 0; }
-	if(IsObstacleCell(coordL)) { pL = pC; obstV.x = GetObstacleVelocity(coordL).x; vMask.x = 0; }							  
-	if(IsObstacleCell(coordU)) { pU = pC; obstV.z = GetObstacleVelocity(coordU).z; vMask.z = 0; }
-	if(IsObstacleCell(coordD)) { pD = pC; obstV.z = GetObstacleVelocity(coordD).z; vMask.z = 0; }
+	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity.
+	if(IsObstacleCell(coordT)) { pT = pC; obstV.y = GetObstacleVelocity(coordT).y; vMask.y = 0;}
+	if(IsObstacleCell(coordB)) { pB = pC; obstV.y = GetObstacleVelocity(coordB).y; vMask.y = 0;}							  
+	if(IsObstacleCell(coordR)) { pR = pC; obstV.x = GetObstacleVelocity(coordR).x; vMask.x = 0;}
+	if(IsObstacleCell(coordL)) { pL = pC; obstV.x = GetObstacleVelocity(coordL).x; vMask.x = 0;}							  
+	if(IsObstacleCell(coordU)) { pU = pC; obstV.z = GetObstacleVelocity(coordU).z; vMask.z = 0;}
+	if(IsObstacleCell(coordD)) { pD = pC; obstV.z = GetObstacleVelocity(coordD).z; vMask.z = 0;}
 
 	// Compute the gradient of pressure at the current cell by taking central differences of neighboring pressure values. 
 	float3 grad = float3(pR - pL, pT - pB, pU - pD) * 0.5f;

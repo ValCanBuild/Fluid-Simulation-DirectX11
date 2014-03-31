@@ -138,7 +138,7 @@ void TerrainObject::Render(const ICamera &camera) {
 	auto deviceContext = pD3dGraphicsObj->GetDeviceContext();
 	Matrix worldMat;
 	transform->GetTransformMatrixQuaternion(worldMat);
-	Matrix wvpMatrix = worldMat*camera.GetViewMatrix()*camera.GetProjectionMatrix();
+	Matrix wvpMatrix = worldMat*camera.GetViewProjectionMatrix();
 	mShader->SetVertexBufferValues(deviceContext, wvpMatrix, worldMat);
 	mRenderer->RenderBuffers(deviceContext);
 	mShader->Render(deviceContext, mRenderer->GetIndexCount());

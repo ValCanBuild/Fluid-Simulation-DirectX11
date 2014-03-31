@@ -18,6 +18,8 @@ namespace Fluid3D {
 		float fDensityBuoyancy;	
 		float fDensityWeight;		
 		float fVorticityStrength; 
+		Vector3 vBuoyancyDirection;
+		float padding0;
 	};
 
 	struct InputBufferAdvection {

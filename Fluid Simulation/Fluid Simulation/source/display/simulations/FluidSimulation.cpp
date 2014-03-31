@@ -17,7 +17,7 @@ using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-#define DEFAULT_FRAMES_TO_SKIP 0
+#define UPDATES_BEFORE_LOD 250
 
 static D3DTexture fireTexture;
 
@@ -26,27 +26,26 @@ void InitFireTexture(D3DGraphicsObject * d3dGraphicsObj) {
 }
 
 FluidSimulation::FluidSimulation() : 
-	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesSinceLastProcess(0), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP),
-	mTimeSinceProcessStart(0.0f)
+	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesSinceLastProcess(0),
+	mFluidUpdatesSinceStart(0)
 {
 	FluidSettings fluidSettings;
 	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
-	//fluidSettings.constantInputPosition = Vector3(0.5f,0,0);
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
 FluidSimulation::FluidSimulation(const FluidSettings &fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
-	mFramesSinceLastProcess(0), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP), mTimeSinceProcessStart(0.0f)
+	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
 {
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
 FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer), 
-	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesToSkip(DEFAULT_FRAMES_TO_SKIP),
-	mFramesSinceLastProcess(0), mTimeSinceProcessStart(0.0f)
+	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer),
+	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
+	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
 {
 
 }
@@ -75,24 +74,34 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND h
 		mVolumeRenderer->SetFireGradientTexture(fireTexture.GetTexture());
 	}
 
+	mLodData.SetObjectBoundingBox(mVolumeRenderer->bounds->GetBoundingBox());
+
 	return true;
 }
 
 bool FluidSimulation::Render(const ICamera &camera) {
 	mIsVisible = IsVisibleByCamera(camera);
 	if (mIsVisible && mRenderEnabled) {
+		mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
 		mVolumeRenderer->Render(camera);
 	}
 	return mIsVisible;
 }
 
-bool FluidSimulation::Update(float dt) {
+bool FluidSimulation::Update(float dt, const ICamera &camera) {
+	mLodData.CalculateOverallLOD(camera);
 	mVolumeRenderer->Update();
 
 	bool canUpdate = mUpdateEnabled;
 
-	if (canUpdate) {
-		canUpdate = mFramesToSkip <= 0 || mFramesSinceLastProcess > mFramesToSkip;
+	// do not do frame skipping until simulation has developed a bit
+	if (mFluidUpdatesSinceStart < UPDATES_BEFORE_LOD) {
+		mFluidUpdatesSinceStart++;
+	}
+	else {
+		if (canUpdate) {
+			canUpdate = mLodData.framesToSkip <= 0 || mFramesSinceLastProcess > mLodData.framesToSkip;
+		}
 	}
 
 	if (canUpdate) {
@@ -102,7 +111,6 @@ bool FluidSimulation::Update(float dt) {
 	else {
 		++mFramesSinceLastProcess;
 	}
-
 	return canUpdate;
 }
 
@@ -120,8 +128,9 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
 
 	// Add LOD settings
-	TwAddVarRW(pBar,"Frames to skip", TW_TYPE_INT32, &mFramesToSkip, "group=LOD min=0 max=10");
+	//TwAddVarRW(pBar,"LOD", LODData::GetLODDataTwType(), &mLodData, "");
 }
+
 
 bool FluidSimulation::IntersectsRay(const Ray &ray, float &distance) const {
 	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();

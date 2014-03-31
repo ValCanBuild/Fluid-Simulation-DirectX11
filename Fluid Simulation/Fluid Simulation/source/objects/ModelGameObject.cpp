@@ -20,8 +20,8 @@ ModelGameObject::ModelGameObject() {
 	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
 }
 
-ModelGameObject::ModelGameObject(std::unique_ptr<Model> model) :
-   mModel(std::unique_ptr<Model>(std::move(model)))
+ModelGameObject::ModelGameObject(std::shared_ptr<Model> model) :
+   mModel(model)
 {
 	transform = std::shared_ptr<Transform>(new Transform(this));
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));

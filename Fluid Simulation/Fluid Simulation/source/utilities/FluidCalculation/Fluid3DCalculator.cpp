@@ -26,6 +26,12 @@ using namespace Fluid3D;
 
 // Declare statics
 map<Vector3, CommonFluidResources> Fluid3DCalculator::commonResourcesMap;
+CComPtr<ID3D11SamplerState>	Fluid3DCalculator::sampleState;
+
+// Static methods
+void Fluid3DCalculator::AttachCommonResources(ID3D11DeviceContext* context) {
+	context->CSSetSamplers(0,1,&(sampleState.p));
+}
 
 Fluid3DCalculator::Fluid3DCalculator(const FluidSettings &fluidSettings) : pD3dGraphicsObj(nullptr), 
 	mFluidSettings(fluidSettings)
@@ -169,34 +175,36 @@ bool Fluid3DCalculator::InitBuffersAndSamplers() {
 		return false;
 	}
 
-	// Create the sampler
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 16;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	// Create the sampler if not already created
+	if (sampleState == nullptr) {
+		D3D11_SAMPLER_DESC samplerDesc;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+		samplerDesc.MipLODBias = 0.0f;
+		samplerDesc.MaxAnisotropy = 16;
+		samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		samplerDesc.BorderColor[0] = 0;
+		samplerDesc.BorderColor[1] = 0;
+		samplerDesc.BorderColor[2] = 0;
+		samplerDesc.BorderColor[3] = 0;
+		samplerDesc.MinLOD = 0;
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-	// Create the texture sampler state.
-	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(hresult)) {
-		return false;
+		// Create the texture sampler state.
+		HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &sampleState);
+		if(FAILED(hresult)) {
+			return false;
+		}
 	}
-
 	return true;
 }
 
 void Fluid3DCalculator::Process() {
-	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
-	context->CSSetSamplers(0,1,&(mSampleState.p));
+	auto context = pD3dGraphicsObj->GetDeviceContext();
+
+	context->CSSetSamplers(0,1,&(sampleState.p));
 
 	// Set the obstacle texture - it is constant throughout the execution step
 	context->CSSetShaderResources(4, 1, &(mFluidResources.obstacleSP.mSRV.p));
@@ -213,7 +221,7 @@ void Fluid3DCalculator::Process() {
 
 	// Advect the reaction field against velocity
 	if (mFluidSettings.GetFluidType() == FIRE) {
-		Advect(mFluidResources.reactionSP, NORMAL, 1.0f, mFluidSettings.reactionDecay);
+		Advect(mFluidResources.reactionSP, mFluidSettings.advectionType, 1.0f, mFluidSettings.reactionDecay);
 	}
 
 	// Advect velocity against itself
@@ -340,6 +348,7 @@ void Fluid3DCalculator::UpdateGeneralBuffer() {
 	dataPtr->fDensityBuoyancy = mFluidSettings.densityBuoyancy;
 	dataPtr->fDensityWeight	= mFluidSettings.densityWeight;
 	dataPtr->fVorticityStrength = mFluidSettings.vorticityStrength;
+	dataPtr->vBuoyancyDirection = mFluidSettings.buoyancyDirection;
 
 	context->Unmap(mInputBufferGeneral,0);
 }
@@ -401,7 +410,8 @@ int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) con
 
 	if (newSettings.timeStep != mFluidSettings.timeStep || newSettings.densityBuoyancy != mFluidSettings.densityBuoyancy
 		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions
-		|| newSettings.vorticityStrength != mFluidSettings.vorticityStrength)
+		|| newSettings.vorticityStrength != mFluidSettings.vorticityStrength
+		|| newSettings.buoyancyDirection != mFluidSettings.buoyancyDirection)
 	{
 		dirtyFlags |= BufferDirtyFlags::General;
 	}

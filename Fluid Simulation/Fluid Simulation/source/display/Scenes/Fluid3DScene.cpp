@@ -41,7 +41,7 @@ struct FluidSimulationDepthSort {
 };
 
 Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), 
-	pPickedSimulation(nullptr), mFireAngle(0.0f) {
+	pPickedSimulation(nullptr) {
 	
 }
 
@@ -103,13 +103,21 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	mSimulations.push_back(fluidSimulationSmoke);
 
 	FluidSettings fluidSettingsFire(FIRE);
-	fluidSettingsFire.dimensions = Vector3(64,32,64);
-	shared_ptr<FluidSimulation> fluidSimulationFire(new FluidSimulation(fluidSettingsFire));
-	shared_ptr<VolumeRenderer> volumeRendererFire = fluidSimulationFire->GetVolumeRenderer();
-	pFireTransform = volumeRendererFire->transform;
-	pFireTransform->scale = Vector3(1);
-	pFireTransform->position = Vector3(0,3.0f,0);
-	mSimulations.push_back(fluidSimulationFire);
+	fluidSettingsFire.dimensions = Vector3(32,64,32);
+	fluidSettingsFire.constantInputPosition = Vector3(0.5f,0.05f,0.5f);
+	// two fire simulations
+	for (int i = 0; i < 2; ++i) {
+		shared_ptr<FluidSimulation> fluidSimulationFire(new FluidSimulation(fluidSettingsFire));
+		shared_ptr<VolumeRenderer> volumeRendererFire = fluidSimulationFire->GetVolumeRenderer();
+		volumeRendererFire->transform->scale = Vector3(1,2,1);
+		float xPos = i == 0 ? 2.0f : -2.0f;
+		volumeRendererFire->transform->position = Vector3(xPos,2.76f,0);
+
+		auto smokeProperties = volumeRendererFire->GetSmokeProperties();
+		smokeProperties->vSmokeColor = RGBA2Color(40,40,40,255);
+
+		mSimulations.push_back(fluidSimulationFire);
+	}
 
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
@@ -146,11 +154,16 @@ void Fluid3DScene::InitGameObjects() {
 	mModelObjects.push_back(house);
 
 	// Campfire
-	fx.SetDirectory(L"data/models/campfire");
-	shared_ptr<ModelGameObject> campfire = unique_ptr<ModelGameObject>(new ModelGameObject(Model::CreateFromCMO(pD3dGraphicsObj->GetDevice(), L"data/models/campfire/campfire.cmo", fx, false)));
-	auto fireTransform = campfire->transform;
-	fireTransform->scale = Vector3(0.2f);
-	mModelObjects.push_back(campfire);
+	fx.SetDirectory(L"data/models/fountain");
+	shared_ptr<Model> fountainModel(move(Model::CreateFromCMO(pD3dGraphicsObj->GetDevice(), L"data/models/fountain/Fountain.cmo", fx, false)));
+	for (int i = 0; i < 2; ++i) {
+		shared_ptr<ModelGameObject> fountain = unique_ptr<ModelGameObject>(new ModelGameObject(fountainModel));
+		auto transform = fountain->transform;
+		transform->scale = Vector3(0.003f);
+		float xPos = i == 0 ? 2.0f : -2.0f;
+		transform->position = Vector3(xPos, 0, 0);
+		mModelObjects.push_back(fountain);
+	}
 
 	// Terrain
 	HeightMap heightMap = HeightmapParser::GenerateFromTGA("data/heightmap1.tga");
@@ -172,19 +185,14 @@ void Fluid3DScene::Update(float delta) {
 		modelObject->Update();
 	}
 
+	const ICamera &camera = *mCamera;
 	if (!mPaused) {
 		for (auto simulation : mSimulations) {
-			if (simulation->Update(delta)) {
+			if (simulation->Update(delta, camera)) {
 				++mNumFluidsUpdating;
 			}
 		}
 	}
-}
-
-void Fluid3DScene::UpdateFirePosition(float delta) {
-	mFireAngle += delta;
-	pFireTransform->position.x = cos(mFireAngle)*1.0f;
-	pFireTransform->position.z = -0.1f + sin(mFireAngle)*1.0f;
 }
 
 bool Fluid3DScene::Render() {

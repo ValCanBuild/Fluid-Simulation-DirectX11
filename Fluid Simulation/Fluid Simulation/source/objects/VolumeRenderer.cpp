@@ -12,7 +12,6 @@ Date: 19/2/2014
 #include "../system/ServiceProvider.h"
 #include "../display/D3DShaders/ShaderParams.h"
 #include "../utilities/ICamera.h"
-#include "../display/D3DShaders/FireRenderShader.h"
 #include "../utilities/FluidCalculation/FluidSettings.h"
 
 using namespace std;
@@ -42,7 +41,7 @@ VolumeRenderer::VolumeRenderer(const Vector3 &volumeSize) :
 	mVolumeSize(volumeSize), 
 	pD3dGraphicsObj(nullptr) 
 {
-	 
+	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultFireAbsorption, defaultNumSamples));
 }
 
 VolumeRenderer::~VolumeRenderer() {
@@ -69,7 +68,6 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 		return false;
 	}
 	
-	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultFireAbsorption, defaultNumSamples));
 	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
 	mVolumeRenderShader->SetTransform(*transform);
 
@@ -89,7 +87,7 @@ void VolumeRenderer::Render(const ICamera &camera) {
 	Vector3 camPos;
 	camera.GetPosition(camPos);
 
-	Matrix wvpMatrix = objectMatrix*camera.GetViewMatrix()*camera.GetProjectionMatrix();
+	Matrix wvpMatrix = objectMatrix*camera.GetViewProjectionMatrix();
 	mVolumeRenderShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
 	mVolumeRenderShader->SetTransform(*transform);
 
@@ -103,7 +101,7 @@ void VolumeRenderer::Render(const ICamera &camera) {
 		{
 			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
 			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
-			
+
 			context->OMSetBlendState(blendState, nullptr, 0xFFFFFFFF);
 			context->RSSetState(rasterizeState);
 		}
@@ -139,4 +137,15 @@ void VolumeRenderer::RefreshSmokeProperties() {
 
 void __stdcall VolumeRenderer::SetSmokePropertiesCallback(void *clientData) {
 	static_cast<VolumeRenderer *>(clientData)->RefreshSmokeProperties();
+}
+
+std::shared_ptr<SmokeProperties> VolumeRenderer::GetSmokeProperties() const {
+	return mSmokeProperties;
+}
+
+void VolumeRenderer::SetNumRenderSamples(int numSamples) {
+	if (numSamples != mSmokeProperties->iNumSamples) {
+		mSmokeProperties->iNumSamples = numSamples;
+		RefreshSmokeProperties();
+	}
 }

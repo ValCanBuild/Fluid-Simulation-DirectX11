@@ -34,8 +34,11 @@ public:
 
 	const Matrix &GetProjectionMatrix() const;
 	const Matrix &GetViewMatrix() const;
+	const Matrix &GetViewProjectionMatrix() const;
+	float GetFieldOfView() const;
 	void GetProjectionMatrix(Matrix& projMatrix) const;
 	void GetViewMatrix(Matrix& viewMatrix) const;
+	void GetViewProjectionMatrix(Matrix& viewProjMatrix) const;
 	void GetRotationMatrix(Matrix& rotationMatrix) const;
 
 	Ray  ScreenPointToRay(Vector2 position) const;
@@ -49,12 +52,14 @@ private:
 private:
 	Matrix mProjectionMatrix;
 	Matrix mViewMatrix;
+	Matrix mViewProjectionMatrix;
 
 	DirectX::BoundingFrustum mBoundingFrustum;
 	DirectX::BoundingFrustum mUntransformedFrustum;
 
 	Matrix mRotationMatrix;
 
+	float mFieldOfView;
 	float mYaw, mPitch, mRoll;
 	Vector3 mPosition, mLookAt, mUp, mRight;
 	const Vector3 mDefaultUp, mDefaultLookAt, mDefaultRight;

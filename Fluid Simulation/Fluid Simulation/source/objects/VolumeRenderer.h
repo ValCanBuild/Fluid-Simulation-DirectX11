@@ -15,11 +15,10 @@ Date: 19/2/2014
 #include <memory>
 #include "../utilities/AtlInclude.h"
 #include "../display/D3DGraphicsObject.h"
+#include "../display/D3DShaders/FireRenderShader.h"
 
 class ICamera;
-class SmokeRenderShader;
 struct CTwBar;
-struct SmokeProperties;
 
 enum  FluidType_t;
 
@@ -41,7 +40,8 @@ public:
 	void SetFireGradientTexture(ID3D11ShaderResourceView *gradientTexSRV);
 
 	void DisplayRenderInfoOnBar(CTwBar * const pBar);
-
+	void SetNumRenderSamples(int numSamples);
+	std::shared_ptr<SmokeProperties> GetSmokeProperties() const;
 private:
 	static void __stdcall SetSmokePropertiesCallback(void *clientData);
 	void RefreshSmokeProperties();
@@ -53,7 +53,7 @@ private:
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
-	std::unique_ptr<SmokeProperties>		mSmokeProperties;
+	std::shared_ptr<SmokeProperties>		mSmokeProperties;
 	std::unique_ptr<SmokeRenderShader>		mVolumeRenderShader;
 	std::shared_ptr<DirectX::CommonStates>	pCommonStates;	
 };

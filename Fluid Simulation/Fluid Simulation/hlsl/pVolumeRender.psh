@@ -72,42 +72,7 @@ float SampleReaction(float3 uv) {
 	return reactionValues.SampleLevel(linearSampler, uv, 0);
 }
 
-float SampleBilinear(float3 uv) {
-	// Get the dimensions of the volume domain
-	uint3 vDimensions;
-	volumeValues.GetDimensions(vDimensions.x, vDimensions.y, vDimensions.z);
-
-	uv = saturate(uv);
-	uv = uv * (vDimensions - 1.0f);
-	
-	int x = uv.x;
-	int y = uv.y;
-	int z = uv.z;
-	
-	float fx = uv.x-x;
-	float fy = uv.y-y;
-	float fz = uv.z-z;
-	
-	int xp1 = min(vDimensions.x-1, x+1);
-	int yp1 = min(vDimensions.y-1, y+1);
-	int zp1 = min(vDimensions.z-1, z+1);
-
-	float x0 = volumeValues[uint3(x,y,z)] * (1.0f - fx) + volumeValues[uint3(xp1,y,z)] * fx;
-	float x1 = volumeValues[uint3(x,y,zp1)] * (1.0f - fx) + volumeValues[uint3(xp1,y,zp1)] * fx;
-
-	float x2 = volumeValues[uint3(x,yp1,z)] * (1.0f  -fx) + volumeValues[uint3(xp1,yp1,z)] * fx;
-	float x3 = volumeValues[uint3(x,yp1,zp1)] * (1.0f - fx) + volumeValues[uint3(xp1,yp1,zp1)] * fx;
-
-	float z0 = x0 * (1.0f - fz) + x1 * fz;
-	float z1 = x2 * (1.0f - fz) + x3 * fz;
-
-	return z0 * (1.0f - fy) + z1 * fy;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Pixel Shader
-////////////////////////////////////////////////////////////////////////////////
-float4 SmokeVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+void CommonCalculations(PixelInputType input, out float3 start, out float3 stepVector, out float stepSize) {
 	float3 pos = vEyePos;
 
 	Ray r;
@@ -137,10 +102,20 @@ float4 SmokeVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	rayStart = (rayStart + halfScale) / vScale;
 	rayStop = (rayStop + halfScale) / vScale;
 
-	float3 start = rayStart;
 	float dist = distance(rayStop, rayStart);
-	float stepSize = dist / float(iNumSamples);
-	float3 ds = normalize(rayStop - rayStart) * stepSize;
+	stepSize = dist / float(iNumSamples);
+	start = rayStart;
+	stepVector = normalize(rayStop - rayStart) * stepSize;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shaders
+////////////////////////////////////////////////////////////////////////////////
+float4 SmokeVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+	float3 start, ds;
+	float stepSize;
+	CommonCalculations(input, start, ds, stepSize);
+
 	float alpha = 1.0f;
 
 	for(int i = 0; i < iNumSamples; ++i, start += ds) {	 
@@ -156,39 +131,10 @@ float4 SmokeVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 }
 
 float4 FireVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
-	float3 pos = vEyePos;
+	float3 start, ds;
+	float stepSize;
+	CommonCalculations(input, start, ds, stepSize);
 
-	Ray r;
-	r.origin = pos;
-	r.dir = normalize(input.worldPosition - pos);
-
-	AABB aabb;
-	aabb.Min = float3(-0.5f, -0.5f, -0.5f) * vScale + vTranslate;
-	aabb.Max = float3(0.5f, 0.5f, 0.5f) * vScale + vTranslate;
-
-	//figure out where ray from eye hit front of cube
-	float tnear, tfar;
-	IntersectBox(r, aabb, tnear, tfar);
-
-	//if eye is in cube then start ray at eye
-	if (tnear < 0.0f) {
-		tnear = 0.0f;
-	}
-
-	float3 rayStart = r.origin + r.dir * tnear;
-	float3 rayStop = r.origin + r.dir * tfar;
-
-	//convert to texture space
-	rayStart -= vTranslate;
-	rayStop -= vTranslate;
-	float3 halfScale = 0.5f * vScale;
-	rayStart = (rayStart + halfScale) / vScale;
-	rayStop = (rayStop + halfScale) / vScale;
-
-	float3 start = rayStart;
-	float dist = distance(rayStop, rayStart);
-	float stepSize = dist / float(iNumSamples);
-	float3 ds = normalize(rayStop - rayStart) * stepSize;
 	float smokeAlpha = 1.0f;
 	float fireAlpha = 1.0f;
 

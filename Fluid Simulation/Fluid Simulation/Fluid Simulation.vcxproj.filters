@@ -118,9 +118,6 @@
     <Filter Include="Models\house">
       <UniqueIdentifier>{47f5224d-1139-4e02-91d2-1511a96cad55}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Models\campfire">
-      <UniqueIdentifier>{264db9fc-8699-47c8-af38-c4320cb7f767}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Utilities\Heightmap">
       <UniqueIdentifier>{9929f503-dae6-47ed-82db-fae6e79e9058}</UniqueIdentifier>
     </Filter>
@@ -141,6 +138,9 @@
     </Filter>
     <Filter Include="Source Files\Utilities\FluidCalculation\Fluid2D">
       <UniqueIdentifier>{d603e68b-427f-4841-86a7-e01da90d8566}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\fountain">
+      <UniqueIdentifier>{57ade616-c096-4062-960f-b32af383c614}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -296,6 +296,9 @@
     </ClCompile>
     <ClCompile Include="source\display\D3DShaders\SmokeRenderShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\simulations\LODData.cpp">
+      <Filter>Source Files\Display\Simulations</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -500,6 +503,9 @@
     <ClInclude Include="source\display\D3DShaders\SmokeRenderShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
+    <ClInclude Include="source\display\simulations\LODData.h">
+      <Filter>Header Files\Display\Simulations</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\cWaveEquation.hlsl">
@@ -557,28 +563,16 @@
     <MeshContentTask Include="data\models\house\English_thatched_house.FBX">
       <Filter>Models\house</Filter>
     </MeshContentTask>
-    <MeshContentTask Include="data\models\campfire\campfire.fbx">
-      <Filter>Models\campfire</Filter>
+    <MeshContentTask Include="data\models\fountain\Fountain.fbx">
+      <Filter>Models\fountain</Filter>
     </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
-    <ImageContentTask Include="data\models\campfire\bark_1.jpg">
-      <Filter>Models\campfire</Filter>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\rock_1.jpg">
-      <Filter>Models\campfire</Filter>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\rock_2.jpg">
-      <Filter>Models\campfire</Filter>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\rock_4.jpg">
-      <Filter>Models\campfire</Filter>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\wood_stump.jpg">
-      <Filter>Models\campfire</Filter>
-    </ImageContentTask>
     <ImageContentTask Include="data\models\house\english_house_texture.bmp">
       <Filter>Models\house</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\fountain\wmarble.jpg">
+      <Filter>Models\fountain</Filter>
     </ImageContentTask>
   </ItemGroup>
 </Project>

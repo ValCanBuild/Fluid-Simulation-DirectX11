@@ -13,6 +13,7 @@ Date: 3/3/2014
 #include "../../utilities/AtlInclude.h"
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/FluidCalculation/FluidSettings.h"
+#include "LODData.h"
 
 class VolumeRenderer;
 class ICamera;
@@ -36,7 +37,7 @@ public:
 	bool Render(const ICamera &camera);
 
 	// Returns true if this simulation is updated and false if it wasn't
-	bool Update(float dt);
+	bool Update(float dt, const ICamera &camera);
 
 	void DisplayInfoOnBar(CTwBar * const pBar);
 	bool IntersectsRay(const Ray &ray, float &distance) const;
@@ -52,14 +53,16 @@ private:
 	std::unique_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
 	std::shared_ptr<VolumeRenderer> mVolumeRenderer;
 
-	// track the time since the Process function was last called on the FluidCalculator
-	int mFramesSinceLastProcess;
-	int mFramesToSkip;
-	float mTimeSinceProcessStart;
 	bool mUpdateEnabled;
 	bool mRenderEnabled;
-	//bool mRender
 	bool mIsVisible;
+
+// LOD Values
+private:
+	LODData mLodData;
+
+	int mFluidUpdatesSinceStart;
+	int mFramesSinceLastProcess;
 };
 
 #endif

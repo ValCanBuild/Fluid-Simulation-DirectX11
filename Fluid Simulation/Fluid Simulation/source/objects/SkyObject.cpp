@@ -49,7 +49,7 @@ void SkyObject::Render(const ICamera &camera) {
 	Matrix objectMatrix;
 	transform->GetTransformMatrixQuaternion(objectMatrix);
 
-	Matrix wvpMatrix = objectMatrix*camera.GetViewMatrix()*camera.GetProjectionMatrix();
+	Matrix wvpMatrix = objectMatrix*camera.GetViewProjectionMatrix();
 	mSkyShader->SetVertexBufferValues(wvpMatrix, objectMatrix);
 
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();

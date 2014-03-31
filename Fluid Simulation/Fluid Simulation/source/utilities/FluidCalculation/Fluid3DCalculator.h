@@ -38,6 +38,9 @@ public:
 	bool Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd);
 	void Process();
 
+	// before computing all fluids, attach the resources they all share to the pipeline
+	static void AttachCommonResources(ID3D11DeviceContext* context);
+
 	ID3D11ShaderResourceView * GetVolumeTexture() const;
 	// If simulating fire - get the reaction values texture
 	ID3D11ShaderResourceView * GetReactionTexture() const;
@@ -86,12 +89,12 @@ private:
 	// Resources that can be shared between simulations are mapped by a Vector3 holding the size of the domain
 	// If fluid calculation domains are of the same size, they can share the same common resources
 	static std::map<Vector3, CommonFluidResources> commonResourcesMap;
+	static CComPtr<ID3D11SamplerState>		sampleState;
 
 
 	CComPtr<ID3D11Buffer>					mInputBufferGeneral;
 	CComPtr<ID3D11Buffer>					mInputBufferImpulse;
 	CComPtr<ID3D11Buffer>					mInputBufferAdvection;
-	CComPtr<ID3D11SamplerState>				mSampleState;
 };
 
 }

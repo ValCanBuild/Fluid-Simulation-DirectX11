@@ -14,7 +14,7 @@ Date: 3/3/2014
 
 // Default parameters
 #define DIMENSION 64.0f
-#define TIME_STEP 0.125f
+#define TIME_STEP 0.1f
 #define CONSTANT_INPUT_RADIUS 0.1f // as a percentage of total size
 #define INTERACTION_IMPULSE_RADIUS 7.0f
 #define OBSTACLES_IMPULSE_RADIUS 5.0f
@@ -60,6 +60,7 @@ struct FluidSettings {
 	float constantInputRadius;
 	float vorticityStrength;
 	Vector3 constantInputPosition;	// location of permanent density and temperature input as % of dimensions
+	Vector3 buoyancyDirection; // default is 0,1,0
 
 	// fire only settings
 	float constantReactionAmount;

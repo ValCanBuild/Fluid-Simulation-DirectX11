@@ -118,6 +118,7 @@
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
     <ClCompile Include="source\display\simulations\FluidSimulation.cpp" />
+    <ClCompile Include="source\display\simulations\LODData.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\objects\BaseD3DBody.cpp" />
     <ClCompile Include="source\objects\Bounds.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="source\display\Scenes\IScene.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
     <ClInclude Include="source\display\simulations\FluidSimulation.h" />
+    <ClInclude Include="source\display\simulations\LODData.h" />
     <ClInclude Include="source\objects\BaseD3DBody.h" />
     <ClInclude Include="source\objects\Bounds.h" />
     <ClInclude Include="source\objects\BoxCollider.h" />
@@ -302,41 +304,23 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <MeshContentTask Include="data\models\campfire\campfire.fbx">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).cmo</ContentOutput>
+    <MeshContentTask Include="data\models\fountain\Fountain.fbx">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/fountain/%(Filename).cmo</ContentOutput>
     </MeshContentTask>
     <MeshContentTask Include="data\models\house\English_thatched_house.FBX">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/house/%(Filename).cmo</ContentOutput>
     </MeshContentTask>
   </ItemGroup>
   <ItemGroup>
-    <ImageContentTask Include="data\models\campfire\bark_1.jpg">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
-      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\rock_1.jpg">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
-      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\rock_2.jpg">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
-      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
-    </ImageContentTask>
-    <ImageContentTask Include="data\models\campfire\rock_4.jpg">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
-      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
-    </ImageContentTask>
-  </ItemGroup>
-  <ItemGroup>
-    <ImageContentTask Include="data\models\campfire\wood_stump.jpg">
-      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/campfire/%(Filename).dds</ContentOutput>
-      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
-    </ImageContentTask>
-  </ItemGroup>
-  <ItemGroup>
     <ImageContentTask Include="data\models\house\english_house_texture.bmp">
       <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/house/%(Filename).dds</ContentOutput>
       <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\fountain\wmarble.jpg">
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/fountain/%(Filename).dds</ContentOutput>
     </ImageContentTask>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
