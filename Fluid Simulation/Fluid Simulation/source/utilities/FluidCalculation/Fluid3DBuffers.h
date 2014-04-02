@@ -32,9 +32,8 @@ namespace Fluid3D {
 	struct InputBufferImpulse {
 		Vector3 vPoint;				
 		float fRadius;
-		float fAmount;
+		Vector3 vAmount;
 		float fExtinguishment;
-		Vector2 padding2;	
 	};
 }
 

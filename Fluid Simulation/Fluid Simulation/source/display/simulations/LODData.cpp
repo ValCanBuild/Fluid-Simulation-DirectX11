@@ -47,7 +47,7 @@ void LODData::CalculateOverallLOD(const ICamera &camera) {
 
 	if (partOfScreen == 0.0f) {
 		framesToSkip = maxFramesToSkip;
-		numSamples = 0;
+		//numSamples = 0;
 	}
 	else {
 

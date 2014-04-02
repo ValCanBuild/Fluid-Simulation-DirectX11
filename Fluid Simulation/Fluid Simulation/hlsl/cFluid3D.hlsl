@@ -34,9 +34,9 @@ cbuffer InputBufferAdvection : register (b1) {
 cbuffer InputBufferImpulse : register (b2) {
 	float3 vPoint;				// Used for ImpulseComputeShader
 	float  fRadius;				// Used for ImpulseComputeShader
-	float  fAmount;				// Used for ImpulseComputeShader
+	float3 vAmount;				// Used for ImpulseComputeShader
 	float  fExtinguishment;		// Used for ExtinguishmentImpulseComputeShader
-	float2 padding2;			// pad to 32 bytes
+	// 32 bytes //
 }
 
 
@@ -69,11 +69,11 @@ RWTexture3D<float> pressureResult : register (u0); // Used for JacobiComputeShad
 
 RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader, ConfinementComputeShader
 
-Texture3D<float4>  obstacles : register (t4); // DivergenceComputeShader, AdvectComputeShader, AdvectBackwardComputeShader, ConfinementComputeShader, JacobiComputeShader, SubtractGradientComputeShader, AdvectMacCormackComputeShader
-RWTexture3D<float4>  obstaclesResult : register (u0); // Used for ObstacleComputeShader
+Texture3D<int>  obstacles : register (t4); // DivergenceComputeShader, AdvectComputeShader, AdvectBackwardComputeShader, ConfinementComputeShader, JacobiComputeShader, SubtractGradientComputeShader, AdvectMacCormackComputeShader
+RWTexture3D<int>  obstaclesResult : register (u0); // Used for ObstacleComputeShader
 
 
-uint3 GetDimensionsFloat4RW(RWTexture3D<float4> tex) {
+uint3 GetDimensionsIntRW(RWTexture3D<int> tex) {
 	uint3 dimensions;
 	tex.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
 	return dimensions;
@@ -92,11 +92,11 @@ uint3 GetDimensionsFloat(Texture3D<float> tex) {
 }
 
 bool IsObstacleCell (uint3 pos) {
-	return obstacles[pos].a > 0.0f;
+	return obstacles[pos] > 0;
 }
 
 float3 GetObstacleVelocity (uint3 pos) {
-	return obstacles[pos].xyz;
+	return float3(0,0,0);
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
@@ -196,7 +196,7 @@ void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
 	mag *= mag;
 	float rad2 = fRadius*fRadius;
 
-	float amount = exp(-mag/rad2) * fAmount * fTimeStep;
+	float3 amount = exp(-mag/rad2) * vAmount * fTimeStep;
 	impulseResult[i] = impulseInitial[i] + amount;
 }
 
@@ -207,7 +207,7 @@ void ExtinguishmentImpulseComputeShader(uint3 i : SV_DispatchThreadID) {
 	
 	// can this be optimized?
 	if (reactionAmount > 0.0f && reactionAmount < fExtinguishment) {
-		amount = fAmount * reactionAmount;
+		amount = vAmount.r * reactionAmount;
 	}
 	impulseResult[i] = impulseInitial[i] + amount;
 }
@@ -397,7 +397,7 @@ void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void ObstaclesComputeShader( uint3 i : SV_DispatchThreadID ) {
-	uint3 dimensions = GetDimensionsFloat4RW(obstaclesResult);
+	uint3 dimensions = GetDimensionsIntRW(obstaclesResult);
 
 	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
 	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
@@ -406,7 +406,7 @@ void ObstaclesComputeShader( uint3 i : SV_DispatchThreadID ) {
 	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
 	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
 
-	float obstacle = 0.0f;
+	int obstacle = 0;
 
 	if(i.x-1 < 0) obstacle = 1;
 	if(i.x+1 > (int)dimensions.x-1) obstacle = 1;
@@ -423,6 +423,5 @@ void ObstaclesComputeShader( uint3 i : SV_DispatchThreadID ) {
 	//if (distance(center, i) <= radius)
 	//	obstacle = 1;
 
-	// rgb stores velocity, a stores whether there is an obstacle or not
-	obstaclesResult[i] = float4(0,0,0,obstacle);
+	obstaclesResult[i] = obstacle;
 }

@@ -30,6 +30,12 @@ class BuoyancyShader;
 class VorticityShader;
 class ConfinementShader;
 
+struct ExtraForce {
+	Vector3 position;
+	float radius;
+	Vector3 amount;
+};
+
 class Fluid3DCalculator {
 public:
 	Fluid3DCalculator(const FluidSettings &fluidSettings);
@@ -37,6 +43,8 @@ public:
 
 	bool Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd);
 	void Process();
+
+	void AddForce(const ExtraForce& force);
 
 	// before computing all fluids, attach the resources they all share to the pipeline
 	static void AttachCommonResources(ID3D11DeviceContext* context);
@@ -55,6 +63,7 @@ private:
 
 	void Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation, float decay = 0.0f);
 	void RefreshConstantImpulse();
+	void ApplyExtraForces();
 	void ApplyImpulse(std::array<ShaderParams, 2> &target, Vector3 &position, float amount, float radius);
 	void ApplyBuoyancy();
 	void ComputeVorticityConfinement();
@@ -62,13 +71,17 @@ private:
 
 	void UpdateAdvectionBuffer(float dissipation, float timeModifier, float decay);
 	void UpdateGeneralBuffer();
-	void UpdateImpulseBuffer(const Vector3& point, float amount, float radius, float extinguishment = 0.0f);
+	void UpdateImpulseBuffer1D(const Vector3& point, float amount, float radius, float extinguishment = 0.0f);
+	void UpdateImpulseBuffer3D(const Vector3& point, const Vector3& amount, float radius, float extinguishment = 0.0f);
 
 	int  GetUpdateDirtyFlags(const FluidSettings &newSettings) const;
+
 private:
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	FluidSettings mFluidSettings;
+	ExtraForce mExtraVelocityForce;
+	bool mExtraVelocityAdded;
 
 	std::unique_ptr<AdvectionShader>				mAdvectionShader;
 	std::unique_ptr<AdvectionShader>				mMacCormarckAdvectionShader;

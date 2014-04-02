@@ -6,6 +6,7 @@ Author:	Valentin Hinov
 Date: 18/2/2014
 *********************************************************************/
 
+
 #include "Fluid3DCalculator.h"
 #include "Fluid3DShaders.h"
 #include "Fluid3DBuffers.h"
@@ -34,7 +35,7 @@ void Fluid3DCalculator::AttachCommonResources(ID3D11DeviceContext* context) {
 }
 
 Fluid3DCalculator::Fluid3DCalculator(const FluidSettings &fluidSettings) : pD3dGraphicsObj(nullptr), 
-	mFluidSettings(fluidSettings)
+	mFluidSettings(fluidSettings), mExtraVelocityAdded(false)
 {
 
 }
@@ -201,6 +202,11 @@ bool Fluid3DCalculator::InitBuffersAndSamplers() {
 	return true;
 }
 
+void Fluid3D::Fluid3DCalculator::AddForce(const ExtraForce& force) {
+	mExtraVelocityForce = force;
+	mExtraVelocityAdded = true;
+}
+
 void Fluid3DCalculator::Process() {
 	auto context = pD3dGraphicsObj->GetDeviceContext();
 
@@ -234,6 +240,9 @@ void Fluid3DCalculator::Process() {
 	// Add a constant amount of density and temperature back into the system
 	RefreshConstantImpulse();
 
+	// If there are any extra forces - add them here
+	ApplyExtraForces();
+
 	// Try to preserve swirling movement of the fluid by injecting vorticity back into the system
 	ComputeVorticityConfinement();
 
@@ -245,6 +254,8 @@ void Fluid3DCalculator::Process() {
 	//Use the pressure texture that was last computed. This computes divergence free velocity
 	mSubtractGradientShader->Compute(context, &mFluidResources.velocitySP[READ], &mCommonResources.pressureSP[READ], &mFluidResources.velocitySP[WRITE]);
 	std::swap(mFluidResources.velocitySP[READ], mFluidResources.velocitySP[WRITE]);
+
+	mExtraVelocityAdded = false;
 }
 
 void Fluid3DCalculator::Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation, float decay) {
@@ -288,7 +299,7 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 		ApplyImpulse(mFluidResources.reactionSP, impulsePos, mFluidSettings.constantReactionAmount, inputRadius);
 
 		// Smoke forms as fire is extinguished
-		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius, mFluidSettings.reactionExtinguishment);
+		UpdateImpulseBuffer1D(impulsePos, mFluidSettings.constantDensityAmount, inputRadius, mFluidSettings.reactionExtinguishment);
 		mExtinguishmentImpulseShader->Compute(context, &mFluidResources.reactionSP[READ], &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
 		swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
 		break;
@@ -297,9 +308,19 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 	ApplyImpulse(mFluidResources.temperatureSP, impulsePos, mFluidSettings.constantTemperature, inputRadius);
 }
 
+void Fluid3DCalculator::ApplyExtraForces() {
+	if (mExtraVelocityAdded) {
+		Vector3 impulsePos = mFluidSettings.dimensions * mExtraVelocityForce.position;
+		auto context = pD3dGraphicsObj->GetDeviceContext();
+		UpdateImpulseBuffer3D(impulsePos, mExtraVelocityForce.amount, mExtraVelocityForce.radius);
+		mImpulseShader->Compute(context, &mFluidResources.velocitySP[READ], &mFluidResources.velocitySP[WRITE]);
+		swap(mFluidResources.velocitySP[READ], mFluidResources.velocitySP[WRITE]);
+	}
+}
+
 void Fluid3DCalculator::ApplyImpulse(std::array<ShaderParams, 2> &target, Vector3 &position, float amount, float radius) {
 	auto context = pD3dGraphicsObj->GetDeviceContext();
-	UpdateImpulseBuffer(position, amount, radius);
+	UpdateImpulseBuffer1D(position, amount, radius);
 	mImpulseShader->Compute(context, &target[READ], &target[WRITE]);
 	swap(target[READ], target[WRITE]);
 }
@@ -373,7 +394,11 @@ void Fluid3DCalculator::UpdateAdvectionBuffer(float dissipation, float timeModif
 	context->Unmap(mInputBufferAdvection,0);
 }
 
-void Fluid3DCalculator::UpdateImpulseBuffer(const Vector3& point, float amount, float radius, float extinguishment) {
+void Fluid3DCalculator::UpdateImpulseBuffer1D(const Vector3& point, float amount, float radius, float extinguishment) {
+	UpdateImpulseBuffer3D(point, Vector3(amount, 0, 0), radius, extinguishment);
+}
+
+void Fluid3DCalculator::UpdateImpulseBuffer3D(const Vector3& point, const Vector3& amount, float radius, float extinguishment) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	InputBufferImpulse* dataPtr;
 
@@ -388,7 +413,7 @@ void Fluid3DCalculator::UpdateImpulseBuffer(const Vector3& point, float amount, 
 	dataPtr = (InputBufferImpulse*)mappedResource.pData;
 	dataPtr->vPoint				= point;
 	dataPtr->fRadius			= radius;	
-	dataPtr->fAmount			= amount;
+	dataPtr->vAmount			= amount;
 	dataPtr->fExtinguishment	= extinguishment;
 
 	context->Unmap(mInputBufferImpulse,0);

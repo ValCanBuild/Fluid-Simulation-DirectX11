@@ -114,30 +114,17 @@ bool FluidSimulation::Update(float dt, const ICamera &camera) {
 	return canUpdate;
 }
 
-void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
-	TwAddVarRW(pBar,"Update", TW_TYPE_BOOLCPP, &mUpdateEnabled, nullptr);
-	TwAddVarRW(pBar,"Render", TW_TYPE_BOOLCPP, &mRenderEnabled, nullptr);
-
-	FluidSettings *settings = mFluidCalculator->GetFluidSettingsPointer();
-
-	// Add fluid calculator settings
-	TwAddVarCB(pBar,"Simulation", settings->GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
-	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
-
-	// Add volume renderer settings
-	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
-
-	// Add LOD settings
-	TwAddVarRW(pBar,"LOD", LODData::GetLODDataTwType(), &mLodData, "");
-}
-
 void FluidSimulation::FluidInteraction(const Ray &ray) {
 	float distance = 0.0f;
 	if (IntersectsRay(ray, distance)) {
 		Vector3 localPos = GetLocalIntersectPosition(ray, distance);
 		// the value of local pos is anywhere between (-0.5,-0.5,-0.5) to (0.5, 0.5, 0.5)
 		// for fluid interaction this needs to be in the range of (0,0,0) to (1,1,1)
-		//mFluidCalculator->extraInputPosition = localPos + Vector3(0.5f);
+		ExtraForce velocityForce;
+		velocityForce.position = localPos + Vector3(0.5f);
+		velocityForce.radius = 20.0f;
+		velocityForce.amount = ray.direction*50.0f;
+		mFluidCalculator->AddForce(velocityForce);
 	}
 }
 
@@ -163,7 +150,6 @@ bool FluidSimulation::IsVisibleByCamera(const ICamera &camera) const {
 	return cType != DISJOINT;
 }
 
-
 std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
 	return mVolumeRenderer;
 }
@@ -172,6 +158,23 @@ std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
 //////////////////////////////////////////////////////////////////////////
 // ANTTWEAK BAR METHODS
 //////////////////////////////////////////////////////////////////////////
+void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
+	TwAddVarRW(pBar,"Update", TW_TYPE_BOOLCPP, &mUpdateEnabled, nullptr);
+	TwAddVarRW(pBar,"Render", TW_TYPE_BOOLCPP, &mRenderEnabled, nullptr);
+
+	FluidSettings *settings = mFluidCalculator->GetFluidSettingsPointer();
+
+	// Add fluid calculator settings
+	TwAddVarCB(pBar,"Simulation", settings->GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
+	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
+
+	// Add volume renderer settings
+	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
+
+	// Add LOD settings
+	TwAddVarRW(pBar,"LOD", LODData::GetLODDataTwType(), &mLodData, "");
+}
+
 void TW_CALL FluidSimulation::GetFluidSettings(void *value, void *clientData) {
 	*static_cast<FluidSettings *>(value) = static_cast<const Fluid3DCalculator *>(clientData)->GetFluidSettings();
 }

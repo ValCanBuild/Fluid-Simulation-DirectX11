@@ -116,6 +116,7 @@ FluidResourcesPerObject FluidResourcesPerObject::CreateResourcesSmoke(ID3D11Devi
 
 	// Create the obstacle shader params
 	CComPtr<ID3D11Texture3D> obstacleText;
+	textureDesc.Format = DXGI_FORMAT_R8_SINT;
 	HRESULT hresult = device->CreateTexture3D(&textureDesc, NULL, &obstacleText);
 	if (FAILED(hresult)) {
 		MessageBox(hwnd, L"Could not create the obstacle Texture Object", L"Error", MB_OK);
