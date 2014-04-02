@@ -9,31 +9,35 @@ Version: 1.0
 #ifndef _SERVICEPROVIDER_H_
 #define _SERVICEPROVIDER_H_
 
+#include <memory>
 #include "InputSystem.h"
-#include "GraphicsSystem.h"
+#include "IGraphicsSystem.h"
+#include "../utilities/AppTimer/IAppTimer.h"
 
 class ServiceProvider {
 public:		
 	static ServiceProvider& Instance() {
 		// Lazy initialize.
 		if (mSingleton == nullptr)
-			mSingleton = new ServiceProvider();
+			mSingleton = std::unique_ptr<ServiceProvider>(new ServiceProvider());
 
 		return *mSingleton;
 	}
 
-	void Initialize(InputSystem* inputSystem, GraphicsSystem* graphicsSystem) {
+	void Initialize(InputSystem* inputSystem, IGraphicsSystem* graphicsSystem, IAppTimer* appTimer) {
 		if (mInitialized)
 			return;
 
 		pInputSystem = inputSystem;
 		pGraphicsSystem = graphicsSystem;
+		pAppTimer = appTimer;
 
 		mInitialized = true;
 	}
 
-	InputSystem* GetInputSystem() { return pInputSystem; };
-	GraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; };
+	InputSystem* GetInputSystem() { return pInputSystem; }
+	IGraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; }
+	IAppTimer* GetAppTimer() { return pAppTimer; }
 
 	~ServiceProvider() {
 		pInputSystem = nullptr;
@@ -44,10 +48,11 @@ private:
 	ServiceProvider() {mInitialized = false;}
 	
 private:
-	static ServiceProvider *mSingleton;
+	static std::unique_ptr<ServiceProvider> mSingleton;
 	bool mInitialized;
 	InputSystem* pInputSystem;
-	GraphicsSystem* pGraphicsSystem;
+	IGraphicsSystem* pGraphicsSystem;
+	IAppTimer* pAppTimer;
 };
 
 #endif

@@ -15,12 +15,14 @@ public:
 	TextureShader();
 	~TextureShader();
 
-	void PrepareForRender(ID3D11DeviceContext* context, ID3D11ShaderResourceView* texture, const Matrix *wvpMatrix);
-	bool Render(ID3D11DeviceContext* context, int indexCount);
+	void SetTexture(ID3D11ShaderResourceView *texture);
+	void SetVertexBufferValues(ID3D11DeviceContext* context, const Matrix &wvpMatrix) const;
+	void Render(ID3D11DeviceContext* context, int indexCount);
 
 private:
 	ShaderDescription GetShaderDescription();
 	bool SpecificInitialization(ID3D11Device* device);
+	void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) override;
 
 	struct InputBuffer {
 		Matrix wvpMatrix;
@@ -28,6 +30,8 @@ private:
 
 	CComPtr<ID3D11Buffer>		mInputBuffer;
 	CComPtr<ID3D11SamplerState> mSampleState;
+	ID3D11ShaderResourceView *  pTexture;
+
 };
 
 #endif

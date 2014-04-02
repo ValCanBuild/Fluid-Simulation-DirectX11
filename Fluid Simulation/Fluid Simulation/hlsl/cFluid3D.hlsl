@@ -9,29 +9,34 @@ Date: 09/11/2013
 ***************************************************************/
 #pragma warning(disable : 3203)	// disable signed/unsigned mismatch warning
 
-#define NUM_THREADS_X 16
-#define NUM_THREADS_Y 4
-#define NUM_THREADS_Z 4
+#define NUM_THREADS_X 8
+#define NUM_THREADS_Y 8
+#define NUM_THREADS_Z 8
 
 // Constant buffers
 cbuffer InputBufferGeneral : register (b0) {
 	float fTimeStep;			// Used for AdvectComputeShader, BuoyancyComputeShader	
 	float fDensityBuoyancy;		// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
-	float fAmbientTemperature;  // Used for BuoyancyComputeShader
-	// 16 bytes //
+	float fVorticityStrength;  // Used for VorticityComputeShader
+	float3 vBuoyancyDirection; // Used for BuoyancyComputeShader
+	float padding0;
+	// 32 bytes //
 };
 
-cbuffer InputBufferDissipation : register (b1) {
+cbuffer InputBufferAdvection : register (b1) {
 	float fDissipation;			// Used for AdvectComputeShader
-	float3 padding1;			// pad to 16 bytes
+	float fTimeStepModifier;
+	float fDecay;
+	float padding1;				// pad to 16 bytes
 }
 
 cbuffer InputBufferImpulse : register (b2) {
 	float3 vPoint;				// Used for ImpulseComputeShader
 	float  fRadius;				// Used for ImpulseComputeShader
-	float4 vFillColor;			// Used for ImpulseComputeShader
-	// 32 bytes //
+	float  fAmount;				// Used for ImpulseComputeShader
+	float  fExtinguishment;		// Used for ExtinguishmentImpulseComputeShader
+	float2 padding2;			// pad to 32 bytes
 }
 
 
@@ -39,7 +44,7 @@ cbuffer InputBufferImpulse : register (b2) {
 SamplerState linearSampler : register (s0);
 
 // Texture Inputs
-Texture3D<float3>	velocity : register (t0);	// Used for AdvectComputeShader, DivergenceComputeShader, BuoyancyComputeShader, SubtractGradientComputeShader
+Texture3D<float3>	velocity : register (t0);	// Used for AdvectComputeShader, DivergenceComputeShader, BuoyancyComputeShader, SubtractGradientComputeShader, VorticityComputeShader, ConfinementComputeShader
 Texture3D<float3>	advectionTargetA : register (t1); // Used for AdvectComputeShader, AdvectBackwardComputeShader
 Texture3D<float3>	advectionTargetB : register (t2); // User for AdvectMacCormackComputeShader
 Texture3D<float3>	advectionTargetC : register (t3); // User for AdvectMacCormackComputeShader
@@ -49,8 +54,12 @@ Texture3D<float>	temperature : register (t1); // Used for BuoyancyComputeShader
 Texture3D<float>	density : register (t2); // Used for BuoyancyComputeShader
 RWTexture3D<float3> buoyancyResult : register (u0); // Used for BuoyancyComputeShader
 
-Texture3D<float3>   impulseInitial : register (t0); // Used for ImpulseComputeShader
-RWTexture3D<float3> impulseResult : register (u0); // Used for ImpulseComputeShader
+Texture3D<float3>   impulseInitial : register (t0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
+Texture3D<float>   reaction : register(t1); // Used for ExtinguishmentImpulseComputeShader
+RWTexture3D<float3> impulseResult : register (u0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
+
+Texture3D<float3>   vorticity : register (t1); // Used for ConfinementComputeShader
+RWTexture3D<float3> vorticityResult : register (u0); // Used for VorticityComputeShader
 
 Texture3D<float>     divergence   : register (t0);  // Used for JacobiComputeShader
 RWTexture3D<float>   divergenceResult : register (u0);  // Used for DivergenceComputeShader
@@ -58,7 +67,17 @@ RWTexture3D<float>   divergenceResult : register (u0);  // Used for DivergenceCo
 Texture3D<float>   pressure : register (t1);  // Used for JacobiComputeShader, SubtractGradientComputeShader
 RWTexture3D<float> pressureResult : register (u0); // Used for JacobiComputeShader
 
-RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader
+RWTexture3D<float3> velocityResult : register (u0); // Used for SubtractGradientComputeShader, ConfinementComputeShader
+
+Texture3D<float4>  obstacles : register (t4); // DivergenceComputeShader, AdvectComputeShader, AdvectBackwardComputeShader, ConfinementComputeShader, JacobiComputeShader, SubtractGradientComputeShader, AdvectMacCormackComputeShader
+RWTexture3D<float4>  obstaclesResult : register (u0); // Used for ObstacleComputeShader
+
+
+uint3 GetDimensionsFloat4RW(RWTexture3D<float4> tex) {
+	uint3 dimensions;
+	tex.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
+	return dimensions;
+}
 
 uint3 GetDimensionsFloat3(Texture3D<float3> tex) {
 	uint3 dimensions;
@@ -72,37 +91,50 @@ uint3 GetDimensionsFloat(Texture3D<float> tex) {
 	return dimensions;
 }
 
-[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
-// Advect the speed by sampling at pos - deltaTime*velocity
-void AdvectComputeShader( uint3 i : SV_DispatchThreadID ) {
-	uint3 dimensions = GetDimensionsFloat3(velocity);
+bool IsObstacleCell (uint3 pos) {
+	return obstacles[pos].a > 0.0f;
+}
 
-	// advect by trace back
-	float3 prevPos = i - fTimeStep * velocity[i];
-	prevPos = (prevPos+0.5f)/dimensions;
-
-	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
-
-	advectionResult[i] = result;//*fDissipation;
+float3 GetObstacleVelocity (uint3 pos) {
+	return obstacles[pos].xyz;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
-// Advect the speed by sampling at pos + deltaTime*velocity
-void AdvectBackwardComputeShader( uint3 i : SV_DispatchThreadID ) {
+// Advect the speed by sampling at pos - deltaTime*velocity
+void AdvectComputeShader( uint3 i : SV_DispatchThreadID ) {
+	// check obstacles
+	if (IsObstacleCell(i)) {
+		advectionResult[i] = float3(0,0,0);
+		return;
+	}
+
 	uint3 dimensions = GetDimensionsFloat3(velocity);
-	// advect by trace forward
-	float3 prevPos = i + fTimeStep * velocity[i];
+
+	// advect by trace back
+	float3 prevPos = i - fTimeStepModifier * fTimeStep * velocity[i];
 	prevPos = (prevPos+0.5f)/dimensions;
 
 	float3 result = advectionTargetA.SampleLevel(linearSampler, prevPos, 0);
 
-	advectionResult[i] = result;
+	float3 finalResult = result*fDissipation;
+	if (fDecay > 0.0f) {
+		finalResult.x = max(0, finalResult.x - fDecay);
+	}
+
+	advectionResult[i] = finalResult;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Advect the speed by using the two intermediate semi-Lagrangian steps to achieve higher-order accuracy
 void AdvectMacCormackComputeShader( uint3 i : SV_DispatchThreadID ) {
+	// check obstacles
+	if (IsObstacleCell(i)) {
+		advectionResult[i] = float3(0,0,0);
+		return;
+	}
+	
 	uint3 dimensions = GetDimensionsFloat3(velocity);
+
 	// advect by trace back
 	float3 prevPos = i - fTimeStep * velocity[i];
 	uint3 j = (uint3) prevPos;
@@ -134,7 +166,12 @@ void AdvectMacCormackComputeShader( uint3 i : SV_DispatchThreadID ) {
 	// clamp results to desired range
 	s = clamp(s,lmin,lmax);
 
-	advectionResult[i] = s*fDissipation;
+	float3 finalResult = s*fDissipation;
+	if (fDecay > 0.0f) {
+		finalResult.x = max(0, finalResult.x - fDecay);
+	}
+
+	advectionResult[i] = finalResult;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
@@ -144,9 +181,9 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float densityVal = density[i];
 
 	float3 result = velocity[i];
-
+	float fAmbientTemperature = 0.0f;
 	if (temperatureVal > fAmbientTemperature) {
-		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * float3(0.0f, 1.0f, 0.0f);
+		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * vBuoyancyDirection;
 	}
 	buoyancyResult[i] = result;
 }
@@ -154,16 +191,87 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // Adds impulse depending on point of interaction
 void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
-	float d = distance(vPoint.xyz,i);
+	float3 pos = i - vPoint;
+	float mag = pos.x*pos.x + pos.y*pos.y + pos.z*pos.z;
+	mag *= mag;
+	float rad2 = fRadius*fRadius;
 
-	if (d < fRadius) {
-		//float a = (fRadius - d) * 0.5f;
-		//a = min(a,1.0f);
-		impulseResult[i] = vFillColor.xyz;
+	float amount = exp(-mag/rad2) * fAmount * fTimeStep;
+	impulseResult[i] = impulseInitial[i] + amount;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+void ExtinguishmentImpulseComputeShader(uint3 i : SV_DispatchThreadID) {	
+	float amount = 0.0f;
+	float reactionAmount = reaction[i];
+	
+	// can this be optimized?
+	if (reactionAmount > 0.0f && reactionAmount < fExtinguishment) {
+		amount = fAmount * reactionAmount;
 	}
-	else {
-		impulseResult[i] = impulseInitial[i];
+	impulseResult[i] = impulseInitial[i] + amount;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+// reintroduce some vorticity back into the system
+void VorticityComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat3(velocity);
+
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,0), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
+
+	float3 vT = velocity[coordT];
+	float3 vB = velocity[coordB];
+	float3 vR = velocity[coordR];
+	float3 vL = velocity[coordL];
+	float3 vU = velocity[coordU];
+	float3 vD = velocity[coordD];
+
+	// using central differences: D0_x = (D+_x - D-_x) / 2
+	float3 result = 0.5f * float3( (( vT.z - vB.z ) - ( vU.y - vD.y )) ,
+								   (( vU.x - vD.x ) - ( vR.z - vL.z )) ,
+								   (( vR.y - vL.y ) - ( vT.x - vB.x )) );
+
+	vorticityResult[i] = result;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+// reintroduce some vorticity back into the system
+void ConfinementComputeShader( uint3 i : SV_DispatchThreadID ) {
+	// if obstacle - do nothing
+	if (IsObstacleCell(i)) {
+		return;
 	}
+
+	uint3 dimensions = GetDimensionsFloat3(vorticity);
+
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,0), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
+
+	// Potential optimization: don't find length multiple times - do once for the entire texture
+	float omegaT = length(vorticity[coordT]);
+	float omegaB = length(vorticity[coordB]);
+	float omegaR = length(vorticity[coordR]);
+	float omegaL = length(vorticity[coordL]);
+	float omegaU = length(vorticity[coordU]);
+	float omegaD = length(vorticity[coordD]);
+
+	float3 omega = vorticity[i];
+
+	float3 eta = 0.5f * float3( omegaR - omegaL, omegaT - omegaB, omegaU - omegaD );
+	eta = normalize( eta + float3(0.001f,0.001f,0.001f) );
+
+	float3 force = fTimeStep * fVorticityStrength * float3( (eta.y * omega.z - eta.z * omega.y), (eta.z * omega.x - eta.x * omega.z), (eta.x * omega.y - eta.y * omega.x) );
+
+	velocityResult[i] = velocity[i] + force;
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
@@ -171,12 +279,12 @@ void ImpulseComputeShader( uint3 i : SV_DispatchThreadID ) {
 void DivergenceComputeShader( uint3 i : SV_DispatchThreadID ) {
 	uint3 dimensions = GetDimensionsFloat3(velocity);
 
-	uint3 coordT = i + uint3(0, 1, 0);
-	uint3 coordB = i - uint3(0, 1, 0);
-	uint3 coordR = i + uint3(1, 0, 0);
-	uint3 coordL = i - uint3(1, 0, 0);
-	uint3 coordU = i + uint3(0, 0, 1);
-	uint3 coordD = i - uint3(0, 0, 1);
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,0), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
 
 	// Find neighbouring velocities
 	float3 vT = velocity[coordT];
@@ -187,24 +295,14 @@ void DivergenceComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float3 vD = velocity[coordD];
 
 	// Enforce boundaries
-	if (coordT.y > dimensions.y - 1) {
-		vT.y = 0.0f;
-	}
-	if (coordB.y < 1) {
-		vB.y = 0.0f;
-	}
-	if (coordR.x > dimensions.x - 1) {
-		vR.x = 0.0f;
-	}
-	if (coordL.x < 1) {
-		vL.x = 0.0f;
-	}
-	if (coordU.z > dimensions.z - 1) {
-		vU.z = 0.0f;
-	}
-	if (coordD.z < 1) {
-		vD.z = 0.0f;
-	}
+	if(IsObstacleCell(coordT)) vT = GetObstacleVelocity(coordT);
+	if(IsObstacleCell(coordB)) vB = GetObstacleVelocity(coordB);
+	
+	if(IsObstacleCell(coordR)) vR = GetObstacleVelocity(coordR);
+	if(IsObstacleCell(coordL)) vL = GetObstacleVelocity(coordL);
+	
+	if(IsObstacleCell(coordU)) vU = GetObstacleVelocity(coordU);
+	if(IsObstacleCell(coordD)) vD = GetObstacleVelocity(coordD);
 
 	float result = 0.5f * (vR.x - vL.x + vT.y - vB.y + vU.z - vD.z);
 
@@ -217,11 +315,11 @@ void JacobiComputeShader( uint3 i : SV_DispatchThreadID ) {
 	uint3 dimensions = GetDimensionsFloat(pressure);
 
 	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
-	uint3 coordB = uint3(i.x, max(i.y-1,1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
 	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
-	uint3 coordL = uint3(max(i.x-1,1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,0), i.y, i.z);
 	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
-	uint3 coordD = uint3(i.x, i.y, max(i.z-1,1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
 
 	float xC = pressure[i];
 
@@ -231,6 +329,15 @@ void JacobiComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float xL = pressure[coordL];
 	float xU = pressure[coordU];
 	float xD = pressure[coordD];
+
+	if(IsObstacleCell(coordT)) xT = xC;
+	if(IsObstacleCell(coordB)) xB = xC;
+							   
+	if(IsObstacleCell(coordR)) xR = xC;
+	if(IsObstacleCell(coordL)) xL = xC;
+							   
+	if(IsObstacleCell(coordU)) xU = xC;
+	if(IsObstacleCell(coordD)) xD = xC;
 
 	// Sample divergence
 	float bC = divergence[i];
@@ -243,14 +350,19 @@ void JacobiComputeShader( uint3 i : SV_DispatchThreadID ) {
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 // enforce incompressibility condition by making the velocity divergence 0 by subtracting the pressure gradient
 void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
+	if(IsObstacleCell(i)) {
+		velocityResult[i] = GetObstacleVelocity(i);
+		return;
+	}
+
 	uint3 dimensions = GetDimensionsFloat(pressure);
 
-	uint3 coordT = i + uint3(0, 1, 0);
-	uint3 coordB = i - uint3(0, 1, 0);
-	uint3 coordR = i + uint3(1, 0, 0);
-	uint3 coordL = i - uint3(1, 0, 0);
-	uint3 coordU = i + uint3(0, 0, 1);
-	uint3 coordD = i - uint3(0, 0, 1);
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,0), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
 
 	// Find neighbouring pressure
 	float pT = pressure[coordT];
@@ -261,25 +373,16 @@ void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float pD = pressure[coordD];
 	float pC = pressure[i];
 
-	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity. 
-	if (coordT.y > dimensions.y - 1) {
-		pT = pC;
-	}
-	if (coordB.y < 1) {
-		pB = pC;
-	}
-	if (coordR.x > dimensions.x - 1) {
-		pR = pC;
-	}
-	if (coordL.x < 1) {
-		pL = pC;
-	}
-	if (coordU.z > dimensions.z - 1) {
-		pU = pC;
-	}
-	if (coordD.z < 1) {
-		pD = pC;
-	}
+	float3 vMask = float3(1,1,1);
+	float3 obstV = float3(0,0,0);
+
+	// If an adjacent cell is solid or boundary, ignore its pressure and use its velocity.
+	if(IsObstacleCell(coordT)) { pT = pC; obstV.y = GetObstacleVelocity(coordT).y; vMask.y = 0;}
+	if(IsObstacleCell(coordB)) { pB = pC; obstV.y = GetObstacleVelocity(coordB).y; vMask.y = 0;}							  
+	if(IsObstacleCell(coordR)) { pR = pC; obstV.x = GetObstacleVelocity(coordR).x; vMask.x = 0;}
+	if(IsObstacleCell(coordL)) { pL = pC; obstV.x = GetObstacleVelocity(coordL).x; vMask.x = 0;}							  
+	if(IsObstacleCell(coordU)) { pU = pC; obstV.z = GetObstacleVelocity(coordU).z; vMask.z = 0;}
+	if(IsObstacleCell(coordD)) { pD = pC; obstV.z = GetObstacleVelocity(coordD).z; vMask.z = 0;}
 
 	// Compute the gradient of pressure at the current cell by taking central differences of neighboring pressure values. 
 	float3 grad = float3(pR - pL, pT - pB, pU - pD) * 0.5f;
@@ -289,5 +392,37 @@ void SubtractGradientComputeShader( uint3 i : SV_DispatchThreadID ) {
 	// Explicitly enforce the free-slip boundary condition by  
 	// replacing the appropriate components of the new velocity with  
 	// obstacle velocities. 
-	velocityResult[i] = newV;
+	velocityResult[i] = newV * vMask + obstV;
+}
+
+[numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
+void ObstaclesComputeShader( uint3 i : SV_DispatchThreadID ) {
+	uint3 dimensions = GetDimensionsFloat4RW(obstaclesResult);
+
+	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
+	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
+	uint3 coordR = uint3(min(i.x+1,dimensions.x-1), i.y, i.z);
+	uint3 coordL = uint3(max(i.x-1,0), i.y, i.z);
+	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
+	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
+
+	float obstacle = 0.0f;
+
+	if(i.x-1 < 0) obstacle = 1;
+	if(i.x+1 > (int)dimensions.x-1) obstacle = 1;
+	
+	if(i.y-1 < 0) obstacle = 1;
+	if(i.y+1 > (int)dimensions.y-1) obstacle = 1;
+	
+	if(i.z-1 < 0) obstacle = 1;
+	if(i.z+1 > (int)dimensions.z-1) obstacle = 1;
+
+	//float3 center = dimensions/2;
+	//float radius = 5;
+	//
+	//if (distance(center, i) <= radius)
+	//	obstacle = 1;
+
+	// rgb stores velocity, a stores whether there is an obstacle or not
+	obstaclesResult[i] = float4(0,0,0,obstacle);
 }

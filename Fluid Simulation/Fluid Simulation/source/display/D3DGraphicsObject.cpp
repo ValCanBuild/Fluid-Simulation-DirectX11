@@ -21,11 +21,11 @@ D3DGraphicsObject::~D3DGraphicsObject(){
 	if(mSwapChain){
 		mSwapChain->SetFullscreenState(false, NULL);
 	}
-#if defined (_DEBUG)
+/*#if defined (_DEBUG)
 	CComPtr<ID3D11Debug> d3dDebug;
 	mDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&d3dDebug));
 	d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
-#endif
+#endif*/
 }
 
 bool D3DGraphicsObject::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hwnd, bool fullscreen, 

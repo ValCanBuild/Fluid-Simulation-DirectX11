@@ -6,29 +6,31 @@ Date: 23/02/2014
 ***************************************************************/
 
 // Constant buffers
-cbuffer InputBuffer : register (b0) {
-	float3 vDimensions;			
-	float  padding0;	// 16 bytes
-
+cbuffer BufferPerFrame : register (b0) {
 	float3 vEyePos;	
-	float  padding1;	// 32 bytes		
-
-	float3 vTranslate;  
-	float  padding2;	// 48 bytes
-
-	float3 vScale;
-	float  padding3;	// 64 bytes
+	float  padding1;	// 16 bytes
 };
 
-cbuffer SmokePropertiesBuffer : register (b1) {
-	float4 vSmokeColor;
-	float fSmokeAbsorption;
-	int iNumSamples;
+cbuffer BufferPerObject : register (b1) {
+	float3 vTranslate;  
+	float  padding2;	// 16 bytes
 
-	float2 padding;
+	float3 vScale;
+	float  padding3;	// 32 bytes
+};
+
+cbuffer SmokePropertiesBuffer : register (b2) {
+	float4 vSmokeColor;
+
+	float fSmokeAbsorption;
+	float fFireAbsorption;
+	int iNumSamples;
+	float padding;		// 32 bytes
 };
 
 Texture3D<float> volumeValues : register (t0);
+Texture3D<float> reactionValues : register (t1);
+Texture2D fireGradient : register(t2);
 
 // TODO - replace with point sampler?
 SamplerState linearSampler : register (s0);
@@ -66,53 +68,11 @@ float SampleDensity(float3 uv) {
 	return volumeValues.SampleLevel(linearSampler, uv, 0);
 }
 
-// TODO - Add bilinear sampling
-float SampleBilinear(float3 uv) {
-	//uv = saturate(uv);
-	//uv = uv * (vDimensions - 1.0f);
-
-	int x = uv.x;
-	int y = uv.y;
-	int z = uv.z;
-	
-	//int X = vDimensions.x;
-	//int XY = vDimensions.x * vDimensions.y;
-	
-	float fx = uv.x - x;
-	float fy = uv.y - y;
-	float fz = uv.z - z;
-	
-	int xp1 = min(vDimensions.x - 1, x + 1);
-	int yp1 = min(vDimensions.y - 1, y + 1);
-	int zp1 = min(vDimensions.z - 1, z + 1);
-
-	float x0 = ( SampleDensity(uv) * (1.0f - fx) ) + ( SampleDensity(uv + float3(xp1,0,0)) * fx );
-	float x1 = ( SampleDensity(uv + float3(0,0,zp1)) * (1.0f-fx) ) + ( SampleDensity(uv + float3(xp1,0,zp1)) * fx );
-	
-	float x2 = ( SampleDensity(uv + float3(0,yp1,0)) * (1.0f-fx) ) + ( SampleDensity(uv + float3(xp1,yp1,0)) * fx );
-	float x3 = ( SampleDensity(uv + float3(0,yp1,zp1)) * (1.0f-fx) ) + ( SampleDensity(uv + float3(xp1,yp1,zp1)) * fx );
-
-	float z0 = x0 * (1.0f-fz) + x1 * fz;
-	float z1 = x2 * (1.0f-fz) + x3 * fz;
-
-	return z0 * (1.0f-fy) + z1 * fy;
-
-	//float x0 = buffer[x+y*X+z*XY] * (1.0f-fx) + buffer[xp1+y*X+z*XY] * fx;
-	//float x1 = buffer[x+y*X+zp1*XY] * (1.0f-fx) + buffer[xp1+y*X+zp1*XY] * fx;
-	//
-	//float x2 = buffer[x+yp1*X+z*XY] * (1.0f-fx) + buffer[xp1+yp1*X+z*XY] * fx;
-	//float x3 = buffer[x+yp1*X+zp1*XY] * (1.0f-fx) + buffer[xp1+yp1*X+zp1*XY] * fx;
-	//
-	//float z0 = x0 * (1.0f-fz) + x1 * fz;
-	//float z1 = x2 * (1.0f-fz) + x3 * fz;
-	//
-	//return z0 * (1.0f-fy) + z1 * fy;
+float SampleReaction(float3 uv) {
+	return reactionValues.SampleLevel(linearSampler, uv, 0);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Pixel Shader
-////////////////////////////////////////////////////////////////////////////////
-float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+void CommonCalculations(PixelInputType input, out float3 start, out float3 stepVector, out float stepSize) {
 	float3 pos = vEyePos;
 
 	Ray r;
@@ -138,18 +98,28 @@ float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	//convert to texture space
 	rayStart -= vTranslate;
 	rayStop -= vTranslate;
-	rayStart = (rayStart + 0.5f * vScale) / vScale;
-	rayStop = (rayStop + 0.5f * vScale) / vScale;
+	float3 halfScale = 0.5f * vScale;
+	rayStart = (rayStart + halfScale) / vScale;
+	rayStop = (rayStop + halfScale) / vScale;
 
-	float3 start = rayStart;
 	float dist = distance(rayStop, rayStart);
-	float stepSize = dist / float(iNumSamples);
-	float3 ds = normalize(rayStop - rayStart) * stepSize;
+	stepSize = dist / float(iNumSamples);
+	start = rayStart;
+	stepVector = normalize(rayStop - rayStart) * stepSize;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shaders
+////////////////////////////////////////////////////////////////////////////////
+float4 SmokeVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+	float3 start, ds;
+	float stepSize;
+	CommonCalculations(input, start, ds, stepSize);
+
 	float alpha = 1.0f;
 
-	for(int i = 0; i < iNumSamples; i++, start += ds) {	 
+	for(int i = 0; i < iNumSamples; ++i, start += ds) {	 
 		float D = SampleDensity(start);	
-		//float D = volumeValues.SampleLevel(linearSampler, start, 0);	
 		alpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
 
 		if (alpha <= 0.01f) {
@@ -158,4 +128,27 @@ float4 VolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	}
 	
 	return vSmokeColor * (1.0f - alpha);
+}
+
+float4 FireVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
+	float3 start, ds;
+	float stepSize;
+	CommonCalculations(input, start, ds, stepSize);
+
+	float smokeAlpha = 1.0f;
+	float fireAlpha = 1.0f;
+
+	for(int i = 0; i < iNumSamples; ++i, start += ds) {	 
+		float D = SampleDensity(start);	
+		float R = SampleReaction(start);
+		smokeAlpha *= 1.0f - saturate(D * stepSize * fSmokeAbsorption);		
+		fireAlpha *= 1.0f - saturate(R * stepSize * fFireAbsorption);		
+
+		if (smokeAlpha <= 0.01f && fireAlpha <= 0.01f) {
+			break;
+		}
+	}
+	float4 smoke = vSmokeColor * (1.0f - smokeAlpha);
+	float4 fire = fireGradient.Sample(linearSampler, float2(fireAlpha, 0)) * (1.0f - fireAlpha);
+	return fire + smoke;
 }

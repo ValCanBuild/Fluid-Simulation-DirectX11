@@ -38,6 +38,8 @@ struct BasicEffectConstants
     XMMATRIX worldViewProj;
 };
 
+static_assert( ( sizeof(BasicEffectConstants) % 16 ) == 0, "CB size not padded correctly" );
+
 
 // Traits type describes our characteristics to the EffectBase template.
 struct BasicEffectTraits
@@ -63,7 +65,7 @@ public:
 
     EffectLights lights;
 
-    int GetCurrentShaderPermutation();
+    int GetCurrentShaderPermutation() const;
 
     void Apply(_In_ ID3D11DeviceContext* deviceContext);
 };
@@ -72,6 +74,44 @@ public:
 // Include the precompiled shader code.
 namespace
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasic.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicNoFog.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicVc.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicVcNoFog.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicTx.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicTxNoFog.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicTxVc.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicTxVcNoFog.inc"
+    
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicVertexLighting.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicVertexLightingVc.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicVertexLightingTx.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicVertexLightingTxVc.inc"
+    
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicOneLight.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicOneLightVc.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicOneLightTx.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicOneLightTxVc.inc"
+    
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicPixelLighting.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicPixelLightingVc.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicPixelLightingTx.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_VSBasicPixelLightingTxVc.inc"
+
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasic.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicNoFog.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicTx.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicTxNoFog.inc"
+
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicVertexLighting.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicVertexLightingNoFog.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicVertexLightingTx.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicVertexLightingTxNoFog.inc"
+
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicPixelLighting.inc"
+    #include "Shaders/Compiled/XboxOneBasicEffect_PSBasicPixelLightingTx.inc"
+#else
     #include "Shaders/Compiled/BasicEffect_VSBasic.inc"
     #include "Shaders/Compiled/BasicEffect_VSBasicNoFog.inc"
     #include "Shaders/Compiled/BasicEffect_VSBasicVc.inc"
@@ -108,6 +148,7 @@ namespace
 
     #include "Shaders/Compiled/BasicEffect_PSBasicPixelLighting.inc"
     #include "Shaders/Compiled/BasicEffect_PSBasicPixelLightingTx.inc"
+#endif
 }
 
 
@@ -248,11 +289,16 @@ BasicEffect::Impl::Impl(_In_ ID3D11Device* device)
     vertexColorEnabled(false),
     textureEnabled(false)
 {
+    static_assert( _countof(EffectBase<BasicEffectTraits>::VertexShaderIndices) == BasicEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<BasicEffectTraits>::VertexShaderBytecode) == BasicEffectTraits::VertexShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<BasicEffectTraits>::PixelShaderBytecode) == BasicEffectTraits::PixelShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<BasicEffectTraits>::PixelShaderIndices) == BasicEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+
     lights.InitializeConstants(constants.specularColorAndPower, constants.lightDirection, constants.lightDiffuseColor, constants.lightSpecularColor);
 }
 
 
-int BasicEffect::Impl::GetCurrentShaderPermutation()
+int BasicEffect::Impl::GetCurrentShaderPermutation() const
 {
     int permutation = 0;
 
@@ -417,6 +463,15 @@ void BasicEffect::SetSpecularPower(float value)
     pImpl->dirtyFlags |= EffectDirtyFlags::ConstantBuffer;
 }
 
+void BasicEffect::DisableSpecular()
+{
+    // Set specular color to black, power to 1
+    // Note: Don't use a power of 0 or the shader will generate strange highlights on non-specular materials
+
+    pImpl->constants.specularColorAndPower = g_XMIdentityR3; 
+
+    pImpl->dirtyFlags |= EffectDirtyFlags::ConstantBuffer;
+}
 
 void BasicEffect::SetAlpha(float value)
 {

@@ -118,7 +118,8 @@ void InputSystemImpl::KeyUp(unsigned int input) {
 
 bool InputSystemImpl::IsKeyDown(unsigned int key) const {
 	// Return what state the key is in (pressed/not pressed).
-	return mKeys[key];
+	return GetAsyncKeyState(key);
+	//return mKeys[key];
 }
 
 bool InputSystemImpl::IsKeyClicked(unsigned int key) const {

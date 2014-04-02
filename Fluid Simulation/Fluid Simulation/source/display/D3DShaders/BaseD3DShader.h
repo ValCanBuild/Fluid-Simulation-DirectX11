@@ -48,16 +48,17 @@ struct ShaderDescription {
 		polygonLayout = nullptr;
 		numLayoutElements = 0;
 	}
+	~ShaderDescription() {
+		polygonLayout = nullptr;
+	}
 };
 
 class BaseD3DShader : public DirectX::IEffect {
 public:
 	~BaseD3DShader() {}
 
-	bool Initialize (ID3D11Device* device, HWND hwnd);	
+	bool Initialize (ID3D11Device* device, HWND hwnd = nullptr);	
 
-	// Child classes supply this function to bind any constant buffers, samplers, etc... before rendering
-	virtual void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {};
 	// IEffect methods.
 	void Apply(_In_ ID3D11DeviceContext* deviceContext) override;
 
@@ -67,6 +68,12 @@ public:
 
 protected:
 	BaseD3DShader() {} // only child classes can be constructed
+
+	// Child classes supply this function to bind any constant buffers, samplers, etc... before rendering
+	virtual void BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {};
+
+	// Child classes supply this function to clean up anything from the context
+	virtual void PostRenderCleanup(_In_ ID3D11DeviceContext* deviceContext) {};
 
 	// This renders an object using the provided Pixel and Vertex Shaders given the index count
 	void RenderShader(ID3D11DeviceContext* context, int indexCount);
@@ -120,5 +127,20 @@ private:
 
 	static std::unordered_map<ShaderFileDescription, VertexShaderData, ShaderFileDescriptionHash, ShaderFileDescriptionEqual> vertexShaderMap;
 };
+
+template<typename T>
+bool BuildDynamicBuffer(_In_ ID3D11Device *device, _Out_ ID3D11Buffer **pOutBuffer) {
+	D3D11_BUFFER_DESC bufferDesc;
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.ByteWidth = sizeof(T);
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bufferDesc.MiscFlags = 0;
+	bufferDesc.StructureByteStride = 0;
+	// General buffer
+	HRESULT hresult = device->CreateBuffer(&bufferDesc, NULL, pOutBuffer);
+
+	return !FAILED(hresult);
+}
 
 #endif

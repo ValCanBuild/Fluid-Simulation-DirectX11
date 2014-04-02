@@ -11,7 +11,7 @@ Date: 02/09/2013
 
 #include <string>
 
-#include "GraphicsSystem.h"
+#include "IGraphicsSystem.h"
 #include "../display/IGraphicsObject.h"
 
 class IScene;
@@ -28,13 +28,13 @@ namespace DirectX
 using namespace std;
 
 const bool FULL_SCREEN = false;
-const bool VSYNC_ENABLED = true;
+const bool VSYNC_ENABLED = false;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.1f;
 const int SCREEN_WIDTH_WINDOWED = 800;
 const int SCREEN_HEIGHT_WINDOWED = 600;
 
-class GraphicsSystemImpl : public GraphicsSystem {
+class GraphicsSystemImpl : public IGraphicsSystem {
 public:
 	GraphicsSystemImpl();
 	GraphicsSystemImpl(const GraphicsSystemImpl&);
@@ -76,7 +76,7 @@ private:
 	shared_ptr<DirectX::CommonStates>  mCommonStates;
 
 	int	mFps, mCpuUsage;
-	wstring	mCardName;
+	wstring mCardName;
 	wstring mVideoMemory;
 
 	bool mSceneFixedUpdatePaused; // pause physics update for the active scene

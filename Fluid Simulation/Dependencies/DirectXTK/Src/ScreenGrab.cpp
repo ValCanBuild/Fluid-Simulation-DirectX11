@@ -28,10 +28,8 @@
 #include "pch.h"
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
-#include <d2d1.h>
-#endif
 
+// VS 2010's stdint.h conflicts with intsafe.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <wincodec.h>
@@ -43,6 +41,7 @@
 #include "dds.h"
 #include "PlatformHelpers.h"
 
+using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
 //--------------------------------------------------------------------------------------
@@ -78,6 +77,9 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
     case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
     case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+    case DXGI_FORMAT_Y416:
+    case DXGI_FORMAT_Y210:
+    case DXGI_FORMAT_Y216:
         return 64;
 
     case DXGI_FORMAT_R10G10B10A2_TYPELESS:
@@ -115,7 +117,14 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
     case DXGI_FORMAT_B8G8R8X8_TYPELESS:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_AYUV:
+    case DXGI_FORMAT_Y410:
+    case DXGI_FORMAT_YUY2:
         return 32;
+
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_P016:
+        return 24;
 
     case DXGI_FORMAT_R8G8_TYPELESS:
     case DXGI_FORMAT_R8G8_UNORM:
@@ -131,11 +140,14 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_R16_SINT:
     case DXGI_FORMAT_B5G6R5_UNORM:
     case DXGI_FORMAT_B5G5R5A1_UNORM:
-
-#ifdef DXGI_1_2_FORMATS
+    case DXGI_FORMAT_A8P8:
     case DXGI_FORMAT_B4G4R4A4_UNORM:
-#endif
         return 16;
+
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_420_OPAQUE:
+    case DXGI_FORMAT_NV11:
+        return 12;
 
     case DXGI_FORMAT_R8_TYPELESS:
     case DXGI_FORMAT_R8_UNORM:
@@ -143,6 +155,9 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_R8_SNORM:
     case DXGI_FORMAT_R8_SINT:
     case DXGI_FORMAT_A8_UNORM:
+    case DXGI_FORMAT_AI44:
+    case DXGI_FORMAT_IA44:
+    case DXGI_FORMAT_P8:
         return 8;
 
     case DXGI_FORMAT_R1_UNORM:
@@ -172,6 +187,21 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC7_UNORM:
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         return 8;
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
+
+    case DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
+    case DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
+        return 32;
+
+#if MONOLITHIC
+    case DXGI_FORMAT_D16_UNORM_S8_UINT:
+    case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
+    case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
+        return 24;
+#endif
+
+#endif // _XBOX_ONE && _TITLE
 
     default:
         return 0;
@@ -230,8 +260,9 @@ static void GetSurfaceInfo( _In_ size_t width,
     size_t numRows = 0;
 
     bool bc = false;
-    bool packed  = false;
-    size_t bcnumBytesPerBlock = 0;
+    bool packed = false;
+    bool planar = false;
+    size_t bpe = 0;
     switch (fmt)
     {
     case DXGI_FORMAT_BC1_TYPELESS:
@@ -241,7 +272,7 @@ static void GetSurfaceInfo( _In_ size_t width,
     case DXGI_FORMAT_BC4_UNORM:
     case DXGI_FORMAT_BC4_SNORM:
         bc=true;
-        bcnumBytesPerBlock = 8;
+        bpe = 8;
         break;
 
     case DXGI_FORMAT_BC2_TYPELESS:
@@ -260,13 +291,44 @@ static void GetSurfaceInfo( _In_ size_t width,
     case DXGI_FORMAT_BC7_UNORM:
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         bc = true;
-        bcnumBytesPerBlock = 16;
+        bpe = 16;
         break;
 
     case DXGI_FORMAT_R8G8_B8G8_UNORM:
     case DXGI_FORMAT_G8R8_G8B8_UNORM:
+    case DXGI_FORMAT_YUY2:
         packed = true;
+        bpe = 4;
         break;
+
+    case DXGI_FORMAT_Y210:
+    case DXGI_FORMAT_Y216:
+        packed = true;
+        bpe = 8;
+        break;
+
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_420_OPAQUE:
+        planar = true;
+        bpe = 2;
+        break;
+
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_P016:
+        planar = true;
+        bpe = 4;
+        break;
+
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+
+    case DXGI_FORMAT_D16_UNORM_S8_UINT:
+    case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
+    case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
+        planar = true;
+        bpe = 4;
+        break;
+
+#endif
     }
 
     if (bc)
@@ -281,22 +343,36 @@ static void GetSurfaceInfo( _In_ size_t width,
         {
             numBlocksHigh = std::max<size_t>( 1, (height + 3) / 4 );
         }
-        rowBytes = numBlocksWide * bcnumBytesPerBlock;
+        rowBytes = numBlocksWide * bpe;
         numRows = numBlocksHigh;
+        numBytes = rowBytes * numBlocksHigh;
     }
     else if (packed)
     {
-        rowBytes = ( ( width + 1 ) >> 1 ) * 4;
+        rowBytes = ( ( width + 1 ) >> 1 ) * bpe;
         numRows = height;
+        numBytes = rowBytes * height;
+    }
+    else if ( fmt == DXGI_FORMAT_NV11 )
+    {
+        rowBytes = ( ( width + 3 ) >> 2 ) * 4;
+        numRows = height * 2; // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
+        numBytes = rowBytes * numRows;
+    }
+    else if (planar)
+    {
+        rowBytes = ( ( width + 1 ) >> 1 ) * bpe;
+        numBytes = ( rowBytes * height ) + ( ( rowBytes * height + 1 ) >> 1 );
+        numRows = height + ( ( height + 1 ) >> 1 );
     }
     else
     {
         size_t bpp = BitsPerPixel( fmt );
         rowBytes = ( width * bpp + 7 ) / 8; // round up to nearest byte
         numRows = height;
+        numBytes = rowBytes * height;
     }
 
-    numBytes = rowBytes * numRows;
     if (outNumBytes)
     {
         *outNumBytes = numBytes;
@@ -346,7 +422,7 @@ static DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt )
 static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
                                _In_ ID3D11Resource* pSource,
                                _Inout_ D3D11_TEXTURE2D_DESC& desc,
-                               _Inout_ ScopedObject<ID3D11Texture2D>& pStaging )
+                               _Inout_ ComPtr<ID3D11Texture2D>& pStaging )
 {
     if ( !pContext || !pSource )
         return E_INVALIDARG;
@@ -357,17 +433,17 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
     if ( resType != D3D11_RESOURCE_DIMENSION_TEXTURE2D )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-    ScopedObject<ID3D11Texture2D> pTexture;
-    HRESULT hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), (void**) &pTexture );
+    ComPtr<ID3D11Texture2D> pTexture;
+    HRESULT hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
     if ( FAILED(hr) )
         return hr;
 
-    assert( pTexture.Get() );
+    assert( pTexture );
 
     pTexture->GetDesc( &desc );
 
-    ScopedObject<ID3D11Device> d3dDevice;
-    pContext->GetDevice( &d3dDevice );
+    ComPtr<ID3D11Device> d3dDevice;
+    pContext->GetDevice( d3dDevice.GetAddressOf() );
 
     if ( desc.SampleDesc.Count > 1 )
     {
@@ -375,12 +451,12 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
 
-        ScopedObject<ID3D11Texture2D> pTemp;
-        hr = d3dDevice->CreateTexture2D( &desc, 0, &pTemp );
+        ComPtr<ID3D11Texture2D> pTemp;
+        hr = d3dDevice->CreateTexture2D( &desc, 0, pTemp.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
-        assert( pTemp.Get() );
+        assert( pTemp );
 
         DXGI_FORMAT fmt = EnsureNotTypeless( desc.Format );
 
@@ -406,19 +482,18 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         desc.Usage = D3D11_USAGE_STAGING;
 
-        hr = d3dDevice->CreateTexture2D( &desc, 0, &pStaging );
+        hr = d3dDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
-        assert( pStaging.Get() );
+        assert( pStaging );
 
         pContext->CopyResource( pStaging.Get(), pTemp.Get() );
     }
     else if ( (desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ) )
     {
         // Handle case where the source is already a staging texture we can use directly
-        pTexture->AddRef();
-        pStaging.Reset( pTexture.Get() );
+        pStaging = pTexture;
     }
     else
     {
@@ -428,11 +503,11 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         desc.Usage = D3D11_USAGE_STAGING;
 
-        hr = d3dDevice->CreateTexture2D( &desc, 0, &pStaging );
+        hr = d3dDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
-        assert( pStaging.Get() );
+        assert( pStaging );
 
         pContext->CopyResource( pStaging.Get(), pSource );
     }
@@ -450,13 +525,13 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
         return E_INVALIDARG;
 
     D3D11_TEXTURE2D_DESC desc = { 0 };
-    ScopedObject<ID3D11Texture2D> pStaging;
+    ComPtr<ID3D11Texture2D> pStaging;
     HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
     if ( FAILED(hr) )
         return hr;
 
     // Create file
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile( safe_handle( CreateFile2( fileName, GENERIC_WRITE, 0, CREATE_ALWAYS, 0 ) ) );
 #else
     ScopedHandle hFile( safe_handle( CreateFileW( fileName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0 ) ) );
@@ -503,10 +578,8 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
     case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT) );    break;
     case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT) );    break; // DXGI 1.1
     case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT) );    break; // DXGI 1.1
-
-#ifdef DXGI_1_2_FORMATS
-    case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) );    break;
-#endif
+    case DXGI_FORMAT_YUY2:                  memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT) );        break; // DXGI 1.2
+    case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) );    break; // DXGI 1.2
 
     // Legacy D3DX formats using D3DFMT enum value as FourCC
     case DXGI_FORMAT_R32G32B32A32_FLOAT:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 116; break; // D3DFMT_A32B32G32R32F
@@ -517,6 +590,12 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
     case DXGI_FORMAT_R16G16_FLOAT:          header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 112; break; // D3DFMT_G16R16F
     case DXGI_FORMAT_R32_FLOAT:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 114; break; // D3DFMT_R32F
     case DXGI_FORMAT_R16_FLOAT:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 111; break; // D3DFMT_R16F
+
+    case DXGI_FORMAT_AI44:
+    case DXGI_FORMAT_IA44:
+    case DXGI_FORMAT_P8:
+    case DXGI_FORMAT_A8P8:
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     default:
         memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
@@ -563,9 +642,9 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 
     uint8_t* dptr = pixels.get();
 
+    size_t msize = std::min<size_t>( rowPitch, mapped.RowPitch );
     for( size_t h = 0; h < rowCount; ++h )
     {
-        size_t msize = std::min<size_t>( rowPitch, mapped.RowPitch );
         memcpy_s( dptr, rowPitch, sptr, msize );
         sptr += mapped.RowPitch;
         dptr += rowPitch;
@@ -610,7 +689,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         return E_INVALIDARG;
 
     D3D11_TEXTURE2D_DESC desc = { 0 };
-    ScopedObject<ID3D11Texture2D> pStaging;
+    ComPtr<ID3D11Texture2D> pStaging;
     HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
     if ( FAILED(hr) )
         return hr;
@@ -668,8 +747,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICStream> stream;
-    hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -677,8 +756,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapEncoder> encoder;
-    hr = pWIC->CreateEncoder( guidContainerFormat, 0, &encoder );
+    ComPtr<IWICBitmapEncoder> encoder;
+    hr = pWIC->CreateEncoder( guidContainerFormat, 0, encoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -686,9 +765,9 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameEncode> frame;
-    ScopedObject<IPropertyBag2> props;
-    hr = encoder->CreateNewFrame( &frame, &props );
+    ComPtr<IWICBitmapFrameEncode> frame;
+    ComPtr<IPropertyBag2> props;
+    hr = encoder->CreateNewFrame( frame.GetAddressOf(), props.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -732,7 +811,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         // Screenshots don’t typically include the alpha channel of the render target
         switch ( desc.Format )
         {
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         case DXGI_FORMAT_R32G32B32A32_FLOAT:            
         case DXGI_FORMAT_R16G16B16A16_FLOAT:
             if ( _IsWIC2() )
@@ -775,8 +854,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     }
 
     // Encode WIC metadata
-    ScopedObject<IWICMetadataQueryWriter> metawriter;
-    if ( SUCCEEDED( frame->GetMetadataQueryWriter( &metawriter ) ) )
+    ComPtr<IWICMetadataQueryWriter> metawriter;
+    if ( SUCCEEDED( frame->GetMetadataQueryWriter( metawriter.GetAddressOf() ) ) )
     {
         PROPVARIANT value;
         PropVariantInit( &value );
@@ -820,18 +899,18 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
     {
         // Conversion required to write
-        ScopedObject<IWICBitmap> source;
+        ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory( desc.Width, desc.Height, pfGuid,
                                            mapped.RowPitch, mapped.RowPitch * desc.Height,
-                                           reinterpret_cast<BYTE*>( mapped.pData ), &source );
+                                           reinterpret_cast<BYTE*>( mapped.pData ), source.GetAddressOf() );
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );
             return hr;
         }
 
-        ScopedObject<IWICFormatConverter> FC;
-        hr = pWIC->CreateFormatConverter( &FC );
+        ComPtr<IWICFormatConverter> FC;
+        hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );

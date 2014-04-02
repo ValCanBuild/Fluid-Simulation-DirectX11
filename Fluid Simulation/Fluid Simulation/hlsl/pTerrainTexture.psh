@@ -1,0 +1,47 @@
+
+
+cbuffer HeightsBuffer : register (b0) {
+	vector <float,3> heights;
+	float padding;
+};
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType {
+	float4 position : SV_POSITION;
+	float3 positionW : POSITION;
+	float2 texC : TEXCOORD0;
+};
+
+Texture2D terrainTexture1 : register(t0);
+Texture2D terrainTexture2 : register(t1);
+Texture2D terrainTexture3 : register(t2);
+SamplerState sampleType : register(s0);
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 TerrainTexturePixelShader(PixelInputType input) : SV_TARGET {
+	float4 c1 = terrainTexture1.Sample( sampleType, input.texC);
+	float4 c2 = terrainTexture2.Sample( sampleType, input.texC);
+	float4 c3 = terrainTexture3.Sample( sampleType, input.texC);
+
+	float height = input.positionW.y;
+	float4 terrainColor;
+
+	//compute terrain color based on height
+	if (height >= heights[2]){
+		terrainColor = c3;
+	}
+	else if (height >= heights[1]){
+		float lerpVal = ( height - heights[1] ) / ( heights[2] - heights[1] );
+		terrainColor = lerp( c2, c3, lerpVal );
+	}
+	else {
+		float lerpVal = ( height - heights[0] ) / ( heights[1] - heights[0] );
+		terrainColor = lerp( c1, c2, lerpVal );
+	}
+
+	return terrainColor;
+}

@@ -8,7 +8,7 @@ Date: 18/2/2014
 *********************************************************************/
 
 #include "Fluid2DCalculator.h"
-#include "../../display/D3DShaders/Fluid2DShaders.h"
+#include "Fluid2DShaders.h"
 
 #define READ 0
 #define WRITE 1
@@ -28,7 +28,7 @@ Date: 18/2/2014
 #define SMOKE_WEIGHT 0.05f
 #define AMBIENT_TEMPERATURE 0.0f
 #define IMPULSE_TEMPERATURE 4.0f
-#define IMPULSE_DENSITY	1.0f
+#define CONSTANT_DENSITY	1.0f
 
 using namespace Fluid2D;
 
@@ -72,19 +72,19 @@ Fluid2DCalculator::~Fluid2DCalculator() {
 bool Fluid2DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
 	pD3dGraphicsObj = d3dGraphicsObj;
 
-	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD));
+	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::AdvectionShaderType_t::ADVECTION_TYPE_FORWARD));
 	bool result = mForwardAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_BACKWARD));
+	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::AdvectionShaderType_t::ADVECTION_TYPE_BACKWARD));
 	result = mBackwardAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mMacCormarckAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_MACCORMARCK));
+	mMacCormarckAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::AdvectionShaderType_t::ADVECTION_TYPE_MACCORMARCK));
 	result = mMacCormarckAdvectionShader->Initialize(pD3dGraphicsObj->GetDevice(),hwnd);
 	if (!result) {
 		return false;
@@ -426,7 +426,7 @@ void Fluid2D::Fluid2DCalculator::RefreshConstantImpulse() {
 
 	swap(mTemperatureSP[READ],mTemperatureSP[WRITE]);
 
-	SetImpulseBuffer(Vector2(halfWidth,(float)height),Vector2(IMPULSE_DENSITY,IMPULSE_DENSITY), IMPULSE_RADIUS);
+	SetImpulseBuffer(Vector2(halfWidth,(float)height),Vector2(CONSTANT_DENSITY,CONSTANT_DENSITY), IMPULSE_RADIUS);
 	mImpulseShader->Compute(pD3dGraphicsObj,&mDensitySP[READ],&mDensitySP[WRITE]);
 
 	swap(mDensitySP[READ],mDensitySP[WRITE]);

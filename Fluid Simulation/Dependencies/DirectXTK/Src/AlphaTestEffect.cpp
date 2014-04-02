@@ -27,6 +27,8 @@ struct AlphaTestEffectConstants
     XMMATRIX worldViewProj;
 };
 
+static_assert( ( sizeof(AlphaTestEffectConstants) % 16 ) == 0, "CB size not padded correctly" );
+
 
 // Traits type describes our characteristics to the EffectBase template.
 struct AlphaTestEffectTraits
@@ -52,7 +54,7 @@ public:
 
     EffectColor color;
 
-    int GetCurrentShaderPermutation();
+    int GetCurrentShaderPermutation() const;
 
     void Apply(_In_ ID3D11DeviceContext* deviceContext);
 };
@@ -61,6 +63,17 @@ public:
 // Include the precompiled shader code.
 namespace
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_VSAlphaTest.inc"
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_VSAlphaTestNoFog.inc"
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_VSAlphaTestVc.inc"
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_VSAlphaTestVcNoFog.inc"
+
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_PSAlphaTestLtGt.inc"
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_PSAlphaTestLtGtNoFog.inc"
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_PSAlphaTestEqNe.inc"
+    #include "Shaders/Compiled/XboxOneAlphaTestEffect_PSAlphaTestEqNeNoFog.inc"
+#else
     #include "Shaders/Compiled/AlphaTestEffect_VSAlphaTest.inc"
     #include "Shaders/Compiled/AlphaTestEffect_VSAlphaTestNoFog.inc"
     #include "Shaders/Compiled/AlphaTestEffect_VSAlphaTestVc.inc"
@@ -70,6 +83,7 @@ namespace
     #include "Shaders/Compiled/AlphaTestEffect_PSAlphaTestLtGtNoFog.inc"
     #include "Shaders/Compiled/AlphaTestEffect_PSAlphaTestEqNe.inc"
     #include "Shaders/Compiled/AlphaTestEffect_PSAlphaTestEqNeNoFog.inc"
+#endif
 }
 
 
@@ -130,10 +144,14 @@ AlphaTestEffect::Impl::Impl(_In_ ID3D11Device* device)
     referenceAlpha(0),
     vertexColorEnabled(false)
 {
+    static_assert( _countof(EffectBase<AlphaTestEffectTraits>::VertexShaderIndices) == AlphaTestEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<AlphaTestEffectTraits>::VertexShaderBytecode) == AlphaTestEffectTraits::VertexShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<AlphaTestEffectTraits>::PixelShaderBytecode) == AlphaTestEffectTraits::PixelShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<AlphaTestEffectTraits>::PixelShaderIndices) == AlphaTestEffectTraits::ShaderPermutationCount, "array/max mismatch" );
 }
 
 
-int AlphaTestEffect::Impl::GetCurrentShaderPermutation()
+int AlphaTestEffect::Impl::GetCurrentShaderPermutation() const
 {
     int permutation = 0;
 

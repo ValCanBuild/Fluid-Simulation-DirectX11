@@ -62,6 +62,12 @@ bool BaseD3DShader::Initialize (ID3D11Device* device, HWND hwnd) {
 	// Perform any child-specific initializations
 	SpecificInitialization(device);
 
+	// Clean up
+	if (shaderDesc.polygonLayout) {
+		delete [] shaderDesc.polygonLayout;
+		shaderDesc.polygonLayout = nullptr;
+	}
+
 	return true;
 }
 

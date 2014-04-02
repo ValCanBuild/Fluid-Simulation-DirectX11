@@ -9,13 +9,13 @@ cbuffer MatrixBuffer {
 //////////////
 struct VertexInputType {
 	float4 position : SV_Position;
-	float3 normal : NORMAL;
-	float2 texC : TEXCOORD;
+	float3 normal : NORMAL; // unused
+	float2 texC : TEXCOORD; // unused
 };
 
 struct PixelInputType {
 	float4 position : SV_POSITION;
-	float3 worldPosition: TEXCOORD0;
+	float3 worldPosition : TEXCOORD0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

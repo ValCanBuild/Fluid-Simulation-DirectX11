@@ -30,6 +30,9 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.props" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\MeshContentTask.props" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ShaderGraphContentTask.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -94,7 +97,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <IgnoreSpecificDefaultLibraries>atls.lib;atlsd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>atls.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <AdditionalLibraryDirectories>$(VCInstallDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -103,17 +106,19 @@
     <ClCompile Include="source\display\D3DGraphicsObject.cpp" />
     <ClCompile Include="source\display\D3DRenderer.cpp" />
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp" />
-    <ClCompile Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoColorShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\OrthoTextureShader.cpp" />
-    <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\SkyShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\SmokeRenderShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\TerrainTextureShader.cpp" />
+    <ClCompile Include="source\display\D3DShaders\FireRenderShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\TextureShader.cpp" />
     <ClCompile Include="source\display\D3DShaders\WaveShader.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp" />
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp" />
     <ClCompile Include="source\display\Scenes\RigidBodyScene3D.cpp" />
     <ClCompile Include="source\display\simulations\FluidSimulation.cpp" />
+    <ClCompile Include="source\display\simulations\LODData.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\objects\BaseD3DBody.cpp" />
     <ClCompile Include="source\objects\Bounds.cpp" />
@@ -122,22 +127,30 @@
     <ClCompile Include="source\objects\Component.cpp" />
     <ClCompile Include="source\objects\D2DColorQuad.cpp" />
     <ClCompile Include="source\objects\D2DTexQuad.cpp" />
+    <ClCompile Include="source\objects\ModelGameObject.cpp" />
     <ClCompile Include="source\objects\PrimitiveGameObject.cpp" />
     <ClCompile Include="source\objects\RigidBody3D.cpp" />
+    <ClCompile Include="source\objects\SkyObject.cpp" />
+    <ClCompile Include="source\objects\TerrainObject.cpp" />
     <ClCompile Include="source\objects\VolumeRenderer.cpp" />
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
     <ClCompile Include="source\system\ServiceProvider.cpp" />
-    <ClCompile Include="source\utilities\AppTimer.cpp" />
-    <ClCompile Include="source\utilities\Camera.cpp" />
+    <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp" />
+    <ClCompile Include="source\utilities\CameraImpl.cpp" />
     <ClCompile Include="source\utilities\CollisionManager.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
     <ClCompile Include="source\utilities\D3DTexture.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DShaders.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DShaders.cpp" />
+    <ClCompile Include="source\utilities\FluidCalculation\FluidResources.cpp" />
     <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp" />
     <ClCompile Include="source\utilities\GeometryBuilder.cpp" />
+    <ClCompile Include="source\utilities\HeightMap.cpp" />
+    <ClCompile Include="source\utilities\HeightmapParser.cpp" />
     <ClCompile Include="source\utilities\PerformanceMonitor.cpp" />
     <ClCompile Include="source\utilities\Physics.cpp" />
     <ClCompile Include="source\utilities\Screen.cpp" />
@@ -147,13 +160,13 @@
     <ClInclude Include="source\display\D3DGraphicsObject.h" />
     <ClInclude Include="source\display\D3DRenderer.h" />
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DBuffers.h" />
-    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoColorShader.h" />
     <ClInclude Include="source\display\D3DShaders\OrthoTextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h" />
-    <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h" />
+    <ClInclude Include="source\display\D3DShaders\SkyShader.h" />
+    <ClInclude Include="source\display\D3DShaders\SmokeRenderShader.h" />
+    <ClInclude Include="source\display\D3DShaders\TerrainTextureShader.h" />
+    <ClInclude Include="source\display\D3DShaders\FireRenderShader.h" />
     <ClInclude Include="source\display\D3DShaders\TextureShader.h" />
     <ClInclude Include="source\display\D3DShaders\WaveShader.h" />
     <ClInclude Include="source\display\IFrameBuffer.h" />
@@ -163,6 +176,7 @@
     <ClInclude Include="source\display\Scenes\IScene.h" />
     <ClInclude Include="source\display\Scenes\RigidBodyScene3D.h" />
     <ClInclude Include="source\display\simulations\FluidSimulation.h" />
+    <ClInclude Include="source\display\simulations\LODData.h" />
     <ClInclude Include="source\objects\BaseD3DBody.h" />
     <ClInclude Include="source\objects\Bounds.h" />
     <ClInclude Include="source\objects\BoxCollider.h" />
@@ -172,19 +186,30 @@
     <ClInclude Include="source\objects\D2DTexQuad.h" />
     <ClInclude Include="source\objects\GameObject.h" />
     <ClInclude Include="source\objects\IRenderable.h" />
+    <ClInclude Include="source\objects\ModelGameObject.h" />
     <ClInclude Include="source\objects\PrimitiveGameObject.h" />
     <ClInclude Include="source\objects\RigidBody3D.h" />
+    <ClInclude Include="source\objects\SkyObject.h" />
+    <ClInclude Include="source\objects\TerrainObject.h" />
     <ClInclude Include="source\objects\Transform.h" />
     <ClInclude Include="source\objects\VolumeRenderer.h" />
     <ClInclude Include="source\system\GraphicsSystemImpl.h" />
-    <ClInclude Include="source\system\GraphicsSystem.h" />
+    <ClInclude Include="source\system\IGraphicsSystem.h" />
     <ClInclude Include="source\system\InputSystemImpl.h" />
     <ClInclude Include="source\system\InputSystem.h" />
     <ClInclude Include="source\system\MainSystem.h" />
     <ClInclude Include="source\system\ServiceProvider.h" />
-    <ClInclude Include="source\utilities\AppTimer.h" />
+    <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h" />
+    <ClInclude Include="source\utilities\AppTimer\IAppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
-    <ClInclude Include="source\utilities\Camera.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DShaders.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DBuffers.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DShaders.h" />
+    <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h" />
+    <ClInclude Include="source\utilities\HeightMap.h" />
+    <ClInclude Include="source\utilities\HeightmapParser.h" />
+    <ClInclude Include="source\utilities\ICamera.h" />
+    <ClInclude Include="source\utilities\CameraImpl.h" />
     <ClInclude Include="source\utilities\CollisionManager.h" />
     <ClInclude Include="source\utilities\Console.h" />
     <ClInclude Include="source\utilities\D3dIncludes.h" />
@@ -197,9 +222,13 @@
     <ClInclude Include="source\utilities\PerformanceMonitor.h" />
     <ClInclude Include="source\utilities\Physics.h" />
     <ClInclude Include="source\utilities\Screen.h" />
+    <ClInclude Include="source\utilities\StringUtils.h" />
+    <ClInclude Include="source\utilities\TgaHeader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="hlsl\pFluid2DTexture.psh" />
+    <None Include="hlsl\pSkymap.psh" />
+    <None Include="hlsl\pTerrainTexture.psh" />
     <None Include="hlsl\pVolumeRender.psh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VolumeRenderPixelShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -228,6 +257,8 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </None>
+    <None Include="hlsl\vSkymap.vsh" />
+    <None Include="hlsl\vTerrainTexture.vsh" />
     <None Include="hlsl\vTexture.vsh">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TextureVertexShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
@@ -272,7 +303,30 @@
       <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <MeshContentTask Include="data\models\fountain\Fountain.fbx">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/fountain/%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
+    <MeshContentTask Include="data\models\house\English_thatched_house.FBX">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/house/%(Filename).cmo</ContentOutput>
+    </MeshContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\house\english_house_texture.bmp">
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/house/%(Filename).dds</ContentOutput>
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+    </ImageContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\fountain\wmarble.jpg">
+      <GenerateMips Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateMips>
+      <ContentOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)data/models/fountain/%(Filename).dds</ContentOutput>
+    </ImageContentTask>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.targets" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\MeshContentTask.targets" />
+    <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ShaderGraphContentTask.targets" />
   </ImportGroup>
 </Project>

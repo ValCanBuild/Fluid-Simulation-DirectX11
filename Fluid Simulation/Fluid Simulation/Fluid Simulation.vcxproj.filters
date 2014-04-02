@@ -31,9 +31,6 @@
     <Filter Include="Source Files\Display">
       <UniqueIdentifier>{35096c27-bdb2-4d3a-b395-0979af5b2074}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Display\D3DShaders">
-      <UniqueIdentifier>{62837f62-26ac-4acd-9c0e-77f064164010}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Display\D3DShaders">
       <UniqueIdentifier>{209bf7e9-d7d3-402f-a58c-fb3c4de7b9a4}</UniqueIdentifier>
     </Filter>
@@ -100,11 +97,50 @@
     <Filter Include="Source Files\Display\Simulations">
       <UniqueIdentifier>{fd6be55c-0226-46db-b1cb-df7dde383485}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Display\D3DShaders\Fluid3D">
+    <Filter Include="Header Files\Utilities\Camera">
+      <UniqueIdentifier>{c5fa175f-cd3c-45c0-99f2-eef025339794}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\Camera">
+      <UniqueIdentifier>{f60b5147-93f8-4f1c-8673-c81220a9c930}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSL\Skymap">
+      <UniqueIdentifier>{f525350c-a6ef-4aec-91c4-24cd770485cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities\AppTimer">
+      <UniqueIdentifier>{d55142e2-dd21-4c37-a167-10947d2b1939}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\AppTimer">
+      <UniqueIdentifier>{fe173478-435a-4c51-a85f-96fa57fe863c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{9fb27a0c-beb1-4063-b213-a2c7d6956559}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\house">
+      <UniqueIdentifier>{47f5224d-1139-4e02-91d2-1511a96cad55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities\Heightmap">
+      <UniqueIdentifier>{9929f503-dae6-47ed-82db-fae6e79e9058}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\Heightmap">
+      <UniqueIdentifier>{6ca25863-fa9c-4869-bccd-e218bef5a268}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Display\D3DShaders">
+      <UniqueIdentifier>{62837f62-26ac-4acd-9c0e-77f064164010}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities\FluidCalculation\Fluid3D">
       <UniqueIdentifier>{304fcd5d-e0c1-47a6-a088-099777c35e73}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Display\D3DShaders\Fluid3D">
-      <UniqueIdentifier>{6e7cc974-7061-48a8-9624-2d1a61f09321}</UniqueIdentifier>
+    <Filter Include="Source Files\Utilities\FluidCalculation\Fluid3D">
+      <UniqueIdentifier>{ecbe197a-d742-4c17-ba70-17f7a7aa6a30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities\FluidCalculation\Fluid2D">
+      <UniqueIdentifier>{ccf014b5-2571-4264-a97a-ec75b03632de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities\FluidCalculation\Fluid2D">
+      <UniqueIdentifier>{d603e68b-427f-4841-86a7-e01da90d8566}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\fountain">
+      <UniqueIdentifier>{57ade616-c096-4062-960f-b32af383c614}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -122,9 +158,6 @@
     </ClCompile>
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
-    </ClCompile>
-    <ClCompile Include="source\utilities\Camera.cpp">
-      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="source\system\ServiceProvider.cpp">
       <Filter>Source Files\System</Filter>
@@ -150,9 +183,6 @@
     <ClCompile Include="source\utilities\Console.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="source\utilities\AppTimer.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="source\display\Scenes\Fluid2DScene.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
     </ClCompile>
@@ -161,9 +191,6 @@
     </ClCompile>
     <ClCompile Include="source\display\Scenes\Fluid3DScene.cpp">
       <Filter>Source Files\Display\Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\Fluid2DShaders.cpp">
-      <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
     <ClCompile Include="source\display\D3DFrameBuffer.cpp">
       <Filter>Source Files\Display\Frame Buffer</Filter>
@@ -210,20 +237,8 @@
     <ClCompile Include="source\utilities\GeometryBuilder.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\VolumeRenderShader.cpp">
-      <Filter>Source Files\Display\D3DShaders</Filter>
-    </ClCompile>
-    <ClCompile Include="source\objects\PrimitiveGameObject.cpp">
-      <Filter>Source Files\Objects</Filter>
-    </ClCompile>
     <ClCompile Include="source\objects\VolumeRenderer.cpp">
       <Filter>Source Files\Objects</Filter>
-    </ClCompile>
-    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp">
-      <Filter>Source Files\Utilities\FluidCalculation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp">
-      <Filter>Source Files\Utilities\FluidCalculation</Filter>
     </ClCompile>
     <ClCompile Include="source\display\simulations\FluidSimulation.cpp">
       <Filter>Source Files\Display\Simulations</Filter>
@@ -231,8 +246,59 @@
     <ClCompile Include="source\utilities\FluidCalculation\FluidSettings.cpp">
       <Filter>Source Files\Utilities\FluidCalculation</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.cpp">
-      <Filter>Source Files\Display\D3DShaders\Fluid3D</Filter>
+    <ClCompile Include="source\utilities\CameraImpl.cpp">
+      <Filter>Source Files\Utilities\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\SkyObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\SkyShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\FluidResources.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp">
+      <Filter>Source Files\Utilities\AppTimer</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\ModelGameObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\PrimitiveGameObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\objects\TerrainObject.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\HeightmapParser.cpp">
+      <Filter>Source Files\Utilities\Heightmap</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\HeightMap.cpp">
+      <Filter>Source Files\Utilities\Heightmap</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\TerrainTextureShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DCalculator.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation\Fluid3D</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DCalculator.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation\Fluid2D</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid2DShaders.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation\Fluid2D</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utilities\FluidCalculation\Fluid3DShaders.cpp">
+      <Filter>Source Files\Utilities\FluidCalculation\Fluid3D</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\FireRenderShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\D3DShaders\SmokeRenderShader.cpp">
+      <Filter>Source Files\Display\D3DShaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\display\simulations\LODData.cpp">
+      <Filter>Source Files\Display\Simulations</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -256,9 +322,6 @@
     </ClInclude>
     <ClInclude Include="source\display\D3DShaders\BaseD3DShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\Camera.h">
-      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="source\system\ServiceProvider.h">
       <Filter>Header Files\System</Filter>
@@ -290,9 +353,6 @@
     <ClInclude Include="source\utilities\Console.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="source\utilities\AppTimer.h">
-      <Filter>Header Files\Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="source\display\Scenes\IScene.h">
       <Filter>Header Files\Display\Scenes</Filter>
     </ClInclude>
@@ -304,9 +364,6 @@
     </ClInclude>
     <ClInclude Include="source\display\Scenes\Fluid3DScene.h">
       <Filter>Header Files\Display\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\Fluid2DShaders.h">
-      <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
     <ClInclude Include="source\display\IFrameBuffer.h">
       <Filter>Header Files\Display\Frame Buffer</Filter>
@@ -356,9 +413,6 @@
     <ClInclude Include="source\system\GraphicsSystemImpl.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="source\system\GraphicsSystem.h">
-      <Filter>Header Files\System\Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="source\display\D3DShaders\ShaderParams.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
@@ -371,20 +425,8 @@
     <ClInclude Include="source\utilities\GeometryBuilder.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\VolumeRenderShader.h">
-      <Filter>Header Files\Display\D3DShaders</Filter>
-    </ClInclude>
-    <ClInclude Include="source\objects\PrimitiveGameObject.h">
-      <Filter>Header Files\Objects</Filter>
-    </ClInclude>
     <ClInclude Include="source\objects\VolumeRenderer.h">
       <Filter>Header Files\Objects</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DCalculator.h">
-      <Filter>Header Files\Utilities\FluidCalculation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DCalculator.h">
-      <Filter>Header Files\Utilities\FluidCalculation</Filter>
     </ClInclude>
     <ClInclude Include="source\display\simulations\FluidSimulation.h">
       <Filter>Header Files\Display\Simulations</Filter>
@@ -392,11 +434,77 @@
     <ClInclude Include="source\utilities\FluidCalculation\FluidSettings.h">
       <Filter>Header Files\Utilities\FluidCalculation</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DShaders.h">
-      <Filter>Header Files\Display\D3DShaders\Fluid3D</Filter>
+    <ClInclude Include="source\utilities\CameraImpl.h">
+      <Filter>Header Files\Utilities\Camera</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\D3DShaders\Fluid3D\Fluid3DBuffers.h">
-      <Filter>Header Files\Display\D3DShaders\Fluid3D</Filter>
+    <ClInclude Include="source\system\IGraphicsSystem.h">
+      <Filter>Header Files\System\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\ICamera.h">
+      <Filter>Header Files\Utilities\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\SkyObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\SkyShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\StringUtils.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\FluidResources.h">
+      <Filter>Header Files\Utilities\FluidCalculation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AppTimer\IAppTimer.h">
+      <Filter>Header Files\Utilities\AppTimer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h">
+      <Filter>Header Files\Utilities\AppTimer</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\ModelGameObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\PrimitiveGameObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\TgaHeader.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\objects\TerrainObject.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\HeightMap.h">
+      <Filter>Header Files\Utilities\Heightmap</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\HeightmapParser.h">
+      <Filter>Header Files\Utilities\Heightmap</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\TerrainTextureShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DCalculator.h">
+      <Filter>Header Files\Utilities\FluidCalculation\Fluid3D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DBuffers.h">
+      <Filter>Header Files\Utilities\FluidCalculation\Fluid3D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid3DShaders.h">
+      <Filter>Header Files\Utilities\FluidCalculation\Fluid3D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DCalculator.h">
+      <Filter>Header Files\Utilities\FluidCalculation\Fluid2D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\FluidCalculation\Fluid2DShaders.h">
+      <Filter>Header Files\Utilities\FluidCalculation\Fluid2D</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\FireRenderShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\D3DShaders\SmokeRenderShader.h">
+      <Filter>Header Files\Display\D3DShaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\display\simulations\LODData.h">
+      <Filter>Header Files\Display\Simulations</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -430,6 +538,18 @@
     <None Include="hlsl\vVolumeRender.vsh">
       <Filter>HLSL\VolumeRender</Filter>
     </None>
+    <None Include="hlsl\pSkymap.psh">
+      <Filter>HLSL\Skymap</Filter>
+    </None>
+    <None Include="hlsl\vSkymap.vsh">
+      <Filter>HLSL\Skymap</Filter>
+    </None>
+    <None Include="hlsl\pTerrainTexture.psh">
+      <Filter>HLSL\Texture</Filter>
+    </None>
+    <None Include="hlsl\vTerrainTexture.vsh">
+      <Filter>HLSL\Texture</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="hlsl\cFluid2D.hlsl">
@@ -438,5 +558,21 @@
     <FxCompile Include="hlsl\cFluid3D.hlsl">
       <Filter>HLSL</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MeshContentTask Include="data\models\house\English_thatched_house.FBX">
+      <Filter>Models\house</Filter>
+    </MeshContentTask>
+    <MeshContentTask Include="data\models\fountain\Fountain.fbx">
+      <Filter>Models\fountain</Filter>
+    </MeshContentTask>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageContentTask Include="data\models\house\english_house_texture.bmp">
+      <Filter>Models\house</Filter>
+    </ImageContentTask>
+    <ImageContentTask Include="data\models\fountain\wmarble.jpg">
+      <Filter>Models\fountain</Filter>
+    </ImageContentTask>
   </ItemGroup>
 </Project>

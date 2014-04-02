@@ -1,0 +1,17 @@
+
+TextureCube skyMap : register (t0);
+
+SamplerState samplerState : register (s0);
+
+struct PixelInputType {
+	float4 position : SV_POSITION;
+	float3 texCoord : TEXCOORD0;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 SkymapPixelShader(PixelInputType input) : SV_TARGET {
+	return skyMap.Sample(samplerState, input.texCoord);
+}

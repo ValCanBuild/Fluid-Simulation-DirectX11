@@ -16,6 +16,8 @@ AntTweakBar: http://anttweakbar.sourceforge.net/
 
 Changelog so far:
 
+v2.0.1: Optimized 3D Fluid Simulation code. It should now have a much smaller memory footprint and do far fewer API calls per frame.
+
 v2.0: Implemented simple 3D Fluid Simulation.
 
 v1.1.1: Implemented obstacles for 2D Fluid Simulation. Slightly improved performance by reducing floating point

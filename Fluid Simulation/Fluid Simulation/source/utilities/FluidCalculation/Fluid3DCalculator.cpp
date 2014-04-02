@@ -7,13 +7,11 @@ Date: 18/2/2014
 *********************************************************************/
 
 #include "Fluid3DCalculator.h"
-#include "../../display/D3DShaders/Fluid3D/Fluid3DShaders.h"
-#include "../../display/D3DShaders/Fluid3D/Fluid3DBuffers.h"
+#include "Fluid3DShaders.h"
+#include "Fluid3DBuffers.h"
 
 #define READ 0
 #define WRITE 1
-#define WRITE2 2
-#define WRITE3 3
 
 #define INTERACTION_IMPULSE_RADIUS 7.0f
 #define OBSTACLES_IMPULSE_RADIUS 5.0f
@@ -21,60 +19,56 @@ Date: 18/2/2014
 
 namespace BufferDirtyFlags
 {
-	const int General						= 0x01;
-	const int DensityDissipation			= 0x02;
-	const int TemperatureDissipation		= 0x04;
-	const int VelocityDissipation			= 0x08;
+	const int General = 0x01;
 }
 
 using namespace Fluid3D;
 
-Fluid3DCalculator::Fluid3DCalculator(FluidSettings fluidSettings) : pD3dGraphicsObj(nullptr), 
-	mFluidSettings(fluidSettings),
-	mVelocitySP(nullptr),
-	mDensitySP(nullptr),
-	mTemperatureSP(nullptr),
-	mPressureSP(nullptr),
-	mObstacleSP(nullptr) {
+// Declare statics
+map<Vector3, CommonFluidResources> Fluid3DCalculator::commonResourcesMap;
+CComPtr<ID3D11SamplerState>	Fluid3DCalculator::sampleState;
+
+// Static methods
+void Fluid3DCalculator::AttachCommonResources(ID3D11DeviceContext* context) {
+	context->CSSetSamplers(0,1,&(sampleState.p));
+}
+
+Fluid3DCalculator::Fluid3DCalculator(const FluidSettings &fluidSettings) : pD3dGraphicsObj(nullptr), 
+	mFluidSettings(fluidSettings)
+{
 
 }
 
 Fluid3DCalculator::~Fluid3DCalculator() {
-	if (mPressureSP) {
-		delete [] mPressureSP;
-		mPressureSP = nullptr;
-	}
-	if (mDensitySP) {
-		delete [] mDensitySP;
-		mDensitySP = nullptr;
-	}
-	if (mTemperatureSP) {
-		delete [] mTemperatureSP;
-		mTemperatureSP = nullptr;
-	}
-	if (mVelocitySP) {
-		delete [] mVelocitySP;
-		mVelocitySP = nullptr;
-	}
-	if (mObstacleSP) {
-		delete [] mObstacleSP;
-		mObstacleSP = nullptr;
-	}
-
 	pD3dGraphicsObj = nullptr;
 }
 
-bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd) {
+bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd) {
 	pD3dGraphicsObj = d3dGraphicsObj;
-
+	ID3D11Device *pDevice = pD3dGraphicsObj->GetDevice();
 	bool result = InitShaders(hwnd);
 	if (!result) {
 		return false;
 	}
 
-	result = InitShaderParams(hwnd);
-	if (!result) {
-		return false;
+	switch (mFluidSettings.GetFluidType()) {
+	case SMOKE:
+		mFluidResources = FluidResourcesPerObject::CreateResourcesSmoke(pDevice, mFluidSettings.dimensions, hwnd);
+		break;
+	case FIRE:
+		mFluidResources = FluidResourcesPerObject::CreateResourcesFire(pDevice, mFluidSettings.dimensions, hwnd);
+		break;
+	}
+
+	if (commonResourcesMap.count(mFluidSettings.dimensions) == 0) {
+		mCommonResources = CommonFluidResources::CreateResources(pDevice, mFluidSettings.dimensions, hwnd);
+		if (!result) {
+			return false;
+		}
+		commonResourcesMap[mFluidSettings.dimensions] = mCommonResources;
+	} 
+	else {
+		mCommonResources = commonResourcesMap[mFluidSettings.dimensions];
 	}
 
 	result = InitBuffersAndSamplers();
@@ -85,24 +79,23 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND 
 
 	// Update buffers with values
 	UpdateGeneralBuffer();
-	UpdateDissipationBuffer(VELOCITY);
-	UpdateDissipationBuffer(DENSITY);
-	UpdateDissipationBuffer(TEMPERATURE);
+
+	// create obstacle shader for generating the static obstacle field
+	ObstacleShader obstacleShader(mFluidSettings.dimensions);
+	result = obstacleShader.Initialize(pD3dGraphicsObj->GetDevice(), hwnd);
+	if (!result) {
+		return false;
+	}
+	obstacleShader.Compute(pD3dGraphicsObj->GetDeviceContext(), &mFluidResources.obstacleSP);
 
 	return true;
 }
 
 bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 	ID3D11Device *device = pD3dGraphicsObj->GetDevice();
-	
-	mForwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_FORWARD, mFluidSettings.dimensions));
-	bool result = mForwardAdvectionShader->Initialize(device,hwnd);
-	if (!result) {
-		return false;
-	}
 
-	mBackwardAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_BACKWARD, mFluidSettings.dimensions));
-	result = mBackwardAdvectionShader->Initialize(device,hwnd);
+	mAdvectionShader = unique_ptr<AdvectionShader>(new AdvectionShader(AdvectionShader::ADVECTION_TYPE_NORMAL, mFluidSettings.dimensions));
+	bool result = mAdvectionShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
@@ -115,6 +108,18 @@ bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 
 	mImpulseShader = unique_ptr<ImpulseShader>(new ImpulseShader(mFluidSettings.dimensions));
 	result = mImpulseShader->Initialize(device,hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mVorticityShader = unique_ptr<VorticityShader>(new VorticityShader(mFluidSettings.dimensions));
+	result = mVorticityShader->Initialize(device,hwnd);
+	if (!result) {
+		return false;
+	}
+
+	mConfinementShader = unique_ptr<ConfinementShader>(new ConfinementShader(mFluidSettings.dimensions));
+	result = mConfinementShader->Initialize(device,hwnd);
 	if (!result) {
 		return false;
 	}
@@ -143,132 +148,11 @@ bool Fluid3DCalculator::InitShaders(HWND hwnd) {
 		return false;
 	}
 
-	return true;
-}
-
-bool Fluid3D::Fluid3DCalculator::InitShaderParams(HWND hwnd) {
-	// Create the velocity shader params
-	CComPtr<ID3D11Texture3D> velocityText[4];
-	mVelocitySP = new ShaderParams[4];
-	D3D11_TEXTURE3D_DESC textureDesc;
-	ZeroMemory(&textureDesc, sizeof(D3D11_TEXTURE3D_DESC));
-	textureDesc.Width = (UINT) mFluidSettings.dimensions.x;
-	textureDesc.Height = (UINT) mFluidSettings.dimensions.y;
-	textureDesc.Depth = (UINT) mFluidSettings.dimensions.z;
-	textureDesc.MipLevels = 1;
-	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;	// 3 components for velocity in 3D + alpha
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.MiscFlags = 0;
-
-	for (int i = 0; i < 4; ++i) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &velocityText[i]);
-		if (FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the velocity Texture Object", L"Error", MB_OK);
-			return false;
-		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(velocityText[i], NULL, &mVelocitySP[i].mSRV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the velocity SRV", L"Error", MB_OK);
-			return false;
-
-		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(velocityText[i], NULL, &mVelocitySP[i].mUAV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the velocity UAV", L"Error", MB_OK);
-			return false;
-		}
-	}
-
-	// Create the density shader params
-	CComPtr<ID3D11Texture3D> densityText[4];
-	mDensitySP = new ShaderParams[4];
-	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
-	for (int i = 0; i < 4; ++i) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &densityText[i]);
-		if (FAILED(hr)){
-			MessageBox(hwnd, L"Could not create the density Texture Object", L"Error", MB_OK);
-			return false;
-		}
-		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(densityText[i], NULL, &mDensitySP[i].mSRV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the density SRV", L"Error", MB_OK);
-			return false;
-		}
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(densityText[i], NULL, &mDensitySP[i].mUAV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the density UAV", L"Error", MB_OK);
-			return false;
-		}
-	}
-
-	// Create the temperature shader params
-	CComPtr<ID3D11Texture3D> temperatureText[4];
-	mTemperatureSP = new ShaderParams[4];
-	for (int i = 0; i < 4; ++i) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &temperatureText[i]);
-		if (FAILED(hr)){
-			MessageBox(hwnd, L"Could not create the temperature Texture Object", L"Error", MB_OK);
-			return false;
-		}
-		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(temperatureText[i], NULL, &mTemperatureSP[i].mSRV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the temperature SRV", L"Error", MB_OK);
-			return false;
-		}
-
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(temperatureText[i], NULL, &mTemperatureSP[i].mUAV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the temperature UAV", L"Error", MB_OK);
-			return false;
-		}
-	}
-
-	// Create divergence shader params
-	CComPtr<ID3D11Texture3D> divergenceText;
-	mDivergenceSP = unique_ptr<ShaderParams>(new ShaderParams());
-	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &divergenceText);
-	// Create the SRV and UAV.
-	hresult = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(divergenceText, NULL, &mDivergenceSP->mSRV);
-	if(FAILED(hresult)) {
-		MessageBox(hwnd, L"Could not create the divergence SRV", L"Error", MB_OK);
-		return false;
-	}
-	hresult = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(divergenceText, NULL, &mDivergenceSP->mUAV);
-	if(FAILED(hresult)) {
-		MessageBox(hwnd, L"Could not create the divergence UAV", L"Error", MB_OK);
-		return false;
-	}
-
-	// Create pressure shader params and render targets
-	mPressureSP = new ShaderParams[2];
-	CComPtr<ID3D11Texture3D> pressureText[2];	
-	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_RENDER_TARGET;
-	for (int i = 0; i < 2; ++i) {
-		HRESULT hr = pD3dGraphicsObj->GetDevice()->CreateTexture3D(&textureDesc, NULL, &pressureText[i]);
-		if (FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the pressure Texture Object", L"Error", MB_OK);
-			return false;
-		}
-		// Create the SRV and UAV.
-		hr = pD3dGraphicsObj->GetDevice()->CreateShaderResourceView(pressureText[i], NULL, &mPressureSP[i].mSRV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the pressure SRV", L"Error", MB_OK);
-			return false;
-		}
-
-		hr = pD3dGraphicsObj->GetDevice()->CreateUnorderedAccessView(pressureText[i], NULL, &mPressureSP[i].mUAV);
-		if(FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the pressure UAV", L"Error", MB_OK);
-			return false;
-		}
-		// Create the render target
-		hr = pD3dGraphicsObj->GetDevice()->CreateRenderTargetView(pressureText[i], NULL, &mPressureRenderTargets[i]);
-		if (FAILED(hr)) {
-			MessageBox(hwnd, L"Could not create the pressure Render Target", L"Error", MB_OK);
+	// only initialize ExtinguishmentImpulseShader if fluid type is fire
+	if (mFluidSettings.GetFluidType() == FIRE) {
+		mExtinguishmentImpulseShader = unique_ptr<ExtinguishmentImpulseShader>(new ExtinguishmentImpulseShader(mFluidSettings.dimensions));
+		result = mExtinguishmentImpulseShader->Initialize(device,hwnd);
+		if (!result) {
 			return false;
 		}
 	}
@@ -278,118 +162,154 @@ bool Fluid3D::Fluid3DCalculator::InitShaderParams(HWND hwnd) {
 
 bool Fluid3DCalculator::InitBuffersAndSamplers() {
 	// Create the constant buffers
-	bool result = BuildBuffer<InputBufferGeneral>(pD3dGraphicsObj->GetDevice(), &mInputBufferGeneral);
+	bool result = BuildDynamicBuffer<InputBufferGeneral>(pD3dGraphicsObj->GetDevice(), &mInputBufferGeneral);
 	if (!result) {
 		return false;
 	}
-	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferDensityDissipation);
+	result = BuildDynamicBuffer<InputBufferAdvection>(pD3dGraphicsObj->GetDevice(), &mInputBufferAdvection);
 	if (!result) {
 		return false;
 	}
-	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferVelocityDissipation);
-	if (!result) {
-		return false;
-	}
-	result = BuildBuffer<InputBufferDissipation>(pD3dGraphicsObj->GetDevice(), &mInputBufferTemperatureDissipation);
-	if (!result) {
-		return false;
-	}
-	result = BuildBuffer<InputBufferImpulse>(pD3dGraphicsObj->GetDevice(), &mInputBufferImpulse);
+	result = BuildDynamicBuffer<InputBufferImpulse>(pD3dGraphicsObj->GetDevice(), &mInputBufferImpulse);
 	if (!result) {
 		return false;
 	}
 
-	// Create the sampler
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 16;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	// Create the sampler if not already created
+	if (sampleState == nullptr) {
+		D3D11_SAMPLER_DESC samplerDesc;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+		samplerDesc.MipLODBias = 0.0f;
+		samplerDesc.MaxAnisotropy = 16;
+		samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		samplerDesc.BorderColor[0] = 0;
+		samplerDesc.BorderColor[1] = 0;
+		samplerDesc.BorderColor[2] = 0;
+		samplerDesc.BorderColor[3] = 0;
+		samplerDesc.MinLOD = 0;
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-	// Create the texture sampler state.
-	HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &mSampleState);
-	if(FAILED(hresult)) {
-		return false;
+		// Create the texture sampler state.
+		HRESULT hresult = pD3dGraphicsObj->GetDevice()->CreateSamplerState(&samplerDesc, &sampleState);
+		if(FAILED(hresult)) {
+			return false;
+		}
 	}
-
 	return true;
 }
 
 void Fluid3DCalculator::Process() {
-	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
-	context->CSSetSamplers(0,1,&(mSampleState.p));
+	auto context = pD3dGraphicsObj->GetDeviceContext();
+
+	context->CSSetSamplers(0,1,&(sampleState.p));
+
+	// Set the obstacle texture - it is constant throughout the execution step
+	context->CSSetShaderResources(4, 1, &(mFluidResources.obstacleSP.mSRV.p));
 
 	// Set all the buffers to the context
-	ID3D11Buffer *const pProcessConstantBuffers[3] = {mInputBufferGeneral, mInputBufferVelocityDissipation, mInputBufferImpulse};
+	ID3D11Buffer *const pProcessConstantBuffers[3] = {mInputBufferGeneral, mInputBufferAdvection, mInputBufferImpulse};
 	context->CSSetConstantBuffers(0, 3, pProcessConstantBuffers);
 
-	// Advect velocity against itself
-	Advect(mVelocitySP);
-
 	//Advect temperature against velocity
-	context->CSSetConstantBuffers(1, 1, &(mInputBufferTemperatureDissipation.p));
-	Advect(mTemperatureSP);
+	Advect(mFluidResources.temperatureSP, NORMAL, mFluidSettings.temperatureDissipation);
 
 	// Advect density against velocity
-	context->CSSetConstantBuffers(1, 1, &(mInputBufferDensityDissipation.p));
-	Advect(mDensitySP);
+	Advect(mFluidResources.densitySP, mFluidSettings.advectionType, mFluidSettings.densityDissipation);
 
-	int resultBuffer = mFluidSettings.macCormackEnabled ? WRITE : WRITE2;
-	swap(mVelocitySP[READ],mVelocitySP[resultBuffer]);
-	swap(mTemperatureSP[READ],mTemperatureSP[resultBuffer]);
-	swap(mDensitySP[READ],mDensitySP[resultBuffer]);
+	// Advect the reaction field against velocity
+	if (mFluidSettings.GetFluidType() == FIRE) {
+		Advect(mFluidResources.reactionSP, mFluidSettings.advectionType, 1.0f, mFluidSettings.reactionDecay);
+	}
+
+	// Advect velocity against itself
+	Advect(mFluidResources.velocitySP, mFluidSettings.advectionType, mFluidSettings.velocityDissipation);
 
 	//Determine how the temperature of the fluid changes the velocity
-	mBuoyancyShader->Compute(context,&mVelocitySP[READ],&mTemperatureSP[READ],&mDensitySP[READ],&mVelocitySP[WRITE]);
-	swap(mVelocitySP[READ],mVelocitySP[WRITE]);
+	mBuoyancyShader->Compute(context,&mFluidResources.velocitySP[READ], &mFluidResources.temperatureSP[READ], &mFluidResources.densitySP[READ], &mFluidResources.velocitySP[WRITE]);
+	swap(mFluidResources.velocitySP[READ], mFluidResources.velocitySP[WRITE]);
 
+	// Add a constant amount of density and temperature back into the system
 	RefreshConstantImpulse();
 
+	// Try to preserve swirling movement of the fluid by injecting vorticity back into the system
+	ComputeVorticityConfinement();
+
 	// Calculate the divergence of the velocity
-	mDivergenceShader->Compute(context,&mVelocitySP[READ],mDivergenceSP.get());
+	mDivergenceShader->Compute(context, &mFluidResources.velocitySP[READ], &mCommonResources.divergenceSP);
 
 	CalculatePressureGradient();
 
 	//Use the pressure texture that was last computed. This computes divergence free velocity
-	mSubtractGradientShader->Compute(context,&mVelocitySP[READ],&mPressureSP[READ],&mVelocitySP[WRITE]);
-	std::swap(mVelocitySP[READ],mVelocitySP[WRITE]);
+	mSubtractGradientShader->Compute(context, &mFluidResources.velocitySP[READ], &mCommonResources.pressureSP[READ], &mFluidResources.velocitySP[WRITE]);
+	std::swap(mFluidResources.velocitySP[READ], mFluidResources.velocitySP[WRITE]);
 }
 
-void Fluid3DCalculator::Advect(ShaderParams *target) {
+void Fluid3DCalculator::Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation, float decay) {
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
-
-	mForwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[READ],&target[WRITE2]);
-	if (mFluidSettings.macCormackEnabled) {
-		mBackwardAdvectionShader->Compute(context,&mVelocitySP[READ],&target[WRITE2],&target[WRITE3]);
-		ShaderParams advectArrayDens[3] = {target[WRITE2], target[WRITE3], target[READ]};
-		mMacCormarckAdvectionShader->Compute(context,&mVelocitySP[READ],advectArrayDens,&target[WRITE]);
+	switch (advectionType) {
+	case NORMAL:
+		UpdateAdvectionBuffer(dissipation, 1.0f, decay);
+		mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &target[READ], &target[WRITE]);
+		break;
+	case MACCORMARCK:
+		UpdateAdvectionBuffer(1.0f, 1.0f, 0.0f);
+		mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &target[READ], &mCommonResources.tempSP[0]);
+		break;
 	}
+
+	if (advectionType == MACCORMARCK) {
+		// advect backwards a step
+		UpdateAdvectionBuffer(1.0f, -1.0f, 0.0f);
+		mAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], &mCommonResources.tempSP[0], &mCommonResources.tempSP[1]);
+		ShaderParams advectArrayDens[3] = {mCommonResources.tempSP[0], mCommonResources.tempSP[1], target[READ]};
+		// proceed with MacCormack advection
+		UpdateAdvectionBuffer(dissipation, 1.0f, decay);
+		mMacCormarckAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], advectArrayDens, &target[WRITE]);
+	}
+	swap(target[READ], target[WRITE]);
 }
 
 void Fluid3DCalculator::RefreshConstantImpulse() {
-	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+	auto context = pD3dGraphicsObj->GetDeviceContext();
+
+	Vector3 impulsePos = mFluidSettings.dimensions * mFluidSettings.constantInputPosition;
+	float size = mFluidSettings.dimensions.x + mFluidSettings.dimensions.y + mFluidSettings.dimensions.z;
+	float inputRadius = mFluidSettings.constantInputRadius * size;
 
 	//refresh the impulse of the density and temperature
-	Vector3 impulsePos = mFluidSettings.dimensions * mFluidSettings.constantInputPosition;
-	Vector4 temperatureAmount(mFluidSettings.constantTemperature,mFluidSettings.constantTemperature,mFluidSettings.constantTemperature,0);
-	Vector4 densityAmount(mFluidSettings.constantDensityAmount,mFluidSettings.constantDensityAmount,mFluidSettings.constantDensityAmount,0);
+	switch (mFluidSettings.GetFluidType()) {
+	case SMOKE:
+		ApplyImpulse(mFluidResources.densitySP, impulsePos, mFluidSettings.constantDensityAmount, inputRadius);
+		break;
+	case FIRE:
+		ApplyImpulse(mFluidResources.reactionSP, impulsePos, mFluidSettings.constantReactionAmount, inputRadius);
 
-	UpdateImpulseBuffer(impulsePos, densityAmount, mFluidSettings.constantInputRadius);
-	mImpulseShader->Compute(context, &mDensitySP[READ], &mDensitySP[WRITE]);
-	swap(mDensitySP[READ], mDensitySP[WRITE]);
+		// Smoke forms as fire is extinguished
+		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius, mFluidSettings.reactionExtinguishment);
+		mExtinguishmentImpulseShader->Compute(context, &mFluidResources.reactionSP[READ], &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
+		swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
+		break;
+	}
+	
+	ApplyImpulse(mFluidResources.temperatureSP, impulsePos, mFluidSettings.constantTemperature, inputRadius);
+}
 
-	UpdateImpulseBuffer(impulsePos, temperatureAmount, mFluidSettings.constantInputRadius);
-	mImpulseShader->Compute(context, &mTemperatureSP[READ], &mTemperatureSP[WRITE]);
-	swap(mTemperatureSP[READ], mTemperatureSP[WRITE]);
+void Fluid3DCalculator::ApplyImpulse(std::array<ShaderParams, 2> &target, Vector3 &position, float amount, float radius) {
+	auto context = pD3dGraphicsObj->GetDeviceContext();
+	UpdateImpulseBuffer(position, amount, radius);
+	mImpulseShader->Compute(context, &target[READ], &target[WRITE]);
+	swap(target[READ], target[WRITE]);
+}
+
+void Fluid3DCalculator::ComputeVorticityConfinement() {
+	ID3D11DeviceContext* context = pD3dGraphicsObj->GetDeviceContext();
+
+	mVorticityShader->Compute(context, &mFluidResources.velocitySP[READ], &mFluidResources.vorticitySP);
+	mConfinementShader->Compute(context, &mFluidResources.velocitySP[READ], &mFluidResources.vorticitySP, &mFluidResources.velocitySP[WRITE]);
+	swap(mFluidResources.velocitySP[READ], mFluidResources.velocitySP[WRITE]);
 }
 
 void Fluid3DCalculator::CalculatePressureGradient() {
@@ -397,17 +317,17 @@ void Fluid3DCalculator::CalculatePressureGradient() {
 
 	// clear pressure texture to prepare for Jacobi
 	float clearCol[4] = {0.0f,0.0f,0.0f,0.0f};
-	context->ClearRenderTargetView(mPressureRenderTargets[READ], clearCol);
-
+	context->ClearUnorderedAccessViewFloat(mCommonResources.pressureSP[READ].mUAV, clearCol);
+	ShaderParams *pDivergence = &mCommonResources.divergenceSP;
 	// perform Jacobi on pressure field
 	int i;
 	for (i = 0; i < mFluidSettings.jacobiIterations; ++i) {		
 		mJacobiShader->Compute(context,
-			&mPressureSP[READ],
-			mDivergenceSP.get(),
-			&mPressureSP[WRITE]);
+			&mCommonResources.pressureSP[READ],
+			pDivergence,
+			&mCommonResources.pressureSP[WRITE]);
 
-		swap(mPressureSP[READ],mPressureSP[WRITE]);
+		swap(mCommonResources.pressureSP[READ], mCommonResources.pressureSP[WRITE]);
 	}
 }
 
@@ -427,47 +347,33 @@ void Fluid3DCalculator::UpdateGeneralBuffer() {
 	dataPtr->fTimeStep = mFluidSettings.timeStep;
 	dataPtr->fDensityBuoyancy = mFluidSettings.densityBuoyancy;
 	dataPtr->fDensityWeight	= mFluidSettings.densityWeight;
-	dataPtr->fAmbientTemperature = AMBIENT_TEMPERATURE;
+	dataPtr->fVorticityStrength = mFluidSettings.vorticityStrength;
+	dataPtr->vBuoyancyDirection = mFluidSettings.buoyancyDirection;
 
 	context->Unmap(mInputBufferGeneral,0);
 }
 
-void Fluid3DCalculator::UpdateDissipationBuffer(DissipationBufferType_t bufferType) {
+void Fluid3DCalculator::UpdateAdvectionBuffer(float dissipation, float timeModifier, float decay) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	InputBufferDissipation* dataPtr;
-	ID3D11Buffer* bufferToMap;
-	float dissipationValue = 0.0f;
-
-	switch (bufferType) {
-	case DENSITY:
-		bufferToMap = mInputBufferDensityDissipation;
-		dissipationValue = mFluidSettings.densityDissipation;
-		break;
-	case VELOCITY:
-		bufferToMap = mInputBufferVelocityDissipation;
-		dissipationValue = mFluidSettings.velocityDissipation;
-		break;
-	case TEMPERATURE:
-		bufferToMap = mInputBufferTemperatureDissipation;
-		dissipationValue = mFluidSettings.temperatureDissipation;
-		break;
-	}
-
+	InputBufferAdvection* dataPtr;
+	
 	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
 
 	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(bufferToMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	HRESULT result = context->Map(mInputBufferAdvection, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result)) {
 		throw std::runtime_error(std::string("Fluid3DEffect: failed to map buffer in UpdateDissipationBuffer function"));
 	}
 
-	dataPtr = (InputBufferDissipation*)mappedResource.pData;
-	dataPtr->fDissipation = dissipationValue;
+	dataPtr = (InputBufferAdvection*)mappedResource.pData;
+	dataPtr->fDissipation = dissipation;
+	dataPtr->fTimeStepModifier = timeModifier;
+	dataPtr->fDecay = decay;
 
-	context->Unmap(bufferToMap,0);
+	context->Unmap(mInputBufferAdvection,0);
 }
 
-void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, Vector4& amount, float radius) {
+void Fluid3DCalculator::UpdateImpulseBuffer(const Vector3& point, float amount, float radius, float extinguishment) {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	InputBufferImpulse* dataPtr;
 
@@ -480,19 +386,12 @@ void Fluid3DCalculator::UpdateImpulseBuffer(Vector3& point, Vector4& amount, flo
 	}
 
 	dataPtr = (InputBufferImpulse*)mappedResource.pData;
-	dataPtr->vPoint	    = point;
-	dataPtr->fRadius    = radius;	
-	dataPtr->vFillColor	= amount;
+	dataPtr->vPoint				= point;
+	dataPtr->fRadius			= radius;	
+	dataPtr->fAmount			= amount;
+	dataPtr->fExtinguishment	= extinguishment;
 
 	context->Unmap(mInputBufferImpulse,0);
-}
-
-ID3D11ShaderResourceView * Fluid3DCalculator::GetVolumeTexture() const {
-	return mDensitySP[READ].mSRV;
-}
-
-const FluidSettings &Fluid3DCalculator::GetFluidSettings() const {
-	return mFluidSettings;
 }
 
 void Fluid3DCalculator::SetFluidSettings(const FluidSettings &fluidSettings) {
@@ -501,15 +400,6 @@ void Fluid3DCalculator::SetFluidSettings(const FluidSettings &fluidSettings) {
 
 	mFluidSettings = fluidSettings;
 
-	if (dirtyFlags & BufferDirtyFlags::VelocityDissipation) {
-		UpdateDissipationBuffer(VELOCITY);
-	}
-	if (dirtyFlags & BufferDirtyFlags::TemperatureDissipation) {
-		UpdateDissipationBuffer(TEMPERATURE);
-	}
-	if (dirtyFlags & BufferDirtyFlags::DensityDissipation) {
-		UpdateDissipationBuffer(DENSITY);
-	}
 	if (dirtyFlags & BufferDirtyFlags::General) {
 		UpdateGeneralBuffer();
 	}
@@ -518,21 +408,29 @@ void Fluid3DCalculator::SetFluidSettings(const FluidSettings &fluidSettings) {
 int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) const {
 	int dirtyFlags = 0;
 
-	if (newSettings.velocityDissipation != mFluidSettings.velocityDissipation) {
-		dirtyFlags |= BufferDirtyFlags::VelocityDissipation;
-	}
-	if (newSettings.temperatureDissipation != mFluidSettings.temperatureDissipation) {
-		dirtyFlags |= BufferDirtyFlags::TemperatureDissipation;
-	}
-	if (newSettings.densityDissipation != mFluidSettings.densityDissipation) {
-		dirtyFlags |= BufferDirtyFlags::DensityDissipation;
-	}
-
 	if (newSettings.timeStep != mFluidSettings.timeStep || newSettings.densityBuoyancy != mFluidSettings.densityBuoyancy
-		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions)
+		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions
+		|| newSettings.vorticityStrength != mFluidSettings.vorticityStrength
+		|| newSettings.buoyancyDirection != mFluidSettings.buoyancyDirection)
 	{
 		dirtyFlags |= BufferDirtyFlags::General;
 	}
 
 	return dirtyFlags;
+}
+
+FluidSettings * const Fluid3D::Fluid3DCalculator::GetFluidSettingsPointer() const {
+	return const_cast<FluidSettings*>(&mFluidSettings);
+}
+
+const FluidSettings &Fluid3DCalculator::GetFluidSettings() const {
+	return mFluidSettings;
+}
+
+ID3D11ShaderResourceView * Fluid3DCalculator::GetVolumeTexture() const {
+	return mFluidResources.densitySP[READ].mSRV;
+}
+
+ID3D11ShaderResourceView * Fluid3DCalculator::GetReactionTexture() const {
+	return mFluidResources.reactionSP[READ].mSRV;
 }

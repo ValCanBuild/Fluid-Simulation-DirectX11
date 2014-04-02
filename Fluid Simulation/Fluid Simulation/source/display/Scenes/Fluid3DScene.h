@@ -13,13 +13,17 @@ Date: 24/10/2013
 #include <vector>
 #include <memory>
 #include "IScene.h"
-#include "../../objects/PrimitiveGameObject.h"
 
-class Camera;
+class CameraImpl;
 class D3DGraphicsObject;
 class InputSystem;
 class FluidSimulation;
+class SkyObject;
+class ModelGameObject;
+class TerrainObject;
+class Transform;
 struct CTwBar;
+
 
 using namespace std;
 
@@ -41,22 +45,22 @@ private:
 	void InitGameObjects();
 	void UpdateCamera(float delta);
 	void HandleInput();
-	void HandleMousePicking();
-
+	void HandleMousePicking(bool interaction);
 	void SortTransparentObjects();
 
 private:
-	unique_ptr<Camera>	mCamera;
-	
+	unique_ptr<CameraImpl>	mCamera;
+	unique_ptr<SkyObject>	mSkyObject;
+	unique_ptr<TerrainObject> mTerrainObject;
+
 	shared_ptr<FluidSimulation> pPickedSimulation;
 	vector<shared_ptr<FluidSimulation>> mSimulations;
-	vector<PrimitiveGameObject>	mPrimitiveObjects;
+	vector<shared_ptr<ModelGameObject>> mModelObjects;
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
 	CTwBar *mTwBar;
 	InputSystem *pInputSystem;
-
 private:
 	int  mNumRenderedFluids;
 	int  mNumFluidsUpdating;

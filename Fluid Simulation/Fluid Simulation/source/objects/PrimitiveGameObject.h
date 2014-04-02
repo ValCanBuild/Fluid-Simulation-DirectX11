@@ -12,15 +12,16 @@ Date: 28/2/2014
 #include "GameObject.h"
 #include <GeometricPrimitive.h>
 
+class ICamera;
+
 class PrimitiveGameObject : public GameObject {
 public:
 	PrimitiveGameObject();
-	PrimitiveGameObject(std::unique_ptr<DirectX::GeometricPrimitive> primitiveModel);
 	PrimitiveGameObject(const PrimitiveGameObject &other);
 	virtual ~PrimitiveGameObject();
 
 	void Update();
-	virtual void Render(const Matrix &viewMatrix, const Matrix &projectionMatrix);
+	virtual void Render(const ICamera &camera) = 0;
 
 protected:
 	std::shared_ptr<DirectX::GeometricPrimitive> primitive;

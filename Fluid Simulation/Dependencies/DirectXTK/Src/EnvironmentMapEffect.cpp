@@ -42,6 +42,8 @@ struct EnvironmentMapEffectConstants
     XMMATRIX worldViewProj;
 };
 
+static_assert( ( sizeof(EnvironmentMapEffectConstants) % 16 ) == 0, "CB size not padded correctly" );
+
 
 // Traits type describes our characteristics to the EffectBase template.
 struct EnvironmentMapEffectTraits
@@ -67,7 +69,7 @@ public:
 
     ComPtr<ID3D11ShaderResourceView> environmentMap;
 
-    int GetCurrentShaderPermutation();
+    int GetCurrentShaderPermutation() const;
 
     void Apply(_In_ ID3D11DeviceContext* deviceContext);
 };
@@ -76,6 +78,17 @@ public:
 // Include the precompiled shader code.
 namespace
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_VSEnvMap.inc"
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_VSEnvMapFresnel.inc"
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_VSEnvMapOneLight.inc"
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_VSEnvMapOneLightFresnel.inc"
+
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_PSEnvMap.inc"
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_PSEnvMapNoFog.inc"
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_PSEnvMapSpecular.inc"
+    #include "Shaders/Compiled/XboxOneEnvironmentMapEffect_PSEnvMapSpecularNoFog.inc"
+#else
     #include "Shaders/Compiled/EnvironmentMapEffect_VSEnvMap.inc"
     #include "Shaders/Compiled/EnvironmentMapEffect_VSEnvMapFresnel.inc"
     #include "Shaders/Compiled/EnvironmentMapEffect_VSEnvMapOneLight.inc"
@@ -85,6 +98,7 @@ namespace
     #include "Shaders/Compiled/EnvironmentMapEffect_PSEnvMapNoFog.inc"
     #include "Shaders/Compiled/EnvironmentMapEffect_PSEnvMapSpecular.inc"
     #include "Shaders/Compiled/EnvironmentMapEffect_PSEnvMapSpecularNoFog.inc"
+#endif
 }
 
 
@@ -161,6 +175,11 @@ EnvironmentMapEffect::Impl::Impl(_In_ ID3D11Device* device)
     fresnelEnabled(true),
     specularEnabled(false)
 {
+    static_assert( _countof(EffectBase<EnvironmentMapEffectTraits>::VertexShaderIndices) == EnvironmentMapEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<EnvironmentMapEffectTraits>::VertexShaderBytecode) == EnvironmentMapEffectTraits::VertexShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<EnvironmentMapEffectTraits>::PixelShaderBytecode) == EnvironmentMapEffectTraits::PixelShaderCount, "array/max mismatch" );
+    static_assert( _countof(EffectBase<EnvironmentMapEffectTraits>::PixelShaderIndices) == EnvironmentMapEffectTraits::ShaderPermutationCount, "array/max mismatch" );
+
     constants.environmentMapAmount = 1;
     constants.fresnelFactor = 1;
 
@@ -170,7 +189,7 @@ EnvironmentMapEffect::Impl::Impl(_In_ ID3D11Device* device)
 }
 
 
-int EnvironmentMapEffect::Impl::GetCurrentShaderPermutation()
+int EnvironmentMapEffect::Impl::GetCurrentShaderPermutation() const
 {
     int permutation = 0;
 

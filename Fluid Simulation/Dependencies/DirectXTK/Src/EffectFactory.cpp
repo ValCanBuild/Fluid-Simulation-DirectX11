@@ -33,7 +33,7 @@ class EffectFactory::Impl
 public:
     Impl(_In_ ID3D11Device* device)
       : device(device), mSharing(true)
-    { }
+    { *mPath = 0; }
 
     std::shared_ptr<IEffect> CreateEffect( _In_ IEffectFactory* factory, _In_ const IEffectFactory::EffectInfo& info, _In_opt_ ID3D11DeviceContext* deviceContext );
     void CreateTexture( _In_z_ const WCHAR* texture, _In_opt_ ID3D11DeviceContext* deviceContext, _Outptr_ ID3D11ShaderResourceView** textureView );
@@ -41,19 +41,23 @@ public:
     void ReleaseCache();
     void SetSharing( bool enabled ) { mSharing = enabled; }
 
+    static SharedResourcePool<ID3D11Device*, Impl> instancePool;
+
+    WCHAR mPath[MAX_PATH];
+
+private:
     ComPtr<ID3D11Device> device;
 
     typedef std::map< std::wstring, std::shared_ptr<IEffect> > EffectCache;
     typedef std::map< std::wstring, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> > TextureCache;
 
     EffectCache  mEffectCache;
+    EffectCache  mEffectCacheSkinning;
     TextureCache mTextureCache;
 
     bool mSharing;
 
     std::mutex mutex;
-
-    static SharedResourcePool<ID3D11Device*, Impl> instancePool;
 };
 
 
@@ -64,14 +68,75 @@ SharedResourcePool<ID3D11Device*, EffectFactory::Impl> EffectFactory::Impl::inst
 _Use_decl_annotations_
 std::shared_ptr<IEffect> EffectFactory::Impl::CreateEffect( IEffectFactory* factory, const IEffectFactory::EffectInfo& info, ID3D11DeviceContext* deviceContext )
 {
-    auto it = (info.name && *info.name) ? mEffectCache.find( info.name ) : mEffectCache.end();
-
-    if ( mSharing && it != mEffectCache.end() )
+    if ( info.enableSkinning )
     {
-        return it->second;
+        // SkinnedEffect
+        if ( mSharing && info.name && *info.name )
+        {
+            auto it = mEffectCacheSkinning.find( info.name );
+            if ( mSharing && it != mEffectCacheSkinning.end() )
+            {
+                return it->second;
+            }
+        }
+
+        std::shared_ptr<SkinnedEffect> effect = std::make_shared<SkinnedEffect>( device.Get() );
+
+        effect->EnableDefaultLighting();
+
+        effect->SetAlpha( info.alpha );
+
+        // Skinned Effect does not have an ambient material color, or per-vertex color support
+
+        XMVECTOR color = XMLoadFloat3( &info.diffuseColor );
+        effect->SetDiffuseColor( color );
+
+        if ( info.specularColor.x != 0 || info.specularColor.y != 0 || info.specularColor.z != 0 )
+        {
+            color = XMLoadFloat3( &info.specularColor );
+            effect->SetSpecularColor( color );
+            effect->SetSpecularPower( info.specularPower );
+        }
+        else
+        {
+            effect->DisableSpecular();
+        }
+
+        if ( info.emissiveColor.x != 0 || info.emissiveColor.y != 0 || info.emissiveColor.z != 0 )
+        {
+            color = XMLoadFloat3( &info.emissiveColor );
+            effect->SetEmissiveColor( color );
+        }
+
+        if ( info.texture && *info.texture )
+        {
+            Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+
+            factory->CreateTexture( info.texture, deviceContext, &srv );
+
+            effect->SetTexture( srv.Get() );
+        }
+
+        if ( mSharing && info.name && *info.name )
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            mEffectCacheSkinning.insert( EffectCache::value_type( info.name, effect) );
+        }
+
+        return effect;
     }
     else
     {
+        // BasicEffect
+        if ( mSharing && info.name && *info.name )
+        {
+            auto it = mEffectCache.find( info.name );
+            if ( mSharing && it != mEffectCache.end() )
+            {
+                return it->second;
+            }
+        }
+
         std::shared_ptr<BasicEffect> effect = std::make_shared<BasicEffect>( device.Get() );
 
         effect->EnableDefaultLighting();
@@ -84,10 +149,9 @@ std::shared_ptr<IEffect> EffectFactory::Impl::CreateEffect( IEffectFactory* fact
             effect->SetVertexColorEnabled( true );
         }
 
-        XMVECTOR color = XMLoadFloat3( &info.ambientColor );
-        effect->SetAmbientLightColor( color );
+        // Basic Effect does not have an ambient material color
 
-        color = XMLoadFloat3( &info.diffuseColor );
+        XMVECTOR color = XMLoadFloat3( &info.diffuseColor );
         effect->SetDiffuseColor( color );
 
         if ( info.specularColor.x != 0 || info.specularColor.y != 0 || info.specularColor.z != 0 )
@@ -95,6 +159,10 @@ std::shared_ptr<IEffect> EffectFactory::Impl::CreateEffect( IEffectFactory* fact
             color = XMLoadFloat3( &info.specularColor );
             effect->SetSpecularColor( color );
             effect->SetSpecularPower( info.specularPower );
+        }
+        else
+        {
+            effect->DisableSpecular();
         }
 
         if ( info.emissiveColor.x != 0 || info.emissiveColor.y != 0 || info.emissiveColor.z != 0 )
@@ -113,7 +181,7 @@ std::shared_ptr<IEffect> EffectFactory::Impl::CreateEffect( IEffectFactory* fact
             effect->SetTextureEnabled( true );
         }
 
-        if ( mSharing && info.name && *info.name && it == mEffectCache.end() )
+        if ( mSharing && info.name && *info.name )
         {
             std::lock_guard<std::mutex> lock(mutex);
             mEffectCache.insert( EffectCache::value_type( info.name, effect) );
@@ -139,33 +207,50 @@ void EffectFactory::Impl::CreateTexture( const WCHAR* name, ID3D11DeviceContext*
     }
     else
     {
+        WCHAR fullName[MAX_PATH]={0};
+        wcscpy_s( fullName, mPath );
+        wcscat_s( fullName, name );
+
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
         WCHAR ext[_MAX_EXT];
         _wsplitpath_s( name, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT );
 
         if ( _wcsicmp( ext, L".dds" ) == 0 )
         {
-            ThrowIfFailed(
-                CreateDDSTextureFromFile( device.Get(), name, nullptr, textureView )
-                );
+            HRESULT hr = CreateDDSTextureFromFile( device.Get(), fullName, nullptr, textureView );
+            if ( FAILED(hr) )
+            {
+                DebugTrace( "CreateDDSTextureFromFile failed (%08X) for '%S'\n", hr, fullName );
+                throw std::exception( "CreateDDSTextureFromFile" );
+            }
         }
         else if ( deviceContext )
         {
             std::lock_guard<std::mutex> lock(mutex);
-            DirectX::ThrowIfFailed(
-                CreateWICTextureFromFile( device.Get(), deviceContext, name, nullptr, textureView )
-                );
+            HRESULT hr = CreateWICTextureFromFile( device.Get(), deviceContext, fullName, nullptr, textureView );
+            if ( FAILED(hr) )
+            {
+                DebugTrace( "CreateWICTextureFromFile failed (%08X) for '%S'\n", hr, fullName );
+                throw std::exception( "CreateWICTextureFromFile" );
+            }
         }
         else
         {
-            DirectX::ThrowIfFailed(
-                CreateWICTextureFromFile( device.Get(), nullptr, name, nullptr, textureView )
-                );
+            HRESULT hr = CreateWICTextureFromFile( device.Get(), nullptr, fullName, nullptr, textureView );
+            if ( FAILED(hr) )
+            {
+                DebugTrace( "CreateWICTextureFromFile failed (%08X) for '%S'\n", hr, fullName );
+                throw std::exception( "CreateWICTextureFromFile" );
+            }
         }
 #else
         UNREFERENCED_PARAMETER( deviceContext );
-        ThrowIfFailed(
-            CreateDDSTextureFromFile( device.Get(), name, nullptr, textureView ) );
+        HRESULT hr = CreateDDSTextureFromFile( device.Get(), fullName, nullptr, textureView );
+        if ( FAILED(hr) )
+        {
+            DebugTrace( "CreateDDSTextureFromFile failed (%08X) for '%S'\n", hr, fullName );
+            throw std::exception( "CreateDDSTextureFromFile" );
+        }
 #endif
 
         if ( mSharing && *name && it == mTextureCache.end() )
@@ -178,7 +263,9 @@ void EffectFactory::Impl::CreateTexture( const WCHAR* name, ID3D11DeviceContext*
 
 void EffectFactory::Impl::ReleaseCache()
 {
+    std::lock_guard<std::mutex> lock(mutex);
     mEffectCache.clear();
+    mEffectCacheSkinning.clear();
     mTextureCache.clear();
 }
 
@@ -229,4 +316,24 @@ void EffectFactory::ReleaseCache()
 void EffectFactory::SetSharing( bool enabled )
 {
     pImpl->SetSharing( enabled );
+}
+
+void EffectFactory::SetDirectory( _In_opt_z_ const WCHAR* path )
+{
+    if ( path && *path != 0 )
+    {
+        wcscpy_s( pImpl->mPath, path );
+        size_t len = wcsnlen( pImpl->mPath, MAX_PATH );
+        if ( len > 0 && len < (MAX_PATH-1) )
+        {
+            // Ensure it has a trailing slash
+            if ( pImpl->mPath[len-1] != L'\\' )
+            {
+                pImpl->mPath[len] = L'\\';
+                pImpl->mPath[len+1] = 0;
+            }
+        }
+    }
+    else
+        *pImpl->mPath = 0;
 }

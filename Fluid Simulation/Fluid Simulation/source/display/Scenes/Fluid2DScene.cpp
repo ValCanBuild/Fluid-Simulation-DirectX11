@@ -9,7 +9,6 @@ Date: 10/09/2013
 #include "Fluid2DScene.h"
 
 #include "../D3DGraphicsObject.h"
-#include "../D3DShaders/Fluid2DShaders.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
 #include "../../utilities/FluidCalculation/Fluid2DCalculator.h"

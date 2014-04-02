@@ -1,9 +1,10 @@
 /***************************************************************
-D3DTexture.h: A class that encapsulates a Direct3D Texture
+D3DTexture.h: A class that encapsulates a Direct3D Texture.
+Can load both a variety of formats including .dds, .jpg,
+.png
 
 Author: Valentin Hinov
 Date: 04/09/2013
-Version: 1.0
 **************************************************************/
 
 #ifndef _D3DTEXTURE_H
@@ -23,6 +24,9 @@ public:
 	ID3D11ShaderResourceView* GetTexture();
 
 	void GetTextureSize(int &width, int &height);
+
+private:
+	bool IsDDSTextureFile(WCHAR* filename) const;
 
 private:
 	CComPtr<ID3D11ShaderResourceView> mTexture;
