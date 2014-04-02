@@ -150,5 +150,5 @@ float4 FireVolumeRenderPixelShader(PixelInputType input) : SV_TARGET {
 	}
 	float4 smoke = vSmokeColor * (1.0f - smokeAlpha);
 	float4 fire = fireGradient.Sample(linearSampler, float2(fireAlpha, 0)) * (1.0f - fireAlpha);
-	return smoke + fire;
+	return fire + smoke;
 }

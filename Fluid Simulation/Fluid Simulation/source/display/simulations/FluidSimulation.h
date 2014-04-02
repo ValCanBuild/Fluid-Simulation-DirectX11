@@ -41,6 +41,7 @@ public:
 
 	void DisplayInfoOnBar(CTwBar * const pBar);
 	bool IntersectsRay(const Ray &ray, float &distance) const;
+	void FluidInteraction(const Ray &ray);
 
 	std::shared_ptr<VolumeRenderer> GetVolumeRenderer() const;
 
@@ -49,6 +50,7 @@ private:
 	static void __stdcall SetFluidSettings(const void *value, void *clientData);
 
 	bool IsVisibleByCamera(const ICamera &camera) const;
+	Vector3 GetLocalIntersectPosition(const Ray &ray, float distance) const;
 private:
 	std::unique_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
 	std::shared_ptr<VolumeRenderer> mVolumeRenderer;

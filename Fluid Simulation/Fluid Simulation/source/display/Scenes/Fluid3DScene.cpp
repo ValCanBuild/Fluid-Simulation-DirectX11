@@ -21,6 +21,7 @@ Date: 24/10/2013
 #include "../../objects/TerrainObject.h"
 #include "../../objects/ModelGameObject.h"
 #include "../../utilities/HeightmapParser.h"
+#include "../../utilities/Screen.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
@@ -74,9 +75,13 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar(barName.c_str());
 	// Position bar
-	int barPos[2] = {550,2};
+	int barWidth = 250;
+	int barHeight = 250;
+	int barX = Screen::width - barWidth - 1;
+	int barY = 2;
+	int barPos[2] = {barX, barY};
 	TwSetParam(mTwBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
-	int barSize[2] = {250,250};
+	int barSize[2] = {barWidth, barHeight};
 	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 	// hide bar initially
 	string command = " '" + barName + "' iconified=true ";
@@ -262,12 +267,16 @@ void Fluid3DScene::UpdateCamera(float delta) {
 }
 
 void Fluid3DScene::HandleInput() {
-	if (pInputSystem->IsMouseLeftClicked()) {
-		HandleMousePicking();
+	if (pInputSystem->IsMouseLeftDown() && pInputSystem->IsKeyDown(VK_SHIFT)) {
+		HandleMousePicking(true);
+	}
+
+	else if (pInputSystem->IsMouseLeftClicked()) {
+		HandleMousePicking(false);
 	}
 }
 
-void Fluid3DScene::HandleMousePicking() {
+void Fluid3DScene::HandleMousePicking(bool interaction) {
 	int posX,posY;
 	pInputSystem->GetMousePos(posX,posY);
 	Ray ray = mCamera->ScreenPointToRay(Vector2((float)posX,(float)posY));
@@ -283,21 +292,26 @@ void Fluid3DScene::HandleMousePicking() {
 		}
 	}
 
-	if (picked == pPickedSimulation) {
-		return;
+	if (interaction && picked != nullptr) {
+		picked->FluidInteraction(ray);
 	}
 	else {
-		if (pPickedSimulation != nullptr) {
-			pPickedSimulation = nullptr;
-			TwRemoveAllVars(mTwBar);
-			string command = " '" + barName + "' iconified=true ";
-			TwDefine(command.c_str());
+		if (picked == pPickedSimulation) {
+			return;
 		}
-		if (picked != nullptr) {
-			pPickedSimulation = picked;
-			pPickedSimulation->DisplayInfoOnBar(mTwBar);
-			string command = " '" + barName + "' iconified=false ";
-			TwDefine(command.c_str());
+		else {
+			if (pPickedSimulation != nullptr) {
+				pPickedSimulation = nullptr;
+				TwRemoveAllVars(mTwBar);
+				string command = " '" + barName + "' iconified=true ";
+				TwDefine(command.c_str());
+			}
+			if (picked != nullptr) {
+				pPickedSimulation = picked;
+				pPickedSimulation->DisplayInfoOnBar(mTwBar);
+				string command = " '" + barName + "' iconified=false ";
+				TwDefine(command.c_str());
+			}
 		}
 	}
 }

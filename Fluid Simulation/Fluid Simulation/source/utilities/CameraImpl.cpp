@@ -117,13 +117,12 @@ Ray CameraImpl::ScreenPointToRay(Vector2 position) const {
 
 	float zDirection = mRightHanded ? -1.0f : 1.0f;
 
-	Vector3 rayOrigin(0.0f);
 	Vector3 rayDir(vx,vy,zDirection);
 
 	Matrix viewInverse;
 	mViewMatrix.Invert(viewInverse);
 
-	rayOrigin = Vector3::Transform(rayOrigin,viewInverse);
+	Vector3 rayOrigin = mPosition;
 	rayDir = Vector3::TransformNormal(rayDir,viewInverse);
 	rayDir.Normalize();
 

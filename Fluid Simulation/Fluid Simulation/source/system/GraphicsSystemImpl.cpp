@@ -66,17 +66,15 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 		return false;
 	}
 
-	Screen::width = screenWidth;
-	Screen::height = screenHeight;
-
 	D3DGraphicsObject *d3dObject = dynamic_cast<D3DGraphicsObject*>(mGraphicsObj.get());
 
 	bool result = mGraphicsObj->Initialize(screenWidth,screenHeight,VSYNC_ENABLED,hwnd,FULL_SCREEN,SCREEN_DEPTH,SCREEN_NEAR);
-
 	if (!result) {
 		MessageBox(hwnd, L"Could not initialize Graphics Object", L"Error", MB_OK);
 		return false;
 	}
+
+	mGraphicsObj->GetScreenDimensions(Screen::width, Screen::height);
 
 	// Initialize AntTweak before the current scene
 	TwInit(TW_DIRECT3D11, d3dObject->GetDevice());

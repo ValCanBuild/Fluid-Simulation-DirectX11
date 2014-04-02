@@ -233,7 +233,6 @@ LRESULT CALLBACK MainSystem::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
 	}
 }
 
-
 void MainSystem::InitializeWindows(int& screenWidth, int& screenHeight) {
 	WNDCLASSEX wc;
 	DEVMODE dmScreenSettings;
@@ -311,7 +310,6 @@ void MainSystem::InitializeWindows(int& screenWidth, int& screenHeight) {
 	// Show the mouse cursor.
 	ShowCursor(true);
 }
-
 
 void MainSystem::ShutdownWindows() {
 	// Show the mouse cursor.

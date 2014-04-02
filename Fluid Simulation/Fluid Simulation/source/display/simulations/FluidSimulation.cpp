@@ -82,7 +82,7 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND h
 bool FluidSimulation::Render(const ICamera &camera) {
 	mIsVisible = IsVisibleByCamera(camera);
 	if (mIsVisible && mRenderEnabled) {
-		mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
+		//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
 		mVolumeRenderer->Render(camera);
 	}
 	return mIsVisible;
@@ -100,7 +100,7 @@ bool FluidSimulation::Update(float dt, const ICamera &camera) {
 	}
 	else {
 		if (canUpdate) {
-			canUpdate = mLodData.framesToSkip <= 0 || mFramesSinceLastProcess > mLodData.framesToSkip;
+			//canUpdate = mLodData.framesToSkip <= 0 || mFramesSinceLastProcess > mLodData.framesToSkip;
 		}
 	}
 
@@ -128,27 +128,30 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
 
 	// Add LOD settings
-	//TwAddVarRW(pBar,"LOD", LODData::GetLODDataTwType(), &mLodData, "");
+	TwAddVarRW(pBar,"LOD", LODData::GetLODDataTwType(), &mLodData, "");
 }
 
+void FluidSimulation::FluidInteraction(const Ray &ray) {
+	float distance = 0.0f;
+	if (IntersectsRay(ray, distance)) {
+		Vector3 localPos = GetLocalIntersectPosition(ray, distance);
+		// the value of local pos is anywhere between (-0.5,-0.5,-0.5) to (0.5, 0.5, 0.5)
+		// for fluid interaction this needs to be in the range of (0,0,0) to (1,1,1)
+		//mFluidCalculator->extraInputPosition = localPos + Vector3(0.5f);
+	}
+}
+
+Vector3 FluidSimulation::GetLocalIntersectPosition(const Ray &ray, float distance) const {
+	Vector3 worldIntersectPos = ray.position + ray.direction * distance;
+	Matrix matrix;
+	mVolumeRenderer->transform->GetTransformMatrixQuaternion(matrix);
+	matrix = matrix.Invert();
+	return Vector3::Transform(worldIntersectPos, matrix);
+}
 
 bool FluidSimulation::IntersectsRay(const Ray &ray, float &distance) const {
 	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
 	return ray.Intersects(*boundingBox, distance);
-}
-
-std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
-	return mVolumeRenderer;
-}
-
-void TW_CALL FluidSimulation::GetFluidSettings(void *value, void *clientData) {
-	*static_cast<FluidSettings *>(value) = static_cast<const Fluid3DCalculator *>(clientData)->GetFluidSettings();
-}
-
-void TW_CALL FluidSimulation::SetFluidSettings(const void *value, void *clientData) {
-	Fluid3DCalculator* fluidCalculator = static_cast<Fluid3DCalculator *>(clientData);
-	FluidSettings fluidSettings = *static_cast<const FluidSettings *>(value);
-	fluidCalculator->SetFluidSettings(fluidSettings);
 }
 
 bool FluidSimulation::IsVisibleByCamera(const ICamera &camera) const {
@@ -158,4 +161,23 @@ bool FluidSimulation::IsVisibleByCamera(const ICamera &camera) const {
 	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
 	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
 	return cType != DISJOINT;
+}
+
+
+std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
+	return mVolumeRenderer;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// ANTTWEAK BAR METHODS
+//////////////////////////////////////////////////////////////////////////
+void TW_CALL FluidSimulation::GetFluidSettings(void *value, void *clientData) {
+	*static_cast<FluidSettings *>(value) = static_cast<const Fluid3DCalculator *>(clientData)->GetFluidSettings();
+}
+
+void TW_CALL FluidSimulation::SetFluidSettings(const void *value, void *clientData) {
+	Fluid3DCalculator* fluidCalculator = static_cast<Fluid3DCalculator *>(clientData);
+	FluidSettings fluidSettings = *static_cast<const FluidSettings *>(value);
+	fluidCalculator->SetFluidSettings(fluidSettings);
 }

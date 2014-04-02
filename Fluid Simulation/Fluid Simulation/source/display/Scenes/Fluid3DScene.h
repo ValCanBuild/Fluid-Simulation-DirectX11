@@ -45,7 +45,7 @@ private:
 	void InitGameObjects();
 	void UpdateCamera(float delta);
 	void HandleInput();
-	void HandleMousePicking();
+	void HandleMousePicking(bool interaction);
 	void SortTransparentObjects();
 
 private:

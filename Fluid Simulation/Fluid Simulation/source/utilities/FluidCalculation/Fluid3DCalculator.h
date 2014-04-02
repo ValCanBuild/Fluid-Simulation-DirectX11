@@ -55,6 +55,7 @@ private:
 
 	void Advect(std::array<ShaderParams, 2> &target, SystemAdvectionType_t advectionType, float dissipation, float decay = 0.0f);
 	void RefreshConstantImpulse();
+	void ApplyImpulse(std::array<ShaderParams, 2> &target, Vector3 &position, float amount, float radius);
 	void ApplyBuoyancy();
 	void ComputeVorticityConfinement();
 	void CalculatePressureGradient();

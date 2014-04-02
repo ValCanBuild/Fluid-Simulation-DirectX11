@@ -269,11 +269,11 @@ void Fluid3DCalculator::Advect(std::array<ShaderParams, 2> &target, SystemAdvect
 		UpdateAdvectionBuffer(dissipation, 1.0f, decay);
 		mMacCormarckAdvectionShader->Compute(context, &mFluidResources.velocitySP[READ], advectArrayDens, &target[WRITE]);
 	}
-	swap(target[READ],target[WRITE]);
+	swap(target[READ], target[WRITE]);
 }
 
 void Fluid3DCalculator::RefreshConstantImpulse() {
-	ID3D11DeviceContext *context = pD3dGraphicsObj->GetDeviceContext();
+	auto context = pD3dGraphicsObj->GetDeviceContext();
 
 	Vector3 impulsePos = mFluidSettings.dimensions * mFluidSettings.constantInputPosition;
 	float size = mFluidSettings.dimensions.x + mFluidSettings.dimensions.y + mFluidSettings.dimensions.z;
@@ -282,14 +282,10 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 	//refresh the impulse of the density and temperature
 	switch (mFluidSettings.GetFluidType()) {
 	case SMOKE:
-		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius);
-		mImpulseShader->Compute(context, &mFluidResources.densitySP[READ], &mFluidResources.densitySP[WRITE]);
-		swap(mFluidResources.densitySP[READ], mFluidResources.densitySP[WRITE]);
+		ApplyImpulse(mFluidResources.densitySP, impulsePos, mFluidSettings.constantDensityAmount, inputRadius);
 		break;
 	case FIRE:
-		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantReactionAmount, inputRadius);
-		mImpulseShader->Compute(context, &mFluidResources.reactionSP[READ], &mFluidResources.reactionSP[WRITE]);
-		swap(mFluidResources.reactionSP[READ], mFluidResources.reactionSP[WRITE]);
+		ApplyImpulse(mFluidResources.reactionSP, impulsePos, mFluidSettings.constantReactionAmount, inputRadius);
 
 		// Smoke forms as fire is extinguished
 		UpdateImpulseBuffer(impulsePos, mFluidSettings.constantDensityAmount, inputRadius, mFluidSettings.reactionExtinguishment);
@@ -298,10 +294,14 @@ void Fluid3DCalculator::RefreshConstantImpulse() {
 		break;
 	}
 	
+	ApplyImpulse(mFluidResources.temperatureSP, impulsePos, mFluidSettings.constantTemperature, inputRadius);
+}
 
-	UpdateImpulseBuffer(impulsePos, mFluidSettings.constantTemperature, inputRadius);
-	mImpulseShader->Compute(context, &mFluidResources.temperatureSP[READ], &mFluidResources.temperatureSP[WRITE]);
-	swap(mFluidResources.temperatureSP[READ], mFluidResources.temperatureSP[WRITE]);
+void Fluid3DCalculator::ApplyImpulse(std::array<ShaderParams, 2> &target, Vector3 &position, float amount, float radius) {
+	auto context = pD3dGraphicsObj->GetDeviceContext();
+	UpdateImpulseBuffer(position, amount, radius);
+	mImpulseShader->Compute(context, &target[READ], &target[WRITE]);
+	swap(target[READ], target[WRITE]);
 }
 
 void Fluid3DCalculator::ComputeVorticityConfinement() {

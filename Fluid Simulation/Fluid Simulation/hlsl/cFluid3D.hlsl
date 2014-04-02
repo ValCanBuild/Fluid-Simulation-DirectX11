@@ -54,9 +54,9 @@ Texture3D<float>	temperature : register (t1); // Used for BuoyancyComputeShader
 Texture3D<float>	density : register (t2); // Used for BuoyancyComputeShader
 RWTexture3D<float3> buoyancyResult : register (u0); // Used for BuoyancyComputeShader
 
-Texture3D<float>   impulseInitial : register (t0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
+Texture3D<float3>   impulseInitial : register (t0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
 Texture3D<float>   reaction : register(t1); // Used for ExtinguishmentImpulseComputeShader
-RWTexture3D<float> impulseResult : register (u0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
+RWTexture3D<float3> impulseResult : register (u0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
 
 Texture3D<float3>   vorticity : register (t1); // Used for ConfinementComputeShader
 RWTexture3D<float3> vorticityResult : register (u0); // Used for VorticityComputeShader
