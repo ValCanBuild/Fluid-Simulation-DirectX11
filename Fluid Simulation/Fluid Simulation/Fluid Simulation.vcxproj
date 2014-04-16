@@ -136,7 +136,6 @@
     <ClCompile Include="source\system\GraphicsSystemImpl.cpp" />
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
-    <ClCompile Include="source\system\ServiceProvider.cpp" />
     <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp" />
     <ClCompile Include="source\utilities\CameraImpl.cpp" />
     <ClCompile Include="source\utilities\CollisionManager.cpp" />

@@ -11,6 +11,7 @@ Date: 10/09/2013
 #include "../D3DGraphicsObject.h"
 #include "../../objects/D2DTexQuad.h"
 #include "../../system/ServiceProvider.h"
+#include "../../system/InputSystem.h"
 #include "../../utilities/FluidCalculation/Fluid2DCalculator.h"
 
 
@@ -89,7 +90,7 @@ void Fluid2DScene::ChangeFluidPropertyView() {
 
 void Fluid2DScene::HandleInput() {
 	// mouse mid button adds obstacles
-	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	auto inputSystem = ServiceProvider::Instance().GetService<InputSystem>();
 	if (inputSystem->IsKeyClicked(VK_SHIFT)) {
 		ChangeFluidPropertyView();
 	}

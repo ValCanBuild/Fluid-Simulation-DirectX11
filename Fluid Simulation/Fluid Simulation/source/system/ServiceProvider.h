@@ -9,50 +9,50 @@ Version: 1.0
 #ifndef _SERVICEPROVIDER_H_
 #define _SERVICEPROVIDER_H_
 
-#include <memory>
-#include "InputSystem.h"
-#include "IGraphicsSystem.h"
-#include "../utilities/AppTimer/IAppTimer.h"
+#include <map>
+#include <typeinfo>
+//#include <memory>
+//#include "InputSystem.h"
+//#include "IGraphicsSystem.h"
+//#include "../utilities/AppTimer/IAppTimer.h"
+
+struct TypeInfoLess {
+	bool operator() (const std::type_info* lhs, const std::type_info* rhs) const {
+		return lhs->before(*rhs) != 0;
+	}
+};
 
 class ServiceProvider {
 public:		
 	static ServiceProvider& Instance() {
 		// Lazy initialize.
-		if (mSingleton == nullptr)
-			mSingleton = std::unique_ptr<ServiceProvider>(new ServiceProvider());
+		static ServiceProvider provider;
 
-		return *mSingleton;
+		return provider;
 	}
 
-	void Initialize(InputSystem* inputSystem, IGraphicsSystem* graphicsSystem, IAppTimer* appTimer) {
-		if (mInitialized)
-			return;
+	~ServiceProvider() {}
 
-		pInputSystem = inputSystem;
-		pGraphicsSystem = graphicsSystem;
-		pAppTimer = appTimer;
-
-		mInitialized = true;
+	template <typename T>
+	void RegisterService(T * service) {
+		mServiceMap[&typeid(T)] = reinterpret_cast<void *>(service);
 	}
 
-	InputSystem* GetInputSystem() { return pInputSystem; }
-	IGraphicsSystem* GetGraphicsSystem() { return pGraphicsSystem; }
-	IAppTimer* GetAppTimer() { return pAppTimer; }
-
-	~ServiceProvider() {
-		pInputSystem = nullptr;
-		pGraphicsSystem = nullptr;
+	template <typename T>
+	T *GetService() {
+		auto it = mServiceMap.find(&typeid(T));
+		if (it == mServiceMap.end()) {
+			return nullptr;
+		}
+		return reinterpret_cast<T *>(it->second);
 	}
 
 private:
-	ServiceProvider() {mInitialized = false;}
+	ServiceProvider() {mServiceMap.clear();}
 	
 private:
-	static std::unique_ptr<ServiceProvider> mSingleton;
-	bool mInitialized;
-	InputSystem* pInputSystem;
-	IGraphicsSystem* pGraphicsSystem;
-	IAppTimer* pAppTimer;
+	typedef std::map<const std::type_info *, void *, TypeInfoLess> ServiceMap;
+	ServiceMap mServiceMap;
 };
 
 #endif

@@ -13,6 +13,7 @@ Date: 19/2/2014
 #include "../display/D3DShaders/ShaderParams.h"
 #include "../utilities/ICamera.h"
 #include "../utilities/FluidCalculation/FluidSettings.h"
+#include "../system/IGraphicsSystem.h"
 
 using namespace std;
 using namespace DirectX;
@@ -71,7 +72,8 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
 	mVolumeRenderShader->SetTransform(*transform);
 
-	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
+	auto graphicsSystem = ServiceProvider::Instance().GetService<IGraphicsSystem>();
+	pCommonStates = graphicsSystem->GetCommonD3DStates();
 
 	if (smokePropertiesTwType == TW_TYPE_UNDEF) {
 		DefinePropertiesTwType();

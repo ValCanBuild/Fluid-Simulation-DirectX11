@@ -22,24 +22,12 @@ Date: 24/10/2013
 #include "../../objects/ModelGameObject.h"
 #include "../../utilities/HeightmapParser.h"
 #include "../../utilities/Screen.h"
+#include "../../system/InputSystem.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
 
 const string barName = "3D Fluid Simulation";
-
-struct FluidSimulationDepthSort {
-	Vector3 cameraPosition;
-
-	FluidSimulationDepthSort(Vector3 &cameraPosition) : cameraPosition(cameraPosition) {}
-
-	bool operator() (const std::shared_ptr<FluidSimulation>& first, const std::shared_ptr<FluidSimulation>& second) const {
-		Vector3 firstPositon = first->GetVolumeRenderer()->transform->position;
-		Vector3 secondPosition = second->GetVolumeRenderer()->transform->position;
-
-		return Vector3::Distance(firstPositon, cameraPosition) > Vector3::Distance(secondPosition, cameraPosition);
-	}
-};
 
 Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), 
 	pPickedSimulation(nullptr) {
@@ -70,7 +58,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 		return false;
 	}
 
-	pInputSystem = ServiceProvider::Instance().GetInputSystem();
+	pInputSystem = ServiceProvider::Instance().GetService<InputSystem>();
 
 	// Initialize this scene's tweak bar
 	mTwBar = TwNewBar(barName.c_str());
@@ -319,5 +307,11 @@ void Fluid3DScene::HandleMousePicking(bool interaction) {
 void Fluid3DScene::SortTransparentObjects() {
 	Vector3 camPos;
 	mCamera->GetPosition(camPos);
-	sort(mSimulations.begin(), mSimulations.end(), FluidSimulationDepthSort(camPos));
+	sort(mSimulations.begin(), mSimulations.end(),
+		[&](const std::shared_ptr<FluidSimulation>& first, const std::shared_ptr<FluidSimulation>& second) {
+			Vector3 firstPositon = first->GetVolumeRenderer()->transform->position;
+			Vector3 secondPosition = second->GetVolumeRenderer()->transform->position;
+
+			return Vector3::Distance(firstPositon, camPos) > Vector3::Distance(secondPosition, camPos);
+	});
 }

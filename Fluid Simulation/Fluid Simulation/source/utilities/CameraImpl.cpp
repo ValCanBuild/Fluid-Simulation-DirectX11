@@ -9,7 +9,9 @@ Version: 1.0
 #include "CameraImpl.h"
 #include "../system/ServiceProvider.h"
 #include "../display/IGraphicsObject.h"
+#include "../system/IGraphicsSystem.h"
 #include <DirectXMath.h>
+
 
 using namespace DirectX;
 
@@ -108,7 +110,7 @@ void CameraImpl::SetPosition(float x, float y, float z) {
 }
 
 Ray CameraImpl::ScreenPointToRay(Vector2 position) const {
-	const IGraphicsObject *graphicsObject = ServiceProvider::Instance().GetGraphicsSystem()->GetGraphicsObject();
+	const IGraphicsObject *graphicsObject = ServiceProvider::Instance().GetService<IGraphicsSystem>()->GetGraphicsObject();
 	int screenWidth,screenHeight;
 	graphicsObject->GetScreenDimensions(screenWidth,screenHeight);
 

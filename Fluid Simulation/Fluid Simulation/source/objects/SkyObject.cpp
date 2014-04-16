@@ -11,6 +11,7 @@ Date: 18/3/2014
 #include "../utilities/ICamera.h"
 #include "../utilities/D3DTexture.h"
 #include "../display/D3DShaders/SkyShader.h"
+#include "../system/IGraphicsSystem.h"
 
 using namespace DirectX;
 
@@ -26,7 +27,7 @@ bool SkyObject::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, _In_ WCHAR *t
 	pD3dGraphicsObj = d3dGraphicsObj;
 
 	primitive = GeometricPrimitive::CreateSphere(pD3dGraphicsObj->GetDeviceContext(), 1.0f, 16U, false);
-	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
+	pCommonStates = ServiceProvider::Instance().GetService<IGraphicsSystem>()->GetCommonD3DStates();
 
 	mSkyTexture = unique_ptr<D3DTexture>(new D3DTexture());
 	bool result = mSkyTexture->Initialize(pD3dGraphicsObj->GetDevice(), pD3dGraphicsObj->GetDeviceContext(), texturePath, hwnd);

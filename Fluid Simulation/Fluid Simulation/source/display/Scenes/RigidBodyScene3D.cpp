@@ -13,6 +13,7 @@ Date: 26/11/2013
 #include "../../objects/BaseD3DBody.h"
 #include "../../utilities/Physics.h"
 #include "../../utilities/CollisionManager.h"
+#include "../../system/InputSystem.h"
 
 float camMoveFactor = 2.0f;
 
@@ -143,7 +144,7 @@ bool RigidBodyScene3D::Render() {
 }
 
 void RigidBodyScene3D::HandleInput() {
-	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	auto inputSystem = ServiceProvider::Instance().GetService<InputSystem>();
 	if (inputSystem->IsKeyDown(VK_UP)) {
 		mBody->rigidBody3D->AddTorque(Vector3(2.0f,2.0f,0.0f));
 	}
@@ -200,7 +201,7 @@ void RigidBodyScene3D::HandleInput() {
 }
 
 void RigidBodyScene3D::UpdateCamera(float delta) {
-	InputSystem *inputSystem = ServiceProvider::Instance().GetInputSystem();
+	auto inputSystem = ServiceProvider::Instance().GetService<InputSystem>();
 
 	// Move camera with WASD 
 	float forwardAmount = 0.0f;

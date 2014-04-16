@@ -159,9 +159,6 @@
     <ClCompile Include="source\display\D3DShaders\BaseD3DShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
-    <ClCompile Include="source\system\ServiceProvider.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
     <ClCompile Include="source\utilities\D3DTexture.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>

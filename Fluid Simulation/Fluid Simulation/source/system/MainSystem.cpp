@@ -51,7 +51,8 @@ bool MainSystem::Initialize() {
 	mInput = unique_ptr<InputSystemImpl>(new InputSystemImpl());
 
 	// Register all systems with the service provider
-	ServiceProvider::Instance().Initialize(mInput.get(),mGraphics.get(), &mAppTimer);
+	ServiceProvider::Instance().RegisterService(static_cast<InputSystem*>(mInput.get()));
+	ServiceProvider::Instance().RegisterService(static_cast<IGraphicsSystem*>(mGraphics.get()));
 	
 	if (!mGraphics || !mInput)
 		return false;

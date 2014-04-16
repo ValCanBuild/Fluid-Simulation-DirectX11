@@ -11,13 +11,14 @@ Date: 22/3/2014
 #include "../utilities/ICamera.h"
 #include "../display/D3DGraphicsObject.h"
 #include "../system/ServiceProvider.h"
+#include "../system/IGraphicsSystem.h"
 
 using namespace DirectX;
 
 ModelGameObject::ModelGameObject() {
 	transform = std::shared_ptr<Transform>(new Transform(this));
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
-	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
+	pCommonStates = ServiceProvider::Instance().GetService<IGraphicsSystem>()->GetCommonD3DStates();
 }
 
 ModelGameObject::ModelGameObject(std::shared_ptr<Model> model) :
@@ -25,7 +26,7 @@ ModelGameObject::ModelGameObject(std::shared_ptr<Model> model) :
 {
 	transform = std::shared_ptr<Transform>(new Transform(this));
 	bounds = std::shared_ptr<Bounds>(new Bounds(this,BOUNDS_TYPE_BOX));
-	pCommonStates = ServiceProvider::Instance().GetGraphicsSystem()->GetCommonD3DStates();
+	pCommonStates = ServiceProvider::Instance().GetService<IGraphicsSystem>()->GetCommonD3DStates();
 }
 
 ModelGameObject::~ModelGameObject() {

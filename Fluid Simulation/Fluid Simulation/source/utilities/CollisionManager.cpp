@@ -12,6 +12,7 @@ Date: 07/12/2013
 #include "Physics.h"
 #include "../system/ServiceProvider.h"
 #include "../display/D3DGraphicsObject.h"
+#include "../system/IGraphicsSystem.h"
 
 using namespace DirectX;
 using namespace std;
@@ -20,7 +21,8 @@ const int MAX_DEBUG_SPHERES = 20;
 
 CollisionManager::CollisionManager(vector<BaseD3DBody*> *sceneObjects ) : pSceneObjects(sceneObjects) {
 	// initialize an array of debug contact points
-	const IGraphicsObject* object = ServiceProvider::Instance().GetGraphicsSystem()->GetGraphicsObject();
+	auto graphicsSystem = ServiceProvider::Instance().GetService<IGraphicsSystem>();
+	const IGraphicsObject* object = graphicsSystem->GetGraphicsObject();
 	const D3DGraphicsObject *d3dObject = dynamic_cast<const D3DGraphicsObject*>(object);
 	for (int i = 0; i < MAX_DEBUG_SPHERES; ++i) {
 		unique_ptr<GeometricPrimitive> sphere = GeometricPrimitive::CreateSphere(d3dObject->GetDeviceContext(), 0.05f);
