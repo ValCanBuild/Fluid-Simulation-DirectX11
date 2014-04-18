@@ -25,7 +25,7 @@ void InitFireTexture(D3DGraphicsObject * d3dGraphicsObj) {
 	fireTexture.Initialize(d3dGraphicsObj->GetDevice(), d3dGraphicsObj->GetDeviceContext(), L"data/FireTransferFunction2.dds");
 }
 
-FluidSimulation::FluidSimulation() : 
+/*FluidSimulation::FluidSimulation() : 
 	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesSinceLastProcess(0),
 	mFluidUpdatesSinceStart(0)
 {
@@ -33,76 +33,89 @@ FluidSimulation::FluidSimulation() :
 	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
 	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
 	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
-}
+}*/
 
 FluidSimulation::FluidSimulation(const FluidSettings &fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
 	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
 {
-	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
-	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
+	mFluidCalculator = make_shared<Fluid3DCalculator>(fluidSettings);
+	//mVolumeRenderer = shared_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
 
-FluidSimulation::FluidSimulation(unique_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(move(fluidCalculator)), mVolumeRenderer(volumeRenderer),
+/*FluidSimulation::FluidSimulation(shared_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
+	mFluidCalculator(fluidCalculator), mVolumeRenderer(volumeRenderer),
 	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
 	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
 {
 
-}
+}*/
 
 FluidSimulation::~FluidSimulation() {
 }
 
+void FluidSimulation::AddVolumeRenderer(std::shared_ptr<VolumeRenderer> volumeRenderer) {
+	mVolumeRenderers.push_back(volumeRenderer);
+}
+
 bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd) {
-	const FluidSettings &settings = mFluidCalculator->GetFluidSettings();
-	bool result = mVolumeRenderer->Initialize(d3dGraphicsObj, hwnd, settings.GetFluidType());
-	if (!result) {
-		return false;
-	}
+	bool result;
 
 	result = mFluidCalculator->Initialize(d3dGraphicsObj, hwnd);
 	if (!result) {
 		return false;
 	}
 
-	mVolumeRenderer->SetSourceTexture(mFluidCalculator->GetVolumeTexture());
-	if (settings.GetFluidType() == FIRE) {
-		mVolumeRenderer->SetReactionTexture(mFluidCalculator->GetReactionTexture());
-		if (fireTexture.GetTexture() == nullptr) {
-			InitFireTexture(d3dGraphicsObj);
+	const FluidSettings &settings = mFluidCalculator->GetFluidSettings();
+	for (auto volumeRenderer : mVolumeRenderers) {
+		result = volumeRenderer->Initialize(d3dGraphicsObj, hwnd, settings.GetFluidType());
+		if (!result) {
+			return false;
 		}
-		mVolumeRenderer->SetFireGradientTexture(fireTexture.GetTexture());
+
+		volumeRenderer->SetSourceTexture(mFluidCalculator->GetVolumeTexture());
+		if (settings.GetFluidType() == FIRE) {
+			volumeRenderer->SetReactionTexture(mFluidCalculator->GetReactionTexture());
+			if (fireTexture.GetTexture() == nullptr) {
+				InitFireTexture(d3dGraphicsObj);
+			}
+			volumeRenderer->SetFireGradientTexture(fireTexture.GetTexture());
+		}
+
+		volumeRenderer->Update();
 	}
 
-	mLodData.SetObjectBoundingBox(mVolumeRenderer->bounds->GetBoundingBox());
+	//mLodController.SetObjectBoundingBox(mVolumeRenderer->bounds->GetBoundingBox());
 
 	return true;
 }
 
 bool FluidSimulation::Render(const ICamera &camera) {
-	mIsVisible = IsVisibleByCamera(camera);
-	if (mIsVisible && mRenderEnabled) {
-		//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
-		mVolumeRenderer->Render(camera);
+	
+	for (auto volumeRenderer : mVolumeRenderers) {
+		bool isVisible = IsRendererVisibleByCamera(volumeRenderer, camera);
+		if (isVisible && mRenderEnabled) {
+			//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
+			volumeRenderer->Render(camera);
+		}
 	}
-	return mIsVisible;
+	return true;
 }
 
 bool FluidSimulation::Update(float dt, const ICamera &camera) {
-	mLodData.CalculateOverallLOD(camera);
-	mVolumeRenderer->Update();
+	//mLodController.CalculateOverallLOD(camera);
+	//mVolumeRenderer->Update();
 
-	bool canUpdate = mUpdateEnabled;
+	bool canUpdate = true;
 
 	// do not do frame skipping until simulation has developed a bit
-	if (mFluidUpdatesSinceStart < UPDATES_BEFORE_LOD) {
+	/*if (mFluidUpdatesSinceStart < UPDATES_BEFORE_LOD) {
 		mFluidUpdatesSinceStart++;
 	}
 	else {
 		if (canUpdate) {
-			//canUpdate = mLodData.framesToSkip <= 0 || mFramesSinceLastProcess > mLodData.framesToSkip;
+			canUpdate = mLodController.framesToSkip <= 0 || mFramesSinceLastProcess > mLodController.framesToSkip;
 		}
-	}
+	}*/
 
 	if (canUpdate) {
 		mFluidCalculator->Process();
@@ -115,7 +128,7 @@ bool FluidSimulation::Update(float dt, const ICamera &camera) {
 }
 
 void FluidSimulation::FluidInteraction(const Ray &ray) {
-	float distance = 0.0f;
+	/*float distance = 0.0f;
 	if (IntersectsRay(ray, distance)) {
 		Vector3 localPos = GetLocalIntersectPosition(ray, distance);
 		// the value of local pos is anywhere between (-0.5,-0.5,-0.5) to (0.5, 0.5, 0.5)
@@ -125,34 +138,36 @@ void FluidSimulation::FluidInteraction(const Ray &ray) {
 		velocityForce.radius = 20.0f;
 		velocityForce.amount = ray.direction*50.0f;
 		mFluidCalculator->AddForce(velocityForce);
-	}
+	}*/
 }
 
 Vector3 FluidSimulation::GetLocalIntersectPosition(const Ray &ray, float distance) const {
-	Vector3 worldIntersectPos = ray.position + ray.direction * distance;
+	/*Vector3 worldIntersectPos = ray.position + ray.direction * distance;
 	Matrix matrix;
 	mVolumeRenderer->transform->GetTransformMatrixQuaternion(matrix);
 	matrix = matrix.Invert();
-	return Vector3::Transform(worldIntersectPos, matrix);
+	return Vector3::Transform(worldIntersectPos, matrix);*/
+	return Vector3(0,0,0);
 }
 
 bool FluidSimulation::IntersectsRay(const Ray &ray, float &distance) const {
-	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
-	return ray.Intersects(*boundingBox, distance);
+	//const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
+	//return ray.Intersects(*boundingBox, distance);
+	return false;
 }
 
-bool FluidSimulation::IsVisibleByCamera(const ICamera &camera) const {
+bool FluidSimulation::IsRendererVisibleByCamera(std::shared_ptr<VolumeRenderer> renderer, const ICamera &camera) const {
 	DirectX::BoundingFrustum boundingFrustum = camera.GetBoundingFrustum();
 
 	// Perform a frustum - bounding box containment test
-	const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
+	const BoundingBox *boundingBox = renderer->bounds->GetBoundingBox();
 	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
 	return cType != DISJOINT;
 }
 
-std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
+/*std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
 	return mVolumeRenderer;
-}
+}*/
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -169,10 +184,10 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
 
 	// Add volume renderer settings
-	mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
+	//mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
 
 	// Add LOD settings
-	TwAddVarRW(pBar,"LOD", LODData::GetLODDataTwType(), &mLodData, "");
+	//TwAddVarRW(pBar,"LOD", LODController::GetLODDataTwType(), &mLodController, "");
 }
 
 void TW_CALL FluidSimulation::GetFluidSettings(void *value, void *clientData) {

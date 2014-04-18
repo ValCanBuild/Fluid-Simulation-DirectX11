@@ -38,8 +38,7 @@ void DefinePropertiesTwType() {
 	firePropertiesTwType = TwDefineStruct("Fire Render Properties", smokePropertiesStructMembers, 4, sizeof(SmokeProperties), nullptr, nullptr);
 }
 
-VolumeRenderer::VolumeRenderer(const Vector3 &volumeSize) :
-	mVolumeSize(volumeSize), 
+VolumeRenderer::VolumeRenderer() :
 	pD3dGraphicsObj(nullptr) 
 {
 	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultFireAbsorption, defaultNumSamples));

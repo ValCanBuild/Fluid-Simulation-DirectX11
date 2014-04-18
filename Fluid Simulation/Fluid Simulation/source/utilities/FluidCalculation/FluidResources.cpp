@@ -8,6 +8,7 @@ Date: 19/3/2014
 #include "FluidResources.h"
 
 using namespace std;
+#define NUM_MIPS 1
 
 CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device, const Vector3 &textureSize, HWND hwnd) {
 	HRESULT hr;
@@ -20,7 +21,7 @@ CommonFluidResources CommonFluidResources::CreateResources(ID3D11Device * device
 	textureDesc.Width = (UINT) textureSize.x;
 	textureDesc.Height = (UINT) textureSize.y;
 	textureDesc.Depth = (UINT) textureSize.z;
-	textureDesc.MipLevels = 1;
+	textureDesc.MipLevels = NUM_MIPS;
 	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
@@ -91,7 +92,7 @@ FluidResourcesPerObject FluidResourcesPerObject::CreateResourcesSmoke(ID3D11Devi
 	textureDesc.Width = (UINT) textureSize.x;
 	textureDesc.Height = (UINT) textureSize.y;
 	textureDesc.Depth = (UINT) textureSize.z;
-	textureDesc.MipLevels = 1;
+	textureDesc.MipLevels = NUM_MIPS;
 	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;	// 3 components for velocity in 3D + alpha
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
@@ -198,7 +199,7 @@ FluidResourcesPerObject FluidResourcesPerObject::CreateResourcesFire(ID3D11Devic
 	textureDesc.Width = (UINT) textureSize.x;
 	textureDesc.Height = (UINT) textureSize.y;
 	textureDesc.Depth = (UINT) textureSize.z;
-	textureDesc.MipLevels = 1;
+	textureDesc.MipLevels = NUM_MIPS;
 	textureDesc.Format = DXGI_FORMAT_R16_FLOAT;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;

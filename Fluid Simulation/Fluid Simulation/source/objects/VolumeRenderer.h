@@ -30,7 +30,7 @@ namespace DirectX
 class VolumeRenderer : public PrimitiveGameObject {
 public:
 	~VolumeRenderer();
-	VolumeRenderer(const Vector3 &volumeSize);
+	VolumeRenderer();
 
 	bool Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwnd, const FluidType_t &fluidType);
 	void Render(const ICamera &camera) override;
@@ -47,7 +47,6 @@ private:
 	void RefreshSmokeProperties();
 
 private:	
-	Vector3 mVolumeSize;
 	Vector3 mPrevCameraPos;
 	FluidType_t mFluidType;
 

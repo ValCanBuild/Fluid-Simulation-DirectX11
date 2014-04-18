@@ -31,8 +31,8 @@ const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = false;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.1f;
-const int SCREEN_WIDTH_WINDOWED = 1280;
-const int SCREEN_HEIGHT_WINDOWED = 720;
+const int SCREEN_WIDTH_WINDOWED = 800;
+const int SCREEN_HEIGHT_WINDOWED = 600;
 
 class GraphicsSystemImpl : public IGraphicsSystem {
 public:

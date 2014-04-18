@@ -294,7 +294,7 @@
     <ClCompile Include="source\display\D3DShaders\SmokeRenderShader.cpp">
       <Filter>Source Files\Display\D3DShaders</Filter>
     </ClCompile>
-    <ClCompile Include="source\display\simulations\LODData.cpp">
+    <ClCompile Include="source\display\simulations\LODController.cpp">
       <Filter>Source Files\Display\Simulations</Filter>
     </ClCompile>
   </ItemGroup>
@@ -500,7 +500,7 @@
     <ClInclude Include="source\display\D3DShaders\SmokeRenderShader.h">
       <Filter>Header Files\Display\D3DShaders</Filter>
     </ClInclude>
-    <ClInclude Include="source\display\simulations\LODData.h">
+    <ClInclude Include="source\display\simulations\LODController.h">
       <Filter>Header Files\Display\Simulations</Filter>
     </ClInclude>
   </ItemGroup>

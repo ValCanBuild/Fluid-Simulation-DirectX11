@@ -10,10 +10,11 @@ Date: 3/3/2014
 #define	_FLUIDSIMULATOR_H
 
 #include <memory>
+#include <vector>
 #include "../../utilities/AtlInclude.h"
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/FluidCalculation/FluidSettings.h"
-#include "LODData.h"
+//#include "LODController.h"
 
 class VolumeRenderer;
 class ICamera;
@@ -26,11 +27,12 @@ namespace Fluid3D {
 class FluidSimulation {
 public:
 	// Creates a fluid simulation with a default fluid calculator and volume renderer
-	FluidSimulation();
+	//FluidSimulation();
 	FluidSimulation(const FluidSettings &fluidSettings);
-	FluidSimulation(std::unique_ptr<Fluid3D::Fluid3DCalculator> fluidCalculator, std::shared_ptr<VolumeRenderer> volumeRenderer);
+	//FluidSimulation(std::shared_ptr<Fluid3D::Fluid3DCalculator> fluidCalculator, std::shared_ptr<VolumeRenderer> volumeRenderer);
 	~FluidSimulation();
 
+	void AddVolumeRenderer(std::shared_ptr<VolumeRenderer> volumeRenderer);
 	bool Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND hwnd);
 
 	// Returns true if this simulation is rendered, and false if it is culled away
@@ -43,17 +45,16 @@ public:
 	bool IntersectsRay(const Ray &ray, float &distance) const;
 	void FluidInteraction(const Ray &ray);
 
-	std::shared_ptr<VolumeRenderer> GetVolumeRenderer() const;
 
 private:
 	static void __stdcall GetFluidSettings(void *value, void *clientData);
 	static void __stdcall SetFluidSettings(const void *value, void *clientData);
 
-	bool IsVisibleByCamera(const ICamera &camera) const;
+	bool IsRendererVisibleByCamera(std::shared_ptr<VolumeRenderer> renderer, const ICamera &camera) const;
 	Vector3 GetLocalIntersectPosition(const Ray &ray, float distance) const;
 private:
-	std::unique_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
-	std::shared_ptr<VolumeRenderer> mVolumeRenderer;
+	std::shared_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
+	std::vector<std::shared_ptr<VolumeRenderer>> mVolumeRenderers; // all volume renderers for this simulation
 
 	bool mUpdateEnabled;
 	bool mRenderEnabled;
@@ -61,7 +62,7 @@ private:
 
 // LOD Values
 private:
-	LODData mLodData;
+	//LODController mLodController;
 
 	int mFluidUpdatesSinceStart;
 	int mFramesSinceLastProcess;

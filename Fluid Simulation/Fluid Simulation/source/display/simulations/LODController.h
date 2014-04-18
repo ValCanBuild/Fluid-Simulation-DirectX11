@@ -1,12 +1,12 @@
 /********************************************************************
-LODData: Contains Level of Detail data for the fluid simulation
+LODController: Controls Level of Detail for the fluid simulation
 
 Author:	Valentin Hinov
 Date: 31/3/2014
 *********************************************************************/
 
-#ifndef _LODDATA_H
-#define	_LODDATA_H
+#ifndef _LODCONTROLLER_H
+#define	_LODCONTROLLER_H
 
 #include <memory>
 
@@ -18,7 +18,7 @@ namespace DirectX
 class ICamera;
 enum ETwType;
 
-struct LODData {
+struct LODController {
 	float overallLOD;
 
 	float distanceLOD;
@@ -35,8 +35,8 @@ struct LODData {
 
 	void SetObjectBoundingBox(const DirectX::BoundingBox* objectBox);
 	void CalculateOverallLOD(const ICamera &camera);
-	LODData();
-	~LODData();
+	LODController();
+	~LODController();
 
 	static ETwType GetLODDataTwType(); // for use on an AntTweakBar
 

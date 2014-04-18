@@ -1,11 +1,11 @@
 /********************************************************************
-LODData.cpp:  Implementation of LODData
+LODController.cpp:  Implementation of LODController
 
 Author:	Valentin Hinov
 Date: 31/3/2014
 *********************************************************************/
 
-#include "LODData.h"
+#include "LODController.h"
 #include <AntTweakBar.h>
 #include "../../utilities/math/MathUtils.h"
 #include "../../utilities/ICamera.h"
@@ -21,18 +21,18 @@ using namespace DirectX;
 
 TwType lodTwType;
 
-LODData::LODData() : 
+LODController::LODController() : 
 	overallLOD(1.0f), distanceLOD(1.0f), framesToSkip(0), minDistance(MIN_DISTANCE), maxDistance(MAX_DISTANCE),
 	maxFramesToSkip(MAX_FRAMES_TO_SKIP), partOfScreen(0.0f), pObjectBox(nullptr), numSamples(NUM_SAMPLES), maxSamples(MAX_SAMPLES)
 {
 
 }
 
-LODData::~LODData() {
+LODController::~LODController() {
 	pObjectBox = nullptr;
 }
 
-void LODData::CalculateOverallLOD(const ICamera &camera) {
+void LODController::CalculateOverallLOD(const ICamera &camera) {
 	// calculate an LOD value depending on the current state.
 	// 0 = no detail
 	// 1 = full detail
@@ -50,14 +50,14 @@ void LODData::CalculateOverallLOD(const ICamera &camera) {
 		//numSamples = 0;
 	}
 	else {
-
+		framesToSkip = 0;
 	}
 
 	numSamples = Clamp(numSamples, 0, maxSamples);
 	framesToSkip = Clamp(framesToSkip, 0, maxFramesToSkip);
 }
 
-void LODData::CalculatedDistanceLOD(const ICamera &camera) {
+void LODController::CalculatedDistanceLOD(const ICamera &camera) {
 	// distance check
 	Vector3 camPos;
 	camera.GetPosition(camPos);
@@ -69,7 +69,7 @@ void LODData::CalculatedDistanceLOD(const ICamera &camera) {
 	distanceLOD = Clamp(distanceLOD, 0.0f, 1.0f);
 }
 
-void LODData::CalculateScreenPercentage(const ICamera &camera) {
+void LODController::CalculateScreenPercentage(const ICamera &camera) {
 	Matrix viewProjMat = camera.GetViewProjectionMatrix();
 	float minX, maxX;
 	float minY, maxY;
@@ -107,7 +107,7 @@ void LODData::CalculateScreenPercentage(const ICamera &camera) {
 	}
 }
 
-void LODData::SetObjectBoundingBox(const DirectX::BoundingBox* objectBox) {
+void LODController::SetObjectBoundingBox(const DirectX::BoundingBox* objectBox) {
 	pObjectBox = objectBox;
 }
 
@@ -116,24 +116,24 @@ void LODData::SetObjectBoundingBox(const DirectX::BoundingBox* objectBox) {
 //////////////////////////////////////////////////////////////////////////
 void InitType() {
 	TwStructMember structMembers[] = {
-		{ "Overall LOD", TW_TYPE_FLOAT, offsetof(LODData, overallLOD), "readonly=true" },
-		{ "Distance LOD", TW_TYPE_FLOAT, offsetof(LODData, distanceLOD), "readonly=true" },
-		{ "View LOD", TW_TYPE_FLOAT, offsetof(LODData, partOfScreen), "readonly=true" },
-		{ "Frames To Skip", TW_TYPE_INT32, offsetof(LODData, framesToSkip), "readonly=true" },
-		{ "Num Samples", TW_TYPE_INT32, offsetof(LODData, numSamples), "readonly=true" },
-		{ "Min Distance", TW_TYPE_FLOAT, offsetof(LODData, minDistance), "min=0.0 step=0.5" },
-		{ "Max Distance", TW_TYPE_FLOAT, offsetof(LODData, maxDistance), "min=0.0 step=0.5" },
-		{ "Max Skip Frames", TW_TYPE_INT32, offsetof(LODData, maxFramesToSkip), "min=0 step=1" },
-		{ "Max Samples", TW_TYPE_INT32, offsetof(LODData, maxSamples), "min=16 step=1" },
+		{ "Overall LOD", TW_TYPE_FLOAT, offsetof(LODController, overallLOD), "readonly=true" },
+		{ "Distance LOD", TW_TYPE_FLOAT, offsetof(LODController, distanceLOD), "readonly=true" },
+		{ "View LOD", TW_TYPE_FLOAT, offsetof(LODController, partOfScreen), "readonly=true" },
+		{ "Frames To Skip", TW_TYPE_INT32, offsetof(LODController, framesToSkip), "readonly=true" },
+		{ "Num Samples", TW_TYPE_INT32, offsetof(LODController, numSamples), "readonly=true" },
+		{ "Min Distance", TW_TYPE_FLOAT, offsetof(LODController, minDistance), "min=0.0 step=0.5" },
+		{ "Max Distance", TW_TYPE_FLOAT, offsetof(LODController, maxDistance), "min=0.0 step=0.5" },
+		{ "Max Skip Frames", TW_TYPE_INT32, offsetof(LODController, maxFramesToSkip), "min=0 step=1" },
+		{ "Max Samples", TW_TYPE_INT32, offsetof(LODController, maxSamples), "min=16 step=1" },
 
 	};
 
 	int numMembers = sizeof(structMembers)/sizeof(structMembers[0]);
 
-	lodTwType = TwDefineStruct("LODType", structMembers, numMembers, sizeof(LODData), nullptr, nullptr);
+	lodTwType = TwDefineStruct("LODType", structMembers, numMembers, sizeof(LODController), nullptr, nullptr);
 }
 
-ETwType LODData::GetLODDataTwType() {
+ETwType LODController::GetLODDataTwType() {
 	if (lodTwType == TW_TYPE_UNDEF) {
 		InitType();
 	}

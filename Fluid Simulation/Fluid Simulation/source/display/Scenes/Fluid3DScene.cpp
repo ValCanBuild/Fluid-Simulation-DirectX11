@@ -23,6 +23,7 @@ Date: 24/10/2013
 #include "../../utilities/HeightmapParser.h"
 #include "../../utilities/Screen.h"
 #include "../../system/InputSystem.h"
+//#include "../../utilities/FluidCalculation/Fluid3DCalculator.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
@@ -44,6 +45,7 @@ Fluid3DScene::~Fluid3DScene() {
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
 	pPickedSimulation = nullptr;
+	//mFluidCalculators.clear();
 	mSimulations.clear();
 	mModelObjects.clear();
 }
@@ -89,30 +91,35 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	FluidSettings fluidSettingsSmoke(SMOKE);
 	fluidSettingsSmoke.dimensions = Vector3(64,128,64);
 	fluidSettingsSmoke.densityDissipation = 0.99f;
-	shared_ptr<FluidSimulation> fluidSimulationSmoke(new FluidSimulation(fluidSettingsSmoke));
-	shared_ptr<VolumeRenderer> volumeRendererSmoke = fluidSimulationSmoke->GetVolumeRenderer();
+
+	auto volumeRendererSmoke = make_shared<VolumeRenderer>();
 	volumeRendererSmoke->transform->scale = Vector3(4,8,4);
 	volumeRendererSmoke->transform->position = Vector3(-0.15f,10.08f,6.43f);
-	mSimulations.push_back(fluidSimulationSmoke);
 
-	FluidSettings fluidSettingsFire(FIRE);
+	auto smokeFluidSim = make_shared<FluidSimulation>(fluidSettingsSmoke);
+	smokeFluidSim->AddVolumeRenderer(volumeRendererSmoke);
+	mSimulations.push_back(smokeFluidSim);
+
+	/*FluidSettings fluidSettingsFire(FIRE);
 	fluidSettingsFire.dimensions = Vector3(32,64,32);
 	fluidSettingsFire.constantInputPosition = Vector3(0.5f,0.05f,0.5f);
-	// two fire simulations
+	auto fireFluidCalculator = make_shared<Fluid3DCalculator>(fluidSettingsFire);
+	mFluidCalculators.push_back(fireFluidCalculator);
+
+	// two fire simulations using one calculator
 	for (int i = 0; i < 2; ++i) {
-		shared_ptr<FluidSimulation> fluidSimulationFire(new FluidSimulation(fluidSettingsFire));
-		shared_ptr<VolumeRenderer> volumeRendererFire = fluidSimulationFire->GetVolumeRenderer();
+		auto volumeRendererFire = make_shared<VolumeRenderer>();
 		volumeRendererFire->transform->scale = Vector3(1,2,1);
 		float xPos = i == 0 ? 2.0f : -2.0f;
 		volumeRendererFire->transform->position = Vector3(xPos,2.76f,0);
 
 		auto smokeProperties = volumeRendererFire->GetSmokeProperties();
 		smokeProperties->vSmokeColor = RGBA2Color(40,40,40,255);
-
+		auto fluidSimulationFire = make_shared<FluidSimulation>(fireFluidCalculator, volumeRendererFire);
 		mSimulations.push_back(fluidSimulationFire);
-	}
+	}*/
 
-	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
+	for (auto simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
 		if (!result) {
 			return false;
@@ -180,8 +187,8 @@ void Fluid3DScene::Update(float delta) {
 
 	const ICamera &camera = *mCamera;
 	if (!mPaused) {
-		for (auto simulation : mSimulations) {
-			if (simulation->Update(delta, camera)) {
+		for (auto fluidSim : mSimulations) {
+			if (fluidSim->Update(delta, camera)) {
 				++mNumFluidsUpdating;
 			}
 		}
