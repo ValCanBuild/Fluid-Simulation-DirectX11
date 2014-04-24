@@ -97,22 +97,22 @@ void SmokeRenderShader::SetCameraPosition(const Vector3 &camPos) const {
 	context->Unmap(mPixelBufferPerFrame,0);
 }
 
-void SmokeRenderShader::SetSmokeProperties(const SmokeProperties &smokeProperties) const {
+void SmokeRenderShader::SetSmokeProperties(const RenderSettings &renderSettings) const {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	PixelSmokePropertiesBuffer* dataPtr;
 
 	ID3D11DeviceContext *context = pD3dGraphicsObject->GetDeviceContext();
 
 	// Lock the screen size constant buffer so it can be written to.
-	HRESULT result = context->Map(mPixelSmokePropertiesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	HRESULT result = context->Map(mPixelRenderSettingsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if(FAILED(result)) {
 		throw std::runtime_error(std::string("VolumeRenderShader: failed to map buffer in SetSmokeProperties function"));
 	}
 
 	dataPtr = (PixelSmokePropertiesBuffer*)mappedResource.pData;
-	dataPtr->smokeProperties = smokeProperties;
+	dataPtr->renderSettings = renderSettings;
 
-	context->Unmap(mPixelSmokePropertiesBuffer,0);
+	context->Unmap(mPixelRenderSettingsBuffer,0);
 
 	// Set the buffer inside the pixel shader
 }
@@ -120,7 +120,7 @@ void SmokeRenderShader::SetSmokeProperties(const SmokeProperties &smokePropertie
 void SmokeRenderShader::BindShaderResources(_In_ ID3D11DeviceContext* deviceContext) {
 	deviceContext->PSSetShaderResources(0, 1, &pVolumeValuesTexture);
 
-	ID3D11Buffer *const pPixelBuffers[3] = {mPixelBufferPerFrame, mPixelBufferPerObject, mPixelSmokePropertiesBuffer};
+	ID3D11Buffer *const pPixelBuffers[3] = {mPixelBufferPerFrame, mPixelBufferPerObject, mPixelRenderSettingsBuffer};
 	deviceContext->PSSetConstantBuffers(0,3,pPixelBuffers);
 
 	deviceContext->VSSetConstantBuffers(0, 1, &(mVertexInputBuffer.p));
@@ -146,7 +146,7 @@ bool SmokeRenderShader::SpecificInitialization(ID3D11Device* device) {
 	}
 
 	// Create the pixel smoke properties buffer
-	result = BuildDynamicBuffer<PixelSmokePropertiesBuffer>(device, &mPixelSmokePropertiesBuffer);
+	result = BuildDynamicBuffer<PixelSmokePropertiesBuffer>(device, &mPixelRenderSettingsBuffer);
 	if (!result) {
 		return false;
 	}

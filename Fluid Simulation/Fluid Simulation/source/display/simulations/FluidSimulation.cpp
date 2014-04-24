@@ -25,30 +25,11 @@ void InitFireTexture(D3DGraphicsObject * d3dGraphicsObj) {
 	fireTexture.Initialize(d3dGraphicsObj->GetDevice(), d3dGraphicsObj->GetDeviceContext(), L"data/FireTransferFunction2.dds");
 }
 
-/*FluidSimulation::FluidSimulation() : 
-	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true), mFramesSinceLastProcess(0),
-	mFluidUpdatesSinceStart(0)
-{
-	FluidSettings fluidSettings;
-	fluidSettings.dimensions = Vector3(64.0f,128.0f,64.0f);
-	mFluidCalculator = unique_ptr<Fluid3DCalculator>(new Fluid3DCalculator(fluidSettings));
-	mVolumeRenderer = unique_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
-}*/
-
 FluidSimulation::FluidSimulation(const FluidSettings &fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
 	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
 {
 	mFluidCalculator = make_shared<Fluid3DCalculator>(fluidSettings);
-	//mVolumeRenderer = shared_ptr<VolumeRenderer>(new VolumeRenderer(Vector3(fluidSettings.dimensions)));
 }
-
-/*FluidSimulation::FluidSimulation(shared_ptr<Fluid3DCalculator> fluidCalculator, shared_ptr<VolumeRenderer> volumeRenderer) :
-	mFluidCalculator(fluidCalculator), mVolumeRenderer(volumeRenderer),
-	mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
-	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
-{
-
-}*/
 
 FluidSimulation::~FluidSimulation() {
 }
@@ -89,22 +70,11 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND h
 	return true;
 }
 
-bool FluidSimulation::Render(const ICamera &camera) {
-	
-	for (auto volumeRenderer : mVolumeRenderers) {
-		bool isVisible = IsRendererVisibleByCamera(volumeRenderer, camera);
-		if (isVisible && mRenderEnabled) {
-			//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
-			volumeRenderer->Render(camera);
-		}
-	}
-	return true;
-}
 
 bool FluidSimulation::Update(float dt, const ICamera &camera) {
 	//mLodController.CalculateOverallLOD(camera);
 	//mVolumeRenderer->Update();
-
+	//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
 	bool canUpdate = true;
 
 	// do not do frame skipping until simulation has developed a bit
@@ -150,24 +120,21 @@ Vector3 FluidSimulation::GetLocalIntersectPosition(const Ray &ray, float distanc
 	return Vector3(0,0,0);
 }
 
-bool FluidSimulation::IntersectsRay(const Ray &ray, float &distance) const {
-	//const BoundingBox *boundingBox = mVolumeRenderer->bounds->GetBoundingBox();
-	//return ray.Intersects(*boundingBox, distance);
-	return false;
+std::shared_ptr<VolumeRenderer> FluidSimulation::IntersectsRay(const Ray &ray, float &distance) const {
+	float maxDist = FLT_MAX;
+	shared_ptr<VolumeRenderer> picked(nullptr);
+	for (auto volumeRenderer : mVolumeRenderers) {
+		const BoundingBox *boundingBox = volumeRenderer->bounds->GetBoundingBox();
+		if (ray.Intersects(*boundingBox, distance)) {
+			if (distance < maxDist) {
+				picked = volumeRenderer;
+				maxDist = distance;
+			}
+		}
+	}
+	distance = maxDist;
+	return picked;
 }
-
-bool FluidSimulation::IsRendererVisibleByCamera(std::shared_ptr<VolumeRenderer> renderer, const ICamera &camera) const {
-	DirectX::BoundingFrustum boundingFrustum = camera.GetBoundingFrustum();
-
-	// Perform a frustum - bounding box containment test
-	const BoundingBox *boundingBox = renderer->bounds->GetBoundingBox();
-	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
-	return cType != DISJOINT;
-}
-
-/*std::shared_ptr<VolumeRenderer> FluidSimulation::GetVolumeRenderer() const {
-	return mVolumeRenderer;
-}*/
 
 
 //////////////////////////////////////////////////////////////////////////

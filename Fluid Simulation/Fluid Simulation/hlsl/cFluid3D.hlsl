@@ -19,9 +19,7 @@ cbuffer InputBufferGeneral : register (b0) {
 	float fDensityBuoyancy;		// Used for BuoyancyComputeShader
 	float fDensityWeight;		// Used for BuoyancyComputeShader
 	float fVorticityStrength;  // Used for VorticityComputeShader
-	float3 vBuoyancyDirection; // Used for BuoyancyComputeShader
-	float padding0;
-	// 32 bytes //
+	// 16 bytes //
 };
 
 cbuffer InputBufferAdvection : register (b1) {
@@ -58,8 +56,8 @@ Texture3D<float3>   impulseInitial : register (t0); // Used for ImpulseComputeSh
 Texture3D<float>   reaction : register(t1); // Used for ExtinguishmentImpulseComputeShader
 RWTexture3D<float3> impulseResult : register (u0); // Used for ImpulseComputeShader, ExtinguishmentImpulseComputeShader
 
-Texture3D<float3>   vorticity : register (t1); // Used for ConfinementComputeShader
-RWTexture3D<float3> vorticityResult : register (u0); // Used for VorticityComputeShader
+Texture3D<float4>   vorticity : register (t1); // Used for ConfinementComputeShader
+RWTexture3D<float4> vorticityResult : register (u0); // Used for VorticityComputeShader
 
 Texture3D<float>     divergence   : register (t0);  // Used for JacobiComputeShader
 RWTexture3D<float>   divergenceResult : register (u0);  // Used for DivergenceComputeShader
@@ -74,6 +72,12 @@ RWTexture3D<int>  obstaclesResult : register (u0); // Used for ObstacleComputeSh
 
 
 uint3 GetDimensionsIntRW(RWTexture3D<int> tex) {
+	uint3 dimensions;
+	tex.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
+	return dimensions;
+}
+
+uint3 GetDimensionsFloat4(Texture3D<float4> tex) {
 	uint3 dimensions;
 	tex.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
 	return dimensions;
@@ -181,10 +185,10 @@ void BuoyancyComputeShader( uint3 i : SV_DispatchThreadID ) {
 	float densityVal = density[i];
 
 	float3 result = velocity[i];
-	float fAmbientTemperature = 0.0f;
-	if (temperatureVal > fAmbientTemperature) {
-		result += (fTimeStep * (temperatureVal - fAmbientTemperature) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * vBuoyancyDirection;
-	}
+	//float fAmbientTemperature = 0.0f;
+	//if (temperatureVal > fAmbientTemperature) {
+		result += (fTimeStep * (temperatureVal) * fDensityBuoyancy - (densityVal * fDensityWeight) ) * float3(0,1,0);
+	//}
 	buoyancyResult[i] = result;
 }
 
@@ -236,7 +240,8 @@ void VorticityComputeShader( uint3 i : SV_DispatchThreadID ) {
 								   (( vU.x - vD.x ) - ( vR.z - vL.z )) ,
 								   (( vR.y - vL.y ) - ( vT.x - vB.x )) );
 
-	vorticityResult[i] = result;
+	float lresult = length(result);
+	vorticityResult[i] = float4(result, lresult);
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
@@ -247,7 +252,7 @@ void ConfinementComputeShader( uint3 i : SV_DispatchThreadID ) {
 		return;
 	}
 
-	uint3 dimensions = GetDimensionsFloat3(vorticity);
+	uint3 dimensions = GetDimensionsFloat4(vorticity);
 
 	uint3 coordT = uint3(i.x, min(i.y+1,dimensions.y-1), i.z);
 	uint3 coordB = uint3(i.x, max(i.y-1,0), i.z);
@@ -256,15 +261,14 @@ void ConfinementComputeShader( uint3 i : SV_DispatchThreadID ) {
 	uint3 coordU = uint3(i.x, i.y, min(i.z+1,dimensions.z-1));
 	uint3 coordD = uint3(i.x, i.y, max(i.z-1,0));
 
-	// Potential optimization: don't find length multiple times - do once for the entire texture
-	float omegaT = length(vorticity[coordT]);
-	float omegaB = length(vorticity[coordB]);
-	float omegaR = length(vorticity[coordR]);
-	float omegaL = length(vorticity[coordL]);
-	float omegaU = length(vorticity[coordU]);
-	float omegaD = length(vorticity[coordD]);
+	float omegaT = vorticity[coordT].w;
+	float omegaB = vorticity[coordB].w;
+	float omegaR = vorticity[coordR].w;
+	float omegaL = vorticity[coordL].w;
+	float omegaU = vorticity[coordU].w;
+	float omegaD = vorticity[coordD].w;
 
-	float3 omega = vorticity[i];
+	float3 omega = vorticity[i].xyz;
 
 	float3 eta = 0.5f * float3( omegaR - omegaL, omegaT - omegaB, omegaU - omegaD );
 	eta = normalize( eta + float3(0.001f,0.001f,0.001f) );

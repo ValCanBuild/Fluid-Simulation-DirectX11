@@ -369,7 +369,6 @@ void Fluid3DCalculator::UpdateGeneralBuffer() {
 	dataPtr->fDensityBuoyancy = mFluidSettings.densityBuoyancy;
 	dataPtr->fDensityWeight	= mFluidSettings.densityWeight;
 	dataPtr->fVorticityStrength = mFluidSettings.vorticityStrength;
-	dataPtr->vBuoyancyDirection = mFluidSettings.buoyancyDirection;
 
 	context->Unmap(mInputBufferGeneral,0);
 }
@@ -435,8 +434,7 @@ int Fluid3DCalculator::GetUpdateDirtyFlags(const FluidSettings &newSettings) con
 
 	if (newSettings.timeStep != mFluidSettings.timeStep || newSettings.densityBuoyancy != mFluidSettings.densityBuoyancy
 		|| newSettings.densityWeight != mFluidSettings.densityWeight || newSettings.dimensions != mFluidSettings.dimensions
-		|| newSettings.vorticityStrength != mFluidSettings.vorticityStrength
-		|| newSettings.buoyancyDirection != mFluidSettings.buoyancyDirection)
+		|| newSettings.vorticityStrength != mFluidSettings.vorticityStrength)
 	{
 		dirtyFlags |= BufferDirtyFlags::General;
 	}

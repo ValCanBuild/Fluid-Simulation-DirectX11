@@ -31,7 +31,7 @@ using namespace DirectX;
 const string barName = "3D Fluid Simulation";
 
 Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), 
-	pPickedSimulation(nullptr) {
+	pPickedRenderer(nullptr) {
 	
 }
 
@@ -44,8 +44,7 @@ Fluid3DScene::~Fluid3DScene() {
 
 	pD3dGraphicsObj = nullptr;
 	pInputSystem = nullptr;
-	pPickedSimulation = nullptr;
-	//mFluidCalculators.clear();
+	mVolumeRenderers.clear();
 	mSimulations.clear();
 	mModelObjects.clear();
 }
@@ -95,16 +94,17 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	auto volumeRendererSmoke = make_shared<VolumeRenderer>();
 	volumeRendererSmoke->transform->scale = Vector3(4,8,4);
 	volumeRendererSmoke->transform->position = Vector3(-0.15f,10.08f,6.43f);
+	mVolumeRenderers.push_back(volumeRendererSmoke);
 
 	auto smokeFluidSim = make_shared<FluidSimulation>(fluidSettingsSmoke);
 	smokeFluidSim->AddVolumeRenderer(volumeRendererSmoke);
 	mSimulations.push_back(smokeFluidSim);
 
-	/*FluidSettings fluidSettingsFire(FIRE);
+	FluidSettings fluidSettingsFire(FIRE);
 	fluidSettingsFire.dimensions = Vector3(32,64,32);
 	fluidSettingsFire.constantInputPosition = Vector3(0.5f,0.05f,0.5f);
-	auto fireFluidCalculator = make_shared<Fluid3DCalculator>(fluidSettingsFire);
-	mFluidCalculators.push_back(fireFluidCalculator);
+	auto fireFluidSim = make_shared<FluidSimulation>(fluidSettingsFire);
+	mSimulations.push_back(fireFluidSim);
 
 	// two fire simulations using one calculator
 	for (int i = 0; i < 2; ++i) {
@@ -113,11 +113,12 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 		float xPos = i == 0 ? 2.0f : -2.0f;
 		volumeRendererFire->transform->position = Vector3(xPos,2.76f,0);
 
-		auto smokeProperties = volumeRendererFire->GetSmokeProperties();
+		auto smokeProperties = volumeRendererFire->GetRenderSettings();
 		smokeProperties->vSmokeColor = RGBA2Color(40,40,40,255);
-		auto fluidSimulationFire = make_shared<FluidSimulation>(fireFluidCalculator, volumeRendererFire);
-		mSimulations.push_back(fluidSimulationFire);
-	}*/
+		
+		fireFluidSim->AddVolumeRenderer(volumeRendererFire);
+		mVolumeRenderers.push_back(volumeRendererFire);
+	}
 
 	for (auto simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
@@ -138,7 +139,7 @@ void Fluid3DScene::InitCamera() {
 	float screenAspect = (float)screenWidth / (float)screenHeight;
 
 	mCamera = CameraImpl::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
-	mCamera->SetPosition(0,3.0f,-4.5);
+	mCamera->SetPosition(0, 3.0f, -8.5);
 }
 
 void Fluid3DScene::InitGameObjects() {
@@ -208,9 +209,10 @@ bool Fluid3DScene::Render() {
 		modelObject->Render(camera, context);
 	}
 
-	for (auto simulation : mSimulations) {
-		if (simulation->Render(camera)) {
-			++mNumRenderedFluids;
+	for (auto volumeRenderer : mVolumeRenderers) {
+		bool isVisible = IsRendererVisibleByCamera(volumeRenderer);
+		if (isVisible) {
+			volumeRenderer->Render(camera);
 		}
 	}
 
@@ -277,33 +279,37 @@ void Fluid3DScene::HandleMousePicking(bool interaction) {
 	Ray ray = mCamera->ScreenPointToRay(Vector2((float)posX,(float)posY));
 
 	float prevMinDistance = FLT_MAX;
-	shared_ptr<FluidSimulation> picked(nullptr);
+	shared_ptr<FluidSimulation> pickedSim(nullptr);
+	shared_ptr<VolumeRenderer> pickedRenderer(nullptr);
 	for (shared_ptr<FluidSimulation> simulation : mSimulations) {
 		float distance;
-		if (simulation->IntersectsRay(ray, distance)) {
+		shared_ptr<VolumeRenderer> renderer = simulation->IntersectsRay(ray, distance);
+		if (renderer) {
 			if (distance < prevMinDistance) {
-				picked = simulation;
+				pickedSim = simulation;
+				pickedRenderer = renderer;
 			}
 		}
 	}
 
-	if (interaction && picked != nullptr) {
-		picked->FluidInteraction(ray);
+	if (interaction && pickedSim != nullptr) {
+		pickedSim->FluidInteraction(ray);
 	}
 	else {
-		if (picked == pPickedSimulation) {
+		if (pickedRenderer == pPickedRenderer) {
 			return;
 		}
 		else {
-			if (pPickedSimulation != nullptr) {
-				pPickedSimulation = nullptr;
+			if (pPickedRenderer != nullptr) {
+				pPickedRenderer = nullptr;
 				TwRemoveAllVars(mTwBar);
 				string command = " '" + barName + "' iconified=true ";
 				TwDefine(command.c_str());
 			}
-			if (picked != nullptr) {
-				pPickedSimulation = picked;
-				pPickedSimulation->DisplayInfoOnBar(mTwBar);
+			if (pickedRenderer != nullptr) {
+				pPickedRenderer = pickedRenderer;
+				pickedSim->DisplayInfoOnBar(mTwBar);
+				pickedRenderer->DisplayRenderInfoOnBar(mTwBar);
 				string command = " '" + barName + "' iconified=false ";
 				TwDefine(command.c_str());
 			}
@@ -311,13 +317,22 @@ void Fluid3DScene::HandleMousePicking(bool interaction) {
 	}
 }
 
+bool Fluid3DScene::IsRendererVisibleByCamera(std::shared_ptr<VolumeRenderer> &renderer) const {
+	DirectX::BoundingFrustum boundingFrustum = mCamera->GetBoundingFrustum();
+
+	// Perform a frustum - bounding box containment test
+	const BoundingBox *boundingBox = renderer->bounds->GetBoundingBox();
+	ContainmentType cType = boundingFrustum.Contains(*boundingBox);
+	return cType != DISJOINT;
+}
+
 void Fluid3DScene::SortTransparentObjects() {
 	Vector3 camPos;
 	mCamera->GetPosition(camPos);
-	sort(mSimulations.begin(), mSimulations.end(),
-		[&](const std::shared_ptr<FluidSimulation>& first, const std::shared_ptr<FluidSimulation>& second) {
-			Vector3 firstPositon = first->GetVolumeRenderer()->transform->position;
-			Vector3 secondPosition = second->GetVolumeRenderer()->transform->position;
+	sort(mVolumeRenderers.begin(), mVolumeRenderers.end(),
+		[&](const std::shared_ptr<VolumeRenderer>& first, const std::shared_ptr<VolumeRenderer>& second) {
+			Vector3 firstPositon = first->transform->position;
+			Vector3 secondPosition = second->transform->position;
 
 			return Vector3::Distance(firstPositon, camPos) > Vector3::Distance(secondPosition, camPos);
 	});

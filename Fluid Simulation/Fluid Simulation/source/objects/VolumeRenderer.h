@@ -41,7 +41,7 @@ public:
 
 	void DisplayRenderInfoOnBar(CTwBar * const pBar);
 	void SetNumRenderSamples(int numSamples);
-	std::shared_ptr<SmokeProperties> GetSmokeProperties() const;
+	std::shared_ptr<RenderSettings> GetRenderSettings() const;
 private:
 	static void __stdcall SetSmokePropertiesCallback(void *clientData);
 	void RefreshSmokeProperties();
@@ -52,7 +52,7 @@ private:
 
 	D3DGraphicsObject* pD3dGraphicsObj;
 
-	std::shared_ptr<SmokeProperties>		mSmokeProperties;
+	std::shared_ptr<RenderSettings>			mRenderSettings;
 	std::unique_ptr<SmokeRenderShader>		mVolumeRenderShader;
 	std::shared_ptr<DirectX::CommonStates>	pCommonStates;	
 };

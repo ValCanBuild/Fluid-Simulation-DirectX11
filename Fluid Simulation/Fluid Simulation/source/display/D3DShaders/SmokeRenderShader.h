@@ -13,14 +13,14 @@ Date: 19/02/2014
 class D3DGraphicsObject;
 class Transform;
 
-struct SmokeProperties {
+struct RenderSettings {
 	Color vSmokeColor;
 	float fSmokeAbsorption;
 	float fFireAbsorption;
 	int iNumSamples;
 	
-	SmokeProperties();
-	SmokeProperties(Color color, float smokeAbsorption, float fireAbsorption, int numSamples) : 
+	RenderSettings();
+	RenderSettings(Color color, float smokeAbsorption, float fireAbsorption, int numSamples) : 
 		vSmokeColor(color), fSmokeAbsorption(smokeAbsorption), fFireAbsorption(fireAbsorption), iNumSamples(numSamples) {}
 };
 
@@ -32,7 +32,7 @@ public:
 	void SetVertexBufferValues(const Matrix &wvpMatrix, const Matrix &worldMatrix) const;
 	void SetTransform(const Transform &transform) const;
 	void SetCameraPosition(const Vector3 &camPos) const;
-	void SetSmokeProperties(const SmokeProperties &smokeProperties) const;
+	void SetSmokeProperties(const RenderSettings &renderSettings) const;
 
 	void SetVolumeValuesTexture(ID3D11ShaderResourceView *volumeValues);
 
@@ -64,14 +64,14 @@ private:
 	};
 
 	struct PixelSmokePropertiesBuffer {
-		SmokeProperties smokeProperties;
+		RenderSettings renderSettings;
 		float padding;
 	};
 
 	CComPtr<ID3D11Buffer>		mVertexInputBuffer;
 	CComPtr<ID3D11Buffer>		mPixelBufferPerFrame;
 	CComPtr<ID3D11Buffer>		mPixelBufferPerObject;
-	CComPtr<ID3D11Buffer>		mPixelSmokePropertiesBuffer;
+	CComPtr<ID3D11Buffer>		mPixelRenderSettingsBuffer;
 
 	ID3D11ShaderResourceView *  pVolumeValuesTexture;
 };

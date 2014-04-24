@@ -23,25 +23,25 @@ static float defaultSmokeAbsorption = 60.0f;
 static float defaultFireAbsorption = 40.0f;
 static int   defaultNumSamples = 64;
 
-TwType smokePropertiesTwType;
+TwType renderSettingsTwType;
 TwType firePropertiesTwType;
 
 void DefinePropertiesTwType() {
 	TwStructMember smokePropertiesStructMembers[] = {
-		{ "Number of Samples", TW_TYPE_INT32, offsetof(SmokeProperties, iNumSamples), "min=16 max=512 step=1" },
-		{ "Smoke Color", TW_TYPE_COLOR4F, offsetof(SmokeProperties, vSmokeColor), "" },
-		{ "Smoke Absorption", TW_TYPE_FLOAT, offsetof(SmokeProperties, fSmokeAbsorption), "min=0.0 max=200.0 step=0.5" },
-		{ "Fire Absorption", TW_TYPE_FLOAT, offsetof(SmokeProperties, fFireAbsorption), "min=0.0 max=200.0 step=0.5" }
+		{ "Number of Samples", TW_TYPE_INT32, offsetof(RenderSettings, iNumSamples), "min=16 max=512 step=1" },
+		{ "Smoke Color", TW_TYPE_COLOR4F, offsetof(RenderSettings, vSmokeColor), "" },
+		{ "Smoke Absorption", TW_TYPE_FLOAT, offsetof(RenderSettings, fSmokeAbsorption), "min=0.0 max=200.0 step=0.5" },
+		{ "Fire Absorption", TW_TYPE_FLOAT, offsetof(RenderSettings, fFireAbsorption), "min=0.0 max=200.0 step=0.5" }
 	};
 
-	smokePropertiesTwType = TwDefineStruct("Smoke Render Properties", smokePropertiesStructMembers, 3, sizeof(SmokeProperties), nullptr, nullptr);
-	firePropertiesTwType = TwDefineStruct("Fire Render Properties", smokePropertiesStructMembers, 4, sizeof(SmokeProperties), nullptr, nullptr);
+	renderSettingsTwType = TwDefineStruct("Smoke Render Properties", smokePropertiesStructMembers, 3, sizeof(RenderSettings), nullptr, nullptr);
+	firePropertiesTwType = TwDefineStruct("Fire Render Properties", smokePropertiesStructMembers, 4, sizeof(RenderSettings), nullptr, nullptr);
 }
 
 VolumeRenderer::VolumeRenderer() :
 	pD3dGraphicsObj(nullptr) 
 {
-	mSmokeProperties = unique_ptr<SmokeProperties>(new SmokeProperties(defaultSmokeColor, defaultSmokeAbsorption, defaultFireAbsorption, defaultNumSamples));
+	mRenderSettings = unique_ptr<RenderSettings>(new RenderSettings(defaultSmokeColor, defaultSmokeAbsorption, defaultFireAbsorption, defaultNumSamples));
 }
 
 VolumeRenderer::~VolumeRenderer() {
@@ -68,13 +68,13 @@ bool VolumeRenderer::Initialize(_In_ D3DGraphicsObject* d3dGraphicsObj, HWND hwn
 		return false;
 	}
 	
-	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
+	mVolumeRenderShader->SetSmokeProperties(*mRenderSettings);
 	mVolumeRenderShader->SetTransform(*transform);
 
 	auto graphicsSystem = ServiceProvider::Instance().GetService<IGraphicsSystem>();
 	pCommonStates = graphicsSystem->GetCommonD3DStates();
 
-	if (smokePropertiesTwType == TW_TYPE_UNDEF) {
+	if (renderSettingsTwType == TW_TYPE_UNDEF) {
 		DefinePropertiesTwType();
 	}
 
@@ -100,8 +100,8 @@ void VolumeRenderer::Render(const ICamera &camera) {
 	auto context = pD3dGraphicsObj->GetDeviceContext();
 	primitive->Draw(mVolumeRenderShader.get(), mVolumeRenderShader->GetInputLayout(), false, false, [=] 
 		{
-			ID3D11BlendState* blendState = pCommonStates->NonPremultiplied();
-			ID3D11RasterizerState* rasterizeState = pCommonStates->CullClockwise();
+			auto blendState = pCommonStates->NonPremultiplied();
+			auto rasterizeState = pCommonStates->CullClockwise();
 
 			context->OMSetBlendState(blendState, nullptr, 0xFFFFFFFF);
 			context->RSSetState(rasterizeState);
@@ -127,26 +127,26 @@ void VolumeRenderer::SetFireGradientTexture(ID3D11ShaderResourceView *gradientTe
 }
 
 void VolumeRenderer::DisplayRenderInfoOnBar(TwBar * const pBar) {
-	TwType typeToAdd = mFluidType == SMOKE ? smokePropertiesTwType : firePropertiesTwType;
-	TwAddVarRW(pBar,"Rendering", typeToAdd, mSmokeProperties.get(), "");
+	TwType typeToAdd = mFluidType == SMOKE ? renderSettingsTwType : firePropertiesTwType;
+	TwAddVarRW(pBar,"Rendering", typeToAdd, mRenderSettings.get(), "");
 	TwAddButton(pBar, "Apply Changes", SetSmokePropertiesCallback, this, "label='Apply Changes' group=Rendering");
 }
 
 void VolumeRenderer::RefreshSmokeProperties() {
-	mVolumeRenderShader->SetSmokeProperties(*mSmokeProperties);
+	mVolumeRenderShader->SetSmokeProperties(*mRenderSettings);
 }
 
 void __stdcall VolumeRenderer::SetSmokePropertiesCallback(void *clientData) {
 	static_cast<VolumeRenderer *>(clientData)->RefreshSmokeProperties();
 }
 
-std::shared_ptr<SmokeProperties> VolumeRenderer::GetSmokeProperties() const {
-	return mSmokeProperties;
+std::shared_ptr<RenderSettings> VolumeRenderer::GetRenderSettings() const {
+	return mRenderSettings;
 }
 
 void VolumeRenderer::SetNumRenderSamples(int numSamples) {
-	if (numSamples != mSmokeProperties->iNumSamples) {
-		mSmokeProperties->iNumSamples = numSamples;
+	if (numSamples != mRenderSettings->iNumSamples) {
+		mRenderSettings->iNumSamples = numSamples;
 		RefreshSmokeProperties();
 	}
 }

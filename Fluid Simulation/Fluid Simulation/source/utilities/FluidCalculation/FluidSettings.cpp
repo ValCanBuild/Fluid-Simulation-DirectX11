@@ -64,7 +64,6 @@ FluidSettings::FluidSettings(FluidType_t fluidType) : mFluidType(fluidType) {
 	constantInputRadius = CONSTANT_INPUT_RADIUS;
 	vorticityStrength = VORTICITY_STRENGTH;
 	constantInputPosition = Vector3(0.5f,0.0f,0.5f);
-	buoyancyDirection = Vector3(0,1,0);
 
 	// fire only settings
 	constantReactionAmount = CONSTANT_REACTION;

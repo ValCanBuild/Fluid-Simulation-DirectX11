@@ -40,7 +40,7 @@ void TW_CALL SingleStepPhysics(void *clientData) {
 /// ~ANT TWEAK BAR CALLBACKS ///
 
 
-GraphicsSystemImpl::GraphicsSystemImpl() : mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false) {
+GraphicsSystemImpl::GraphicsSystemImpl() : mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false), mRenderOverlay(true) {
 	mFps = mCpuUsage = 0;
 }
 
@@ -98,8 +98,7 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 	TwDefine(" MainControl iconified=true ");
 	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
-	TwAddVarRW(twBar,"Pause Scene Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
-	TwAddButton(twBar,"Single Physics Step", SingleStepPhysics, this, " key=space ");
+	TwAddVarRW(twBar, "Render Overlay", TW_TYPE_BOOLCPP, &mRenderOverlay, " key=p ");
 
 	// Get video card info
 	int cardMemory = 0;
@@ -164,30 +163,31 @@ bool GraphicsSystemImpl::Render() const {
 
 bool GraphicsSystemImpl::RenderOverlay() const {
 	// Render overlay information
-	mSpriteBatch->Begin();
-	{
-		// Display FPS
-		wstring text = L"FPS: " + std::to_wstring(mFps);
-		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,10));
+	if (mRenderOverlay)	{
+		mSpriteBatch->Begin();
+		{
+			// Display FPS
+			wstring text = L"FPS: " + std::to_wstring(mFps);
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,10));
 
-		// Display Card Name
-		mSpriteFont->DrawString(mSpriteBatch.get(),mCardName.c_str(),XMFLOAT2(10,35));
+			// Display Card Name
+			mSpriteFont->DrawString(mSpriteBatch.get(),mCardName.c_str(),XMFLOAT2(10,35));
 
-		// Display Card Memory
-		text = L"Video Memory: " + mVideoMemory + L"MB";
-		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
+			// Display Card Memory
+			text = L"Video Memory: " + mVideoMemory + L"MB";
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
 
-		// Display CPU usage
-		text = L"CPU Usage: " + std::to_wstring(mCpuUsage) + L"%";
-		mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
+			// Display CPU usage
+			text = L"CPU Usage: " + std::to_wstring(mCpuUsage) + L"%";
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
 
-		// Allow the current scene to render any additional overlay items
-		mCurrentScene->RenderOverlay(mSpriteBatch, mSpriteFont);
+			// Allow the current scene to render any additional overlay items
+			mCurrentScene->RenderOverlay(mSpriteBatch, mSpriteFont);
+		}
+		mSpriteBatch->End();
 	}
-	mSpriteBatch->End();
-
+	
 	// Render Ant Tweak Bar
-	// Render AntTweakBar
 	int twResult = TwDraw();
 	if (twResult == 0) {
 		// TWDraw failed, use TwGetLastError to retrieve error

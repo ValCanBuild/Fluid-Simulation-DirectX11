@@ -37,7 +37,6 @@ const int SCREEN_HEIGHT_WINDOWED = 600;
 class GraphicsSystemImpl : public IGraphicsSystem {
 public:
 	GraphicsSystemImpl();
-	GraphicsSystemImpl(const GraphicsSystemImpl&);
 	~GraphicsSystemImpl();
 
 	bool Initialize(int, int, HWND);
@@ -60,6 +59,8 @@ public:
 	IScene * const GetCurrentScene() const;
 
 private:
+	GraphicsSystemImpl(const GraphicsSystemImpl&);
+	
 	bool Render() const;
 	bool RenderOverlay() const;
 
@@ -79,6 +80,7 @@ private:
 	wstring mCardName;
 	wstring mVideoMemory;
 
+	bool mRenderOverlay;
 	bool mSceneFixedUpdatePaused; // pause physics update for the active scene
 	bool mReverseFixedTimestep; // pass a negative timestep value to active scene
 };

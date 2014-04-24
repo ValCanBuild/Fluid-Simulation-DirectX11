@@ -21,6 +21,7 @@ class FluidSimulation;
 class SkyObject;
 class ModelGameObject;
 class TerrainObject;
+class VolumeRenderer;
 class Transform;
 struct CTwBar;
 
@@ -47,13 +48,15 @@ private:
 	void HandleMousePicking(bool interaction);
 	void SortTransparentObjects();
 
+	bool IsRendererVisibleByCamera(std::shared_ptr<VolumeRenderer> &renderer) const;
 private:
 	unique_ptr<CameraImpl>	mCamera;
 	unique_ptr<SkyObject>	mSkyObject;
 	unique_ptr<TerrainObject> mTerrainObject;
 	vector<shared_ptr<ModelGameObject>> mModelObjects;
+	vector<shared_ptr<VolumeRenderer>> mVolumeRenderers;
 
-	shared_ptr<FluidSimulation> pPickedSimulation;
+	shared_ptr<VolumeRenderer> pPickedRenderer;
 	vector<shared_ptr<FluidSimulation>> mSimulations;
 
 	D3DGraphicsObject* pD3dGraphicsObj;

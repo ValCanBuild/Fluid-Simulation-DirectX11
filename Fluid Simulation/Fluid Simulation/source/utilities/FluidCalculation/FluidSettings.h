@@ -27,7 +27,7 @@ Date: 3/3/2014
 #define AMBIENT_TEMPERATURE 0.0f
 #define CONSTANT_TEMPERATURE 3.0f
 #define CONSTANT_DENSITY 1.0f
-#define VORTICITY_STRENGTH 0.9f
+#define VORTICITY_STRENGTH 0.8f
 #define CONSTANT_REACTION 1.0f
 #define REACTION_DECAY 0.001f
 #define REACTION_EXTINGUISHMENT 0.01f
@@ -60,7 +60,6 @@ struct FluidSettings {
 	float constantInputRadius;
 	float vorticityStrength;
 	Vector3 constantInputPosition;	// location of permanent density and temperature input as % of dimensions
-	Vector3 buoyancyDirection; // default is 0,1,0
 
 	// fire only settings
 	float constantReactionAmount;

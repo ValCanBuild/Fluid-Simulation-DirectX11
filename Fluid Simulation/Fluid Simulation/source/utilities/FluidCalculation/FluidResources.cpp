@@ -172,6 +172,7 @@ FluidResourcesPerObject FluidResourcesPerObject::CreateResourcesSmoke(ID3D11Devi
 
 	// Create the vorticity shader params
 	CComPtr<ID3D11Texture3D> vorticityText;
+	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	hresult = device->CreateTexture3D(&textureDesc, NULL, &vorticityText);
 	if (FAILED(hresult)) {
 		MessageBox(hwnd, L"Could not create the vorticity Texture Object", L"Error", MB_OK);
