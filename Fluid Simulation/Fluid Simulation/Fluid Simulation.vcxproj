@@ -137,6 +137,7 @@
     <ClCompile Include="source\system\InputSystemImpl.cpp" />
     <ClCompile Include="source\system\MainSystem.cpp" />
     <ClCompile Include="source\utilities\AppTimer\AppTimerImpl.cpp" />
+    <ClCompile Include="source\utilities\AutoCameraController.cpp" />
     <ClCompile Include="source\utilities\CameraImpl.cpp" />
     <ClCompile Include="source\utilities\CollisionManager.cpp" />
     <ClCompile Include="source\utilities\Console.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="source\utilities\AppTimer\AppTimerImpl.h" />
     <ClInclude Include="source\utilities\AppTimer\IAppTimer.h" />
     <ClInclude Include="source\utilities\AtlInclude.h" />
+    <ClInclude Include="source\utilities\AutoCameraController.h" />
     <ClInclude Include="source\utilities\FluidCalculation\Fluid2DShaders.h" />
     <ClInclude Include="source\utilities\FluidCalculation\Fluid3DBuffers.h" />
     <ClInclude Include="source\utilities\FluidCalculation\Fluid3DShaders.h" />
@@ -216,6 +218,7 @@
     <ClInclude Include="source\utilities\FluidCalculation\Fluid3DCalculator.h" />
     <ClInclude Include="source\utilities\FluidCalculation\FluidSettings.h" />
     <ClInclude Include="source\utilities\GeometryBuilder.h" />
+    <ClInclude Include="source\utilities\math\Interpolate.h" />
     <ClInclude Include="source\utilities\math\MathUtils.h" />
     <ClInclude Include="source\utilities\D3DTexture.h" />
     <ClInclude Include="source\utilities\PerformanceMonitor.h" />

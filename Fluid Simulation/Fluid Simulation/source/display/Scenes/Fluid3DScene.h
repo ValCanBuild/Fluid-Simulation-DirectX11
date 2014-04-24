@@ -15,6 +15,7 @@ Date: 24/10/2013
 #include "IScene.h"
 
 class CameraImpl;
+class AutoCameraController;
 class D3DGraphicsObject;
 class InputSystem;
 class FluidSimulation;
@@ -51,6 +52,7 @@ private:
 	bool IsRendererVisibleByCamera(std::shared_ptr<VolumeRenderer> &renderer) const;
 private:
 	unique_ptr<CameraImpl>	mCamera;
+	unique_ptr<AutoCameraController> mAutoCameraController;
 	unique_ptr<SkyObject>	mSkyObject;
 	unique_ptr<TerrainObject> mTerrainObject;
 	vector<shared_ptr<ModelGameObject>> mModelObjects;
@@ -67,6 +69,7 @@ private:
 	int  mNumRenderedFluids;
 	int  mNumFluidsUpdating;
 	bool mPaused;
+	bool mAutoCamEnabled;
 };
 
 #endif

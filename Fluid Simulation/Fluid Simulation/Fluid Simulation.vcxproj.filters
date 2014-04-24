@@ -297,6 +297,9 @@
     <ClCompile Include="source\display\simulations\LODController.cpp">
       <Filter>Source Files\Display\Simulations</Filter>
     </ClCompile>
+    <ClCompile Include="source\utilities\AutoCameraController.cpp">
+      <Filter>Source Files\Utilities\Camera</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\utilities\D3dIncludes.h">
@@ -502,6 +505,12 @@
     </ClInclude>
     <ClInclude Include="source\display\simulations\LODController.h">
       <Filter>Header Files\Display\Simulations</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\math\Interpolate.h">
+      <Filter>Header Files\Utilities\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\AutoCameraController.h">
+      <Filter>Header Files\Utilities\Camera</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

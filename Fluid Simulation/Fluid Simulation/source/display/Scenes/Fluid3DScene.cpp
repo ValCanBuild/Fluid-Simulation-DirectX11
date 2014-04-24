@@ -14,6 +14,7 @@ Date: 24/10/2013
 
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/CameraImpl.h"
+#include "../../utilities/AutoCameraController.h"
 #include "../../system/ServiceProvider.h"
 #include "../../objects/VolumeRenderer.h"
 #include "../simulations/FluidSimulation.h"
@@ -23,14 +24,13 @@ Date: 24/10/2013
 #include "../../utilities/HeightmapParser.h"
 #include "../../utilities/Screen.h"
 #include "../../system/InputSystem.h"
-//#include "../../utilities/FluidCalculation/Fluid3DCalculator.h"
 
 using namespace Fluid3D;
 using namespace DirectX;
 
 const string barName = "3D Fluid Simulation";
 
-Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), 
+Fluid3DScene::Fluid3DScene() : mPaused(false), pInputSystem(nullptr), mNumRenderedFluids(0), mNumFluidsUpdating(0), mAutoCamEnabled(false),
 	pPickedRenderer(nullptr) {
 	
 }
@@ -69,9 +69,9 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	int barX = Screen::width - barWidth - 1;
 	int barY = 2;
 	int barPos[2] = {barX, barY};
-	TwSetParam(mTwBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
+	TwSetParam(mTwBar, nullptr, "position", TW_PARAM_INT32, 2, barPos);
 	int barSize[2] = {barWidth, barHeight};
-	TwSetParam(mTwBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
+	TwSetParam(mTwBar, nullptr, "size", TW_PARAM_INT32, 2, barSize);
 	// hide bar initially
 	string command = " '" + barName + "' iconified=true ";
 	TwDefine(command.c_str());
@@ -87,6 +87,15 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
+	/*for (int i = 0; i < 2; i++) {
+		FluidSettings fluidSettingsSmoke(SMOKE);
+		fluidSettingsSmoke.dimensions = Vector3(32);
+		fluidSettingsSmoke.densityDissipation = 0.99f;
+
+		auto smokeFluidSim = make_shared<FluidSimulation>(fluidSettingsSmoke);
+		mSimulations.push_back(smokeFluidSim);
+	}*/
+
 	FluidSettings fluidSettingsSmoke(SMOKE);
 	fluidSettingsSmoke.dimensions = Vector3(64,128,64);
 	fluidSettingsSmoke.densityDissipation = 0.99f;
@@ -101,7 +110,7 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	mSimulations.push_back(smokeFluidSim);
 
 	FluidSettings fluidSettingsFire(FIRE);
-	fluidSettingsFire.dimensions = Vector3(32,64,32);
+	fluidSettingsFire.dimensions = Vector3(34,60,34);
 	fluidSettingsFire.constantInputPosition = Vector3(0.5f,0.05f,0.5f);
 	auto fireFluidSim = make_shared<FluidSimulation>(fluidSettingsFire);
 	mSimulations.push_back(fireFluidSim);
@@ -140,6 +149,27 @@ void Fluid3DScene::InitCamera() {
 
 	mCamera = CameraImpl::CreateCameraLH(fieldOfView, screenAspect, nearVal, farVal);
 	mCamera->SetPosition(0, 3.0f, -8.5);
+
+	mAutoCameraController = unique_ptr<AutoCameraController>(new AutoCameraController(*mCamera));
+	mAutoCameraController->AddRoutePoint(Vector3(0,3,-8.87f));
+	mAutoCameraController->AddRoutePoint(Vector3(-12.0f, 4.84f, 12.15f));
+	mAutoCameraController->AddRoutePoint(Vector3(10.32f, 5.48f, 13.33f));
+	mAutoCameraController->AddRoutePoint(Vector3(19.0f, 13.0f, -15.64f));
+	mAutoCameraController->AddRoutePoint(Vector3(-15.5f, 12.52f, -19.7f));
+	mAutoCameraController->AddRoutePoint(Vector3(-12.0f, 3.6f, 2.2f));
+	mAutoCameraController->AddRoutePoint(Vector3(10.62f, 2.8f, 0.0f));
+	mAutoCameraController->AddRoutePoint(Vector3(0,3,-8.87f));	
+
+	mAutoCameraController->AddRouteRotation(Quaternion(0,0,0,1));
+	mAutoCameraController->AddRouteRotation(Quaternion(-0.03f,0.87f,0.02f,0.43f));
+	mAutoCameraController->AddRouteRotation(Quaternion(0.013f,0.91f,0.03f,-0.40f));
+	mAutoCameraController->AddRouteRotation(Quaternion(-0.12f,0.38f,-0.05f,-0.91f));
+	mAutoCameraController->AddRouteRotation(Quaternion(-0.1f,-0.29f,-0.03f,-0.94f));
+	mAutoCameraController->AddRouteRotation(Quaternion(0.03f,-0.68f,-0.03f,-0.72f));
+	mAutoCameraController->AddRouteRotation(Quaternion(-0.19f,-0.49f,-0.11f,0.84f));
+	mAutoCameraController->AddRouteRotation(Quaternion(0,0,0,1));
+
+	mAutoCameraController->SetSpeedFactor(0.025f);
 }
 
 void Fluid3DScene::InitGameObjects() {
@@ -220,46 +250,61 @@ bool Fluid3DScene::Render() {
 }
 
 void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont) {
-	wstring text = L"Fluids Rendered: " + std::to_wstring(mNumRenderedFluids);
+	/*Vector3 camPos;
+	mCamera->GetPosition(camPos);
+	wstring text = L"Pos X: " + std::to_wstring(camPos.x) + L" Y: " + std::to_wstring(camPos.y) + L" Z: " + std::to_wstring(camPos.z);
 	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,110));
 
-	text = L"Fluids Updating: " + std::to_wstring(mNumFluidsUpdating);
-	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));
+	Quaternion rotQuat;
+	mCamera->GetRotationQuaternion(rotQuat);
+	text = L"Rot X: " + std::to_wstring(rotQuat.x) + L" Y: " + std::to_wstring(rotQuat.y)
+		+ L" Z: " + std::to_wstring(rotQuat.z) + L" W: " + std::to_wstring(rotQuat.w);
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));*/
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {
-	// Move camera with WASD 
-	float forwardAmount = 0.0f;
-	float rightAmount = 0.0f;
-	const float moveFactor = 3.5f;
+	bool hasMoved = false;
 
-	if (pInputSystem->IsKeyDown('W')) {
-		forwardAmount += delta;
+	if (mAutoCamEnabled) {
+		mAutoCameraController->Update(delta);
+		hasMoved = true;
 	}
-	else if (pInputSystem->IsKeyDown('S')) {
-		forwardAmount -= delta;
-	}
-	if (pInputSystem->IsKeyDown('A')) {
-		rightAmount -= delta;
-	}
-	else if (pInputSystem->IsKeyDown('D')) {
-		rightAmount += delta;
-	}
+	else {
+		// Move camera with WASD 
+		float forwardAmount = 0.0f;
+		float rightAmount = 0.0f;
+		const float moveFactor = 3.5f;
 
-	if (forwardAmount != 0.0f || rightAmount != 0.0f) {
-		mCamera->MoveFacing(forwardAmount*moveFactor,rightAmount*moveFactor);
+		if (pInputSystem->IsKeyDown('W')) {
+			forwardAmount += delta;
+		}
+		else if (pInputSystem->IsKeyDown('S')) {
+			forwardAmount -= delta;
+		}
+		if (pInputSystem->IsKeyDown('A')) {
+			rightAmount -= delta;
+		}
+		else if (pInputSystem->IsKeyDown('D')) {
+			rightAmount += delta;
+		}
+
+		hasMoved = (forwardAmount != 0.0f || rightAmount != 0.0f);
+		if (hasMoved) {
+			mCamera->MoveFacing(forwardAmount*moveFactor,rightAmount*moveFactor);
+		}
+
+		// Rotate camera with mouse button
+		if (pInputSystem->IsMouseRightDown()) {
+			int xDelta,yDelta;
+			float mouseSensitivity = 0.003f;
+			pInputSystem->GetMouseDelta(xDelta,yDelta);
+			mCamera->AddYawPitchRoll(xDelta*mouseSensitivity,yDelta*mouseSensitivity,0.0f);
+		}
+	}
+	if  (hasMoved) {
 		// the camera has moved - sort transparent object render order
 		SortTransparentObjects(); 
 	}
-
-	// Rotate camera with mouse button
-	if (pInputSystem->IsMouseRightDown()) {
-		int xDelta,yDelta;
-		float mouseSensitivity = 0.003f;
-		pInputSystem->GetMouseDelta(xDelta,yDelta);
-		mCamera->AddYawPitchRoll(xDelta*mouseSensitivity,yDelta*mouseSensitivity,0.0f);
-	}
-
 	mCamera->Update();
 }
 
@@ -267,9 +312,20 @@ void Fluid3DScene::HandleInput() {
 	if (pInputSystem->IsMouseLeftDown() && pInputSystem->IsKeyDown(VK_SHIFT)) {
 		HandleMousePicking(true);
 	}
-
 	else if (pInputSystem->IsMouseLeftClicked()) {
 		HandleMousePicking(false);
+	}
+
+	if (pInputSystem->IsKeyClicked('B')) {
+		mAutoCamEnabled = !mAutoCamEnabled;
+		mAutoCameraController->SetActive(mAutoCamEnabled);
+	}
+
+	if (pInputSystem->IsKeyDown(VK_UP)) {
+		mAutoCameraController->ModifySpeedFactor(0.001f);
+	}
+	else if (pInputSystem->IsKeyDown(VK_DOWN)) {
+		mAutoCameraController->ModifySpeedFactor(-0.001f);
 	}
 }
 

@@ -53,7 +53,8 @@ bool MainSystem::Initialize() {
 	// Register all systems with the service provider
 	ServiceProvider::Instance().RegisterService(static_cast<InputSystem*>(mInput.get()));
 	ServiceProvider::Instance().RegisterService(static_cast<IGraphicsSystem*>(mGraphics.get()));
-	
+	ServiceProvider::Instance().RegisterService(static_cast<IAppTimer*>(&mAppTimer));
+
 	if (!mGraphics || !mInput)
 		return false;
 

@@ -21,6 +21,7 @@ public:
 	
 	int	  GetFps() const override;
 	long  GetCurrTime() const override;  // in millis
+	long long GetCurrTimePrecise() const override;
 
 	void Reset(); // Call before message loop.
 	void Start(); // Call when unpaused.

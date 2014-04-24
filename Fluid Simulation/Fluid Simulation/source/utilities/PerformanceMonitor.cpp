@@ -35,7 +35,7 @@ bool PerformanceMonitor::Initialize() {
 	}
 
 	// Initialize the start time and cpu usage.
-	mLastSampleTime = GetTickCount(); 
+	mLastSampleTime = GetTickCount64(); 
 	mCpuUsage = 0;
 
 	return mCanReadCpu;
@@ -46,9 +46,9 @@ void PerformanceMonitor::Tick() {
 
 	if(mCanReadCpu) {
 		// If it has been 1 second then update the current cpu usage and reset the 1 second timer again.
-		if((mLastSampleTime + 1000) < GetTickCount())
+		if((mLastSampleTime + 1000) < GetTickCount64())
 		{
-			mLastSampleTime = GetTickCount(); 
+			mLastSampleTime = GetTickCount64(); 
 
 			PdhCollectQueryData(mQueryHandle);
 		

@@ -11,10 +11,6 @@ Version: 1.0
 
 #include <map>
 #include <typeinfo>
-//#include <memory>
-//#include "InputSystem.h"
-//#include "IGraphicsSystem.h"
-//#include "../utilities/AppTimer/IAppTimer.h"
 
 struct TypeInfoLess {
 	bool operator() (const std::type_info* lhs, const std::type_info* rhs) const {

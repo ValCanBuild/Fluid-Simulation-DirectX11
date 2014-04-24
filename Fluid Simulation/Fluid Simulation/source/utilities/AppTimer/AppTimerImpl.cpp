@@ -93,10 +93,14 @@ void AppTimerImpl::Stop() {
 }
 
 long AppTimerImpl::GetCurrTime() const {
+	return (long)(GetCurrTimePrecise()*mSecondsPerCount);
+}
+
+long long AppTimerImpl::GetCurrTimePrecise() const {
 	if( !mStopped ) {
 		__int64 currTime;
 		QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
-		return (long)(currTime*mSecondsPerCount);
+		return currTime;
 	}
 	return 0;
 }

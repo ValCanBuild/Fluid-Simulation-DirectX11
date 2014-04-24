@@ -21,6 +21,8 @@ public:
 	virtual void FixedUpdate(float fixedDelta) {}; // update that happens at fixed time step - use for physics simulation
 	virtual bool Render() = 0;
 	virtual void RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont) {};
+private:
+	IScene(const IScene &other) {} // disable copy constructor
 };
 
 #endif

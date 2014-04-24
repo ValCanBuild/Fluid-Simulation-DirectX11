@@ -67,8 +67,7 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND
 			return false;
 		}
 		commonResourcesMap[mFluidSettings.dimensions] = mCommonResources;
-	} 
-	else {
+	} else {
 		mCommonResources = commonResourcesMap[mFluidSettings.dimensions];
 	}
 

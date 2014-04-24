@@ -23,14 +23,17 @@ public:
 
 	void AddYawPitchRoll(float yaw, float pitch, float roll);
 	void SetYawPitchRoll(float yaw, float pitch, float roll);
+	void SetRotationQuaternion(const Quaternion &quaternion);
 
 	void AddPosition(float x, float y, float z);
 	void SetPosition(float x, float y, float z);
+	void SetPositionVec3(const Vector3& pos);
 
 	void MoveFacing(float forwardAmount, float rightAmount);
 
 	void GetPosition(Vector3& pos) const;
 	void GetTarget(Vector3& target) const;
+	void GetRotationQuaternion(Quaternion &quaternion);
 
 	const Matrix &GetProjectionMatrix() const;
 	const Matrix &GetViewMatrix() const;
@@ -58,6 +61,7 @@ private:
 	DirectX::BoundingFrustum mUntransformedFrustum;
 
 	Matrix mRotationMatrix;
+	Quaternion mRotationQuaternion;
 
 	float mFieldOfView;
 	float mYaw, mPitch, mRoll;

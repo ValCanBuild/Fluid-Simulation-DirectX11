@@ -16,6 +16,7 @@ public:
 	
 	virtual int	  GetFps() const = 0;
 	virtual long  GetCurrTime() const = 0;  // in milliseconds
+	virtual long long GetCurrTimePrecise() const = 0;
 };
 
 #endif

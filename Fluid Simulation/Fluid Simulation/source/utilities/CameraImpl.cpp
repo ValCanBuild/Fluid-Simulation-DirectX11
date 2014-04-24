@@ -58,7 +58,8 @@ void CameraImpl::Update() {
 		return;
 	}
 
-	mRotationMatrix = Matrix::CreateFromYawPitchRoll(mYaw, mPitch, 0.0f);
+	//mRotationMatrix = Matrix::CreateFromYawPitchRoll(mYaw, mPitch, 0.0f);
+	mRotationMatrix = Matrix::CreateFromQuaternion(mRotationQuaternion);
 
 	// Transform the lookAt and up vector by the rotation matrix so the view is correctly rotated at the origin.
 	Vector3::TransformNormal(mDefaultLookAt,mRotationMatrix,mLookAt);
@@ -85,17 +86,21 @@ void CameraImpl::MoveFacing(float forwardAmount, float rightAmount) {
 	mHasChanged = true;
 }
 
-void CameraImpl::AddYawPitchRoll(float yaw, float pitch, float roll) {
-	mYaw += yaw;
-	mPitch += pitch;
-	mRoll += roll;
+void CameraImpl::SetRotationQuaternion(const Quaternion &quaternion) {
+	mRotationQuaternion = quaternion;
 	mHasChanged = true;
+}
+
+void CameraImpl::AddYawPitchRoll(float yaw, float pitch, float roll) {
+	SetYawPitchRoll(mYaw + yaw, mPitch + pitch, mRoll + roll);
 }
 
 void CameraImpl::SetYawPitchRoll(float yaw, float pitch, float roll) {
 	mYaw = yaw;
 	mPitch = pitch;
 	mRoll = roll;
+
+	mRotationQuaternion = Quaternion::CreateFromYawPitchRoll(mYaw, mPitch, mRoll);
 	mHasChanged = true;
 }
 
@@ -105,7 +110,11 @@ void CameraImpl::AddPosition(float x, float y, float z) {
 }
 
 void CameraImpl::SetPosition(float x, float y, float z) {
-	mPosition = Vector3(x,y,z);
+	SetPositionVec3(Vector3(x,y,z));
+}
+
+void CameraImpl::SetPositionVec3(const Vector3& pos) {
+	mPosition = pos;
 	mHasChanged = true;
 }
 
@@ -173,4 +182,8 @@ const DirectX::BoundingFrustum &CameraImpl::GetBoundingFrustum() const {
 
 float CameraImpl::GetFieldOfView() const {
 	return mFieldOfView;
+}
+
+void CameraImpl::GetRotationQuaternion(Quaternion &quaternion) {
+	quaternion = mRotationQuaternion;
 }

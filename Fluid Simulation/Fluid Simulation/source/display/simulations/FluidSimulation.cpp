@@ -12,6 +12,8 @@ Date: 3/3/2014
 #include "../../utilities/FluidCalculation/Fluid3DCalculator.h"
 #include "../../utilities/ICamera.h"
 #include "../../utilities/D3DTexture.h"
+#include "../../utilities/AppTimer/IAppTimer.h"
+#include "../../system/ServiceProvider.h"
 
 using namespace std;
 using namespace DirectX;
@@ -26,12 +28,13 @@ void InitFireTexture(D3DGraphicsObject * d3dGraphicsObj) {
 }
 
 FluidSimulation::FluidSimulation(const FluidSettings &fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
-	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0)
+	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0), mAvgUpdateTime(0), mNumUpdates(0), mUpdateTime(0), pAppTimer(nullptr)
 {
 	mFluidCalculator = make_shared<Fluid3DCalculator>(fluidSettings);
 }
 
 FluidSimulation::~FluidSimulation() {
+	pAppTimer = nullptr;
 }
 
 void FluidSimulation::AddVolumeRenderer(std::shared_ptr<VolumeRenderer> volumeRenderer) {
@@ -67,6 +70,8 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND h
 
 	//mLodController.SetObjectBoundingBox(mVolumeRenderer->bounds->GetBoundingBox());
 
+	pAppTimer = ServiceProvider::Instance().GetService<IAppTimer>();
+
 	return true;
 }
 
@@ -75,8 +80,10 @@ bool FluidSimulation::Update(float dt, const ICamera &camera) {
 	//mLodController.CalculateOverallLOD(camera);
 	//mVolumeRenderer->Update();
 	//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
+	
+	long long updateTimeNow = pAppTimer->GetCurrTimePrecise();
+	
 	bool canUpdate = true;
-
 	// do not do frame skipping until simulation has developed a bit
 	/*if (mFluidUpdatesSinceStart < UPDATES_BEFORE_LOD) {
 		mFluidUpdatesSinceStart++;
@@ -94,6 +101,18 @@ bool FluidSimulation::Update(float dt, const ICamera &camera) {
 	else {
 		++mFramesSinceLastProcess;
 	}
+
+	long long updateTimeAfter = pAppTimer->GetCurrTimePrecise();
+	mAvgUpdateTime = updateTimeAfter - updateTimeNow;
+	
+	//++mNumUpdates;
+	//
+	//if (mNumUpdates >= 5) {
+	//	mAvgUpdateTime = mUpdateTime/5;
+	//	mUpdateTime = 0;
+	//	mNumUpdates = 0;
+	//}
+
 	return canUpdate;
 }
 
@@ -141,6 +160,7 @@ std::shared_ptr<VolumeRenderer> FluidSimulation::IntersectsRay(const Ray &ray, f
 // ANTTWEAK BAR METHODS
 //////////////////////////////////////////////////////////////////////////
 void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
+	TwAddVarRO(pBar, "Avg Update Time", TW_TYPE_INT32, &mAvgUpdateTime, nullptr);
 	TwAddVarRW(pBar,"Update", TW_TYPE_BOOLCPP, &mUpdateEnabled, nullptr);
 	TwAddVarRW(pBar,"Render", TW_TYPE_BOOLCPP, &mRenderEnabled, nullptr);
 

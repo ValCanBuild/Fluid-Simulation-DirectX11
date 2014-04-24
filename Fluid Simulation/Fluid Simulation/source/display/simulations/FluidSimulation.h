@@ -19,6 +19,7 @@ Date: 3/3/2014
 class VolumeRenderer;
 class ICamera;
 struct CTwBar;
+class IAppTimer;
 
 namespace Fluid3D {
 	class Fluid3DCalculator;
@@ -58,8 +59,13 @@ private:
 // LOD Values
 private:
 	//LODController mLodController;
+	long long mAvgUpdateTime;
+	long long mUpdateTime;
+	int mNumUpdates;
 	int mFluidUpdatesSinceStart;
 	int mFramesSinceLastProcess;
+
+	IAppTimer *pAppTimer;
 };
 
 #endif
