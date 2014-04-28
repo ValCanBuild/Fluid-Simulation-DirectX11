@@ -73,7 +73,7 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 	int barSize[2] = {barWidth, barHeight};
 	TwSetParam(mTwBar, nullptr, "size", TW_PARAM_INT32, 2, barSize);
 	// hide bar initially
-	string command = " '" + barName + "' iconified=true ";
+	string command = " '" + barName + "' visible=false ";
 	TwDefine(command.c_str());
 
 	mSkyObject = unique_ptr<SkyObject>(new SkyObject());
@@ -99,10 +99,13 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	FluidSettings fluidSettingsSmoke(SMOKE);
 	fluidSettingsSmoke.dimensions = Vector3(64,128,64);
 	fluidSettingsSmoke.densityDissipation = 0.99f;
+	fluidSettingsSmoke.densityWeight = 0.15f;
+	fluidSettingsSmoke.densityBuoyancy = 0.9f;
+	fluidSettingsSmoke.constantInputPosition = Vector3(0.5f, 0.02f, 0.5f);
 
 	auto volumeRendererSmoke = make_shared<VolumeRenderer>();
 	volumeRendererSmoke->transform->scale = Vector3(4,8,4);
-	volumeRendererSmoke->transform->position = Vector3(-0.15f,10.08f,6.43f);
+	volumeRendererSmoke->transform->position = Vector3(-0.15f,10.21f,6.42f);
 	mVolumeRenderers.push_back(volumeRendererSmoke);
 
 	auto smokeFluidSim = make_shared<FluidSimulation>(fluidSettingsSmoke);
@@ -110,8 +113,13 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 	mSimulations.push_back(smokeFluidSim);
 
 	FluidSettings fluidSettingsFire(FIRE);
-	fluidSettingsFire.dimensions = Vector3(34,60,34);
-	fluidSettingsFire.constantInputPosition = Vector3(0.5f,0.05f,0.5f);
+	fluidSettingsFire.densityDissipation = 0.992f;
+	fluidSettingsFire.constantReactionAmount = 0.95f;
+	fluidSettingsFire.reactionDecay = 0.009f;
+	fluidSettingsFire.reactionExtinguishment = 0.03f;
+	fluidSettingsFire.vorticityStrength = 0.95f;
+	fluidSettingsFire.dimensions = Vector3(40,80,40);
+	fluidSettingsFire.constantInputPosition = Vector3(0.5f,0.07f,0.5f);
 	auto fireFluidSim = make_shared<FluidSimulation>(fluidSettingsFire);
 	mSimulations.push_back(fireFluidSim);
 
@@ -126,6 +134,41 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 		smokeProperties->vSmokeColor = RGBA2Color(40,40,40,255);
 		
 		fireFluidSim->AddVolumeRenderer(volumeRendererFire);
+		mVolumeRenderers.push_back(volumeRendererFire);
+	}
+
+	fluidSettingsSmoke.vorticityStrength = 1.0f;
+	fluidSettingsSmoke.reactionDecay = 0.008f;
+	fluidSettingsSmoke.constantInputRadius = 0.07f;
+	fluidSettingsSmoke.densityDissipation = 0.980f;
+	fluidSettingsSmoke.dimensions = Vector3(30,60,30);
+	fluidSettingsSmoke.constantInputPosition = Vector3(0.5f, 0.05f, 0.5f);
+	auto smallFireFluidSim = make_shared<FluidSimulation>(fluidSettingsSmoke);
+	mSimulations.push_back(smallFireFluidSim);
+	// three fire simulations using one calculator
+	for (int i = 0; i < 3; ++i) {
+		auto volumeRendererFire = make_shared<VolumeRenderer>();
+		volumeRendererFire->transform->scale = Vector3(1,2,1);
+		Vector3 pos;
+		auto smokeProperties = volumeRendererFire->GetRenderSettings();
+		if (i == 0) {
+			pos = Vector3(-5.0f, 6.28f, 19.5f);
+			smokeProperties->fSmokeAbsorption = 40.0f;
+			smokeProperties->vSmokeColor = RGBA2Color(30,200,100,255);
+		}
+		else if (i == 1) {
+			pos = Vector3(-11.0f, 3.78f, 0.0f);
+			smokeProperties->fSmokeAbsorption = 80.0f;
+			smokeProperties->vSmokeColor = RGBA2Color(20,20,20,255);
+		}
+		else if (i == 2) {
+			pos = Vector3(10.0f, 3.88f, 7.0f);
+			smokeProperties->fSmokeAbsorption = 40.0f;
+			smokeProperties->vSmokeColor = RGBA2Color(80,80,220,255);
+		}
+
+		volumeRendererFire->transform->position = pos;
+		smallFireFluidSim->AddVolumeRenderer(volumeRendererFire);
 		mVolumeRenderers.push_back(volumeRendererFire);
 	}
 
@@ -152,21 +195,19 @@ void Fluid3DScene::InitCamera() {
 
 	mAutoCameraController = unique_ptr<AutoCameraController>(new AutoCameraController(*mCamera));
 	mAutoCameraController->AddRoutePoint(Vector3(0,3,-8.87f));
-	mAutoCameraController->AddRoutePoint(Vector3(-12.0f, 4.84f, 12.15f));
+	mAutoCameraController->AddRoutePoint(Vector3(-14.0f, 6.0f, 19.5f));
 	mAutoCameraController->AddRoutePoint(Vector3(10.32f, 5.48f, 13.33f));
 	mAutoCameraController->AddRoutePoint(Vector3(19.0f, 13.0f, -15.64f));
 	mAutoCameraController->AddRoutePoint(Vector3(-15.5f, 12.52f, -19.7f));
-	mAutoCameraController->AddRoutePoint(Vector3(-12.0f, 3.6f, 2.2f));
-	mAutoCameraController->AddRoutePoint(Vector3(10.62f, 2.8f, 0.0f));
+	mAutoCameraController->AddRoutePoint(Vector3(-13.0f, 4.0f, -2.5f));
 	mAutoCameraController->AddRoutePoint(Vector3(0,3,-8.87f));	
 
 	mAutoCameraController->AddRouteRotation(Quaternion(0,0,0,1));
-	mAutoCameraController->AddRouteRotation(Quaternion(-0.03f,0.87f,0.02f,0.43f));
-	mAutoCameraController->AddRouteRotation(Quaternion(0.013f,0.91f,0.03f,-0.40f));
+	mAutoCameraController->AddRouteRotation(Quaternion(0.02f,0.82f,0.0f,0.56f));
+	mAutoCameraController->AddRouteRotation(Quaternion(0.0f,0.98f,0.01f,-0.05f));
 	mAutoCameraController->AddRouteRotation(Quaternion(-0.12f,0.38f,-0.05f,-0.91f));
 	mAutoCameraController->AddRouteRotation(Quaternion(-0.1f,-0.29f,-0.03f,-0.94f));
-	mAutoCameraController->AddRouteRotation(Quaternion(0.03f,-0.68f,-0.03f,-0.72f));
-	mAutoCameraController->AddRouteRotation(Quaternion(-0.19f,-0.49f,-0.11f,0.84f));
+	mAutoCameraController->AddRouteRotation(Quaternion(-0.01f,-0.35f,0.0f,-0.9f));
 	mAutoCameraController->AddRouteRotation(Quaternion(0,0,0,1));
 
 	mAutoCameraController->SetSpeedFactor(0.025f);
@@ -195,6 +236,24 @@ void Fluid3DScene::InitGameObjects() {
 		transform->position = Vector3(xPos, 0, 0);
 		mModelObjects.push_back(fountain);
 	}
+	// smaller flame fountains
+	for (int i = 0; i < 3; ++i) {
+		shared_ptr<ModelGameObject> fountain = unique_ptr<ModelGameObject>(new ModelGameObject(fountainModel));
+		auto transform = fountain->transform;
+		transform->scale = Vector3(0.002f);
+		Vector3 pos;
+		if (i == 0) {
+			pos = Vector3(10.0f, 1.7f, 7.0f);
+		}
+		else if (i == 1) {
+			pos = Vector3(-11.0f, 1.6f, 0.0f);
+		}
+		else if (i == 2) {
+			pos = Vector3(-5.0f, 4.1f, 19.5f);
+		}
+		transform->position = pos;
+		mModelObjects.push_back(fountain);
+	}
 
 	// Terrain
 	HeightMap heightMap = HeightmapParser::GenerateFromTGA("data/heightmap1.tga");
@@ -210,16 +269,16 @@ void Fluid3DScene::Update(float delta) {
 
 	mNumFluidsUpdating = 0;
 
-	//UpdateFirePosition(delta);
-
 	for (auto modelObject : mModelObjects) {
 		modelObject->Update();
 	}
+}
 
+void Fluid3DScene::FixedUpdate(float fixedDelta) {
 	const ICamera &camera = *mCamera;
 	if (!mPaused) {
 		for (auto fluidSim : mSimulations) {
-			if (fluidSim->Update(delta, camera)) {
+			if (fluidSim->Update(fixedDelta, camera)) {
 				++mNumFluidsUpdating;
 			}
 		}
@@ -250,7 +309,7 @@ bool Fluid3DScene::Render() {
 }
 
 void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont) {
-	/*Vector3 camPos;
+	Vector3 camPos;
 	mCamera->GetPosition(camPos);
 	wstring text = L"Pos X: " + std::to_wstring(camPos.x) + L" Y: " + std::to_wstring(camPos.y) + L" Z: " + std::to_wstring(camPos.z);
 	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,110));
@@ -259,7 +318,7 @@ void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBat
 	mCamera->GetRotationQuaternion(rotQuat);
 	text = L"Rot X: " + std::to_wstring(rotQuat.x) + L" Y: " + std::to_wstring(rotQuat.y)
 		+ L" Z: " + std::to_wstring(rotQuat.z) + L" W: " + std::to_wstring(rotQuat.w);
-	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));*/
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {
@@ -301,7 +360,7 @@ void Fluid3DScene::UpdateCamera(float delta) {
 			mCamera->AddYawPitchRoll(xDelta*mouseSensitivity,yDelta*mouseSensitivity,0.0f);
 		}
 	}
-	if  (hasMoved) {
+	if (hasMoved) {
 		// the camera has moved - sort transparent object render order
 		SortTransparentObjects(); 
 	}
@@ -359,14 +418,14 @@ void Fluid3DScene::HandleMousePicking(bool interaction) {
 			if (pPickedRenderer != nullptr) {
 				pPickedRenderer = nullptr;
 				TwRemoveAllVars(mTwBar);
-				string command = " '" + barName + "' iconified=true ";
+				string command = " '" + barName + "' visible=false ";
 				TwDefine(command.c_str());
 			}
 			if (pickedRenderer != nullptr) {
 				pPickedRenderer = pickedRenderer;
 				pickedSim->DisplayInfoOnBar(mTwBar);
 				pickedRenderer->DisplayRenderInfoOnBar(mTwBar);
-				string command = " '" + barName + "' iconified=false ";
+				string command = " '" + barName + "' visible=true ";
 				TwDefine(command.c_str());
 			}
 		}

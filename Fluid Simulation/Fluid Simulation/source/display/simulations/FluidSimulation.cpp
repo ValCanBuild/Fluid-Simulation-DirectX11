@@ -12,14 +12,12 @@ Date: 3/3/2014
 #include "../../utilities/FluidCalculation/Fluid3DCalculator.h"
 #include "../../utilities/ICamera.h"
 #include "../../utilities/D3DTexture.h"
-#include "../../utilities/AppTimer/IAppTimer.h"
-#include "../../system/ServiceProvider.h"
 
 using namespace std;
 using namespace DirectX;
 using namespace Fluid3D;
 
-#define UPDATES_BEFORE_LOD 250
+#define UPDATES_BEFORE_LOD 150
 
 static D3DTexture fireTexture;
 
@@ -28,13 +26,13 @@ void InitFireTexture(D3DGraphicsObject * d3dGraphicsObj) {
 }
 
 FluidSimulation::FluidSimulation(const FluidSettings &fluidSettings) : mUpdateEnabled(true), mIsVisible(true), mRenderEnabled(true),
-	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0), mAvgUpdateTime(0), mNumUpdates(0), mUpdateTime(0), pAppTimer(nullptr)
+	mFramesSinceLastProcess(0), mFluidUpdatesSinceStart(0), mFramesToSkip(2)
 {
 	mFluidCalculator = make_shared<Fluid3DCalculator>(fluidSettings);
 }
 
 FluidSimulation::~FluidSimulation() {
-	pAppTimer = nullptr;
+	
 }
 
 void FluidSimulation::AddVolumeRenderer(std::shared_ptr<VolumeRenderer> volumeRenderer) {
@@ -68,50 +66,31 @@ bool FluidSimulation::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND h
 		volumeRenderer->Update();
 	}
 
-	//mLodController.SetObjectBoundingBox(mVolumeRenderer->bounds->GetBoundingBox());
-
-	pAppTimer = ServiceProvider::Instance().GetService<IAppTimer>();
-
 	return true;
 }
 
 
 bool FluidSimulation::Update(float dt, const ICamera &camera) {
-	//mLodController.CalculateOverallLOD(camera);
-	//mVolumeRenderer->Update();
-	//mVolumeRenderer->SetNumRenderSamples(mLodData.numSamples);
-	
-	long long updateTimeNow = pAppTimer->GetCurrTimePrecise();
-	
+	bool skipFrames = !IsSimulationVisible(camera);
 	bool canUpdate = true;
-	// do not do frame skipping until simulation has developed a bit
-	/*if (mFluidUpdatesSinceStart < UPDATES_BEFORE_LOD) {
-		mFluidUpdatesSinceStart++;
-	}
-	else {
-		if (canUpdate) {
-			canUpdate = mLodController.framesToSkip <= 0 || mFramesSinceLastProcess > mLodController.framesToSkip;
-		}
-	}*/
 
-	if (canUpdate) {
+	// do not do frame skipping until simulation has developed a bit
+	if (skipFrames) {
+		if (mFluidUpdatesSinceStart < UPDATES_BEFORE_LOD) {
+			mFluidUpdatesSinceStart++;
+		}
+		else {
+			canUpdate = mFramesToSkip <= 0 || mFramesSinceLastProcess > mFramesToSkip;
+		}
+	}
+
+	if (canUpdate && mUpdateEnabled) {
 		mFluidCalculator->Process();
 		mFramesSinceLastProcess = 0;
 	} 
 	else {
 		++mFramesSinceLastProcess;
 	}
-
-	long long updateTimeAfter = pAppTimer->GetCurrTimePrecise();
-	mAvgUpdateTime = updateTimeAfter - updateTimeNow;
-	
-	//++mNumUpdates;
-	//
-	//if (mNumUpdates >= 5) {
-	//	mAvgUpdateTime = mUpdateTime/5;
-	//	mUpdateTime = 0;
-	//	mNumUpdates = 0;
-	//}
 
 	return canUpdate;
 }
@@ -155,12 +134,21 @@ std::shared_ptr<VolumeRenderer> FluidSimulation::IntersectsRay(const Ray &ray, f
 	return picked;
 }
 
+bool FluidSimulation::IsSimulationVisible(const ICamera &camera) const {
+	const BoundingFrustum &frustum = camera.GetBoundingFrustum();
+	for (auto renderer : mVolumeRenderers) {
+		const BoundingBox *box = renderer->bounds->GetBoundingBox();
+		if (frustum.Contains(*box) != DISJOINT) {
+			return true;
+		}
+	}
+	return false;
+}
 
 //////////////////////////////////////////////////////////////////////////
 // ANTTWEAK BAR METHODS
 //////////////////////////////////////////////////////////////////////////
 void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
-	TwAddVarRO(pBar, "Avg Update Time", TW_TYPE_INT32, &mAvgUpdateTime, nullptr);
 	TwAddVarRW(pBar,"Update", TW_TYPE_BOOLCPP, &mUpdateEnabled, nullptr);
 	TwAddVarRW(pBar,"Render", TW_TYPE_BOOLCPP, &mRenderEnabled, nullptr);
 
@@ -170,11 +158,7 @@ void FluidSimulation::DisplayInfoOnBar(TwBar * const pBar) {
 	TwAddVarCB(pBar,"Simulation", settings->GetFluidSettingsTwType(), SetFluidSettings, GetFluidSettings, mFluidCalculator.get(), "");
 	TwAddVarRW(pBar,"Input Position", TW_TYPE_DIR3F, &settings->constantInputPosition, "group=Simulation");
 
-	// Add volume renderer settings
-	//mVolumeRenderer->DisplayRenderInfoOnBar(pBar);
-
-	// Add LOD settings
-	//TwAddVarRW(pBar,"LOD", LODController::GetLODDataTwType(), &mLodController, "");
+	TwAddVarRO(pBar, "Frames Skipped", TW_TYPE_INT32, &mFramesToSkip, nullptr);
 }
 
 void TW_CALL FluidSimulation::GetFluidSettings(void *value, void *clientData) {

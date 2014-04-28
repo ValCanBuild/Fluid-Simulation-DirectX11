@@ -39,10 +39,10 @@ void AutoCameraController::Update(float dt) {
 void AutoCameraController::RestoreToPath(float dt) {
 	mRouteRestoreLerpValue += dt*RouteRestoreSpeedFactor;
 
-	Vector3 newPos = Interpolate::Lerp(mRouteRestorePointStart, mMovementRoute[mRouteRestoreIndex], mRouteRestoreLerpValue);
+	Vector3 newPos = Vector3::SmoothStep(mRouteRestorePointStart, mMovementRoute[mRouteRestoreIndex], mRouteRestoreLerpValue);
 	mCamera.SetPositionVec3(newPos);
 
-	Quaternion newRot = Interpolate::Lerp(mRouteRestoreRotationStart, mRotationRoute[mRouteRestoreIndex], mRouteRestoreLerpValue);
+	Quaternion newRot = Quaternion::Slerp(mRouteRestoreRotationStart, mRotationRoute[mRouteRestoreIndex], mRouteRestoreLerpValue);
 	mCamera.SetRotationQuaternion(newRot);
 
 	if (mRouteRestoreLerpValue > 1.0f) {

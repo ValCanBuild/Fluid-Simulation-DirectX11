@@ -38,6 +38,8 @@ public:
 	void InitCamera();
 
 	void Update(float delta);
+	void FixedUpdate(float fixedDelta) override;
+
 	bool Render();
 	void RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont);
 

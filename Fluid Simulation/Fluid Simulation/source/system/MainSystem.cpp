@@ -58,9 +58,6 @@ bool MainSystem::Initialize() {
 	if (!mGraphics || !mInput)
 		return false;
 
-	// Initialize AppTimer
-	mAppTimer.Reset();
-
 	// Init input
 	result = mInput->Initialize(mHInstance, mHwnd);
 	if (!result) {
@@ -89,6 +86,9 @@ void MainSystem::Run() {
 	// Initialize the message structure.
 	ZeroMemory(&msg, sizeof(MSG));
 	
+	// Initialize AppTimer
+	mAppTimer.Reset();
+
 	// Loop until there is a quit message from the window or the user.
 	done = false;
 	while(!done) {

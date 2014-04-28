@@ -24,7 +24,7 @@ void InitTypes() {
 		{ "Density Buoyancy", TW_TYPE_FLOAT, offsetof(FluidSettings, densityBuoyancy), "min=0.0 max=100.0 step=0.001" },
 		{ "Input Radius", TW_TYPE_FLOAT, offsetof(FluidSettings, constantInputRadius), "min=0.005 max=1.0 step=0.01" },
 		{ "Constant Reaction", TW_TYPE_FLOAT, offsetof(FluidSettings, constantReactionAmount), "min=0.0 max=100.0 step=0.01" },
-		{ "Reaction Decay", TW_TYPE_FLOAT, offsetof(FluidSettings, reactionDecay), "min=0.0 max=10.0 step=0.001" },
+		{ "Reaction Decay", TW_TYPE_FLOAT, offsetof(FluidSettings, reactionDecay), "min=0.0 max=10.0 step=0.0005" },
 		{ "Reaction Extinguishment", TW_TYPE_FLOAT, offsetof(FluidSettings, reactionExtinguishment), "min=0.001 max=1.0 step=0.001" }
 	};
 

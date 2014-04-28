@@ -86,11 +86,6 @@ void CameraImpl::MoveFacing(float forwardAmount, float rightAmount) {
 	mHasChanged = true;
 }
 
-void CameraImpl::SetRotationQuaternion(const Quaternion &quaternion) {
-	mRotationQuaternion = quaternion;
-	mHasChanged = true;
-}
-
 void CameraImpl::AddYawPitchRoll(float yaw, float pitch, float roll) {
 	SetYawPitchRoll(mYaw + yaw, mPitch + pitch, mRoll + roll);
 }
@@ -100,7 +95,11 @@ void CameraImpl::SetYawPitchRoll(float yaw, float pitch, float roll) {
 	mPitch = pitch;
 	mRoll = roll;
 
-	mRotationQuaternion = Quaternion::CreateFromYawPitchRoll(mYaw, mPitch, mRoll);
+	SetRotationQuaternion(Quaternion::CreateFromYawPitchRoll(mYaw, mPitch, mRoll));
+}
+
+void CameraImpl::SetRotationQuaternion(const Quaternion &quaternion) {
+	mRotationQuaternion = quaternion;
 	mHasChanged = true;
 }
 

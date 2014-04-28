@@ -14,12 +14,10 @@ Date: 3/3/2014
 #include "../../utilities/AtlInclude.h"
 #include "../D3DGraphicsObject.h"
 #include "../../utilities/FluidCalculation/FluidSettings.h"
-//#include "LODController.h"
 
 class VolumeRenderer;
 class ICamera;
 struct CTwBar;
-class IAppTimer;
 
 namespace Fluid3D {
 	class Fluid3DCalculator;
@@ -48,6 +46,7 @@ private:
 	static void __stdcall SetFluidSettings(const void *value, void *clientData);
 
 	Vector3 GetLocalIntersectPosition(const Ray &ray, float distance) const;
+	bool IsSimulationVisible(const ICamera &camera) const;
 private:
 	std::shared_ptr<Fluid3D::Fluid3DCalculator>	mFluidCalculator;
 	std::vector<std::shared_ptr<VolumeRenderer>> mVolumeRenderers;
@@ -58,14 +57,9 @@ private:
 
 // LOD Values
 private:
-	//LODController mLodController;
-	long long mAvgUpdateTime;
-	long long mUpdateTime;
-	int mNumUpdates;
+	int mFramesToSkip;
 	int mFluidUpdatesSinceStart;
 	int mFramesSinceLastProcess;
-
-	IAppTimer *pAppTimer;
 };
 
 #endif

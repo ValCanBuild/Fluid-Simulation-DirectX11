@@ -94,11 +94,14 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	// Position bar
 	int barPos[2] = {1,screenHeight-100};
 	TwSetParam(twBar,nullptr,"position", TW_PARAM_INT32, 2, barPos);
-	int barSize[2] = {70,100};
+	int barSize[2] = {200,100};
 	TwSetParam(twBar,nullptr,"size", TW_PARAM_INT32, 2, barSize);
 	TwDefine(" MainControl iconified=true ");
 	TwAddButton(twBar,"Reset Scene", ResetCallback, this, " key=r ");// The R key resets the scene
-	TwAddVarRW(twBar, "Render Overlay", TW_TYPE_BOOLCPP, &mRenderOverlay, " key=p ");
+	TwAddVarRW(twBar, "Render Overlay", TW_TYPE_BOOLCPP, &mRenderOverlay, " key=o ");
+	TwAddVarRW(twBar, "Pause Physics", TW_TYPE_BOOLCPP, &mSceneFixedUpdatePaused, " key=p ");
+	TwAddVarRW(twBar, "Sim Max Timestep", TW_TYPE_FLOAT, &Physics::fMaxSimulationTimestep, " min=0.005 max=1.0 step=0.001 ");
+
 
 	// Get video card info
 	int cardMemory = 0;
@@ -107,8 +110,6 @@ bool GraphicsSystemImpl::Initialize(int screenWidth, int screenHeight, HWND hwnd
 	string cardNameString = cardName;
 	mCardName = StrToWidestr(cardNameString);
 	mVideoMemory = to_wstring(cardMemory);
-
-	mSceneFixedUpdatePaused = true;
 
 	return true;
 }
@@ -130,12 +131,7 @@ bool GraphicsSystemImpl::Frame(float delta) const {
 
 void GraphicsSystemImpl::FixedFrame(float fixedDelta) const {
 	if (!mSceneFixedUpdatePaused) {
-		if (mReverseFixedTimestep) {
-			mCurrentScene->FixedUpdate(-fixedDelta);
-		}
-		else {
-			mCurrentScene->FixedUpdate(fixedDelta);
-		}
+		mCurrentScene->FixedUpdate(fixedDelta);
 	}
 }
 
@@ -176,10 +172,6 @@ bool GraphicsSystemImpl::RenderOverlay() const {
 			// Display Card Memory
 			text = L"Video Memory: " + mVideoMemory + L"MB";
 			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
-
-			// Display CPU usage
-			text = L"CPU Usage: " + std::to_wstring(mCpuUsage) + L"%";
-			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
 
 			// Allow the current scene to render any additional overlay items
 			mCurrentScene->RenderOverlay(mSpriteBatch, mSpriteFont);

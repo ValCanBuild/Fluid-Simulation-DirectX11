@@ -1,6 +1,8 @@
 #ifndef _INTERPOLATE_H
 #define _INTEPROLATE_H
 
+#include "MathUtils.h"
+
 namespace Interpolate
 {
 	//// INTERPOLATION FUNCTIONS: Several based on http://wiki.unity3d.com/index.php?title=Interpolate ////
@@ -77,7 +79,7 @@ namespace Interpolate
 		float percentComplete = t;
 		float percentCompleteSquared = percentComplete * percentComplete;
 		float percentCompleteCubed = percentCompleteSquared * percentComplete;
- 
+		
 		return previous * (-0.5f * percentCompleteCubed +
 								   percentCompleteSquared -
 							0.5f * percentComplete) +
@@ -88,6 +90,13 @@ namespace Interpolate
 							0.5f * percentComplete) +
 				next    * ( 0.5f * percentCompleteCubed -
 							0.5f * percentCompleteSquared);
+	}
+
+	// Specialization of CatmullRom for Vector3 types
+	template <>
+	inline Vector3 CatmullRom<Vector3>(Vector3& previous, Vector3& start, Vector3& end, Vector3& next, 
+		float t) {
+			return Vector3::CatmullRom(previous, start, end, next, t);
 	}
 
 	/**
