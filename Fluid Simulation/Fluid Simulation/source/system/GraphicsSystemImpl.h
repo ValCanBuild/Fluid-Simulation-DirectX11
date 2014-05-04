@@ -40,7 +40,7 @@ public:
 	~GraphicsSystemImpl();
 
 	bool Initialize(int, int, HWND);
-	bool Frame(float delta) const;	// delta time in seconds
+	bool Frame(float delta);	// delta time in seconds
 	void FixedFrame(float fixedDelta) const; // fixed delta time to be used for physics simulation
 
 	bool TakeScreenshot(LPCWSTR name) const;
@@ -77,6 +77,9 @@ private:
 	shared_ptr<DirectX::CommonStates>  mCommonStates;
 
 	int	mFps, mCpuUsage;
+	int mTotalFps;
+	int mMinimumFps, mMaximumFps, mAverageFps;
+	int mNumFrames;
 	wstring mCardName;
 	wstring mVideoMemory;
 

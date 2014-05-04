@@ -87,14 +87,6 @@ bool Fluid3DScene::Initialize(_In_ IGraphicsObject* graphicsObject, HWND hwnd) {
 }
 
 bool Fluid3DScene::InitSimulations(HWND hwnd) {
-	/*for (int i = 0; i < 2; i++) {
-		FluidSettings fluidSettingsSmoke(SMOKE);
-		fluidSettingsSmoke.dimensions = Vector3(32);
-		fluidSettingsSmoke.densityDissipation = 0.99f;
-
-		auto smokeFluidSim = make_shared<FluidSimulation>(fluidSettingsSmoke);
-		mSimulations.push_back(smokeFluidSim);
-	}*/
 
 	FluidSettings fluidSettingsSmoke(SMOKE);
 	fluidSettingsSmoke.dimensions = Vector3(64,128,64);
@@ -172,7 +164,7 @@ bool Fluid3DScene::InitSimulations(HWND hwnd) {
 		mVolumeRenderers.push_back(volumeRendererFire);
 	}
 
-	for (auto simulation : mSimulations) {
+	for (auto & simulation : mSimulations) {
 		bool result = simulation->Initialize(pD3dGraphicsObj, hwnd);
 		if (!result) {
 			return false;
@@ -269,7 +261,7 @@ void Fluid3DScene::Update(float delta) {
 
 	mNumFluidsUpdating = 0;
 
-	for (auto modelObject : mModelObjects) {
+	for (auto & modelObject : mModelObjects) {
 		modelObject->Update();
 	}
 }
@@ -277,7 +269,7 @@ void Fluid3DScene::Update(float delta) {
 void Fluid3DScene::FixedUpdate(float fixedDelta) {
 	const ICamera &camera = *mCamera;
 	if (!mPaused) {
-		for (auto fluidSim : mSimulations) {
+		for (auto & fluidSim : mSimulations) {
 			if (fluidSim->Update(fixedDelta, camera)) {
 				++mNumFluidsUpdating;
 			}
@@ -294,11 +286,11 @@ bool Fluid3DScene::Render() {
 	// draw the terrain
 	mTerrainObject->Render(camera);
 	
-	for (auto modelObject : mModelObjects) {
+	for (auto & modelObject : mModelObjects) {
 		modelObject->Render(camera, context);
 	}
 
-	for (auto volumeRenderer : mVolumeRenderers) {
+	for (auto & volumeRenderer : mVolumeRenderers) {
 		bool isVisible = IsRendererVisibleByCamera(volumeRenderer);
 		if (isVisible) {
 			volumeRenderer->Render(camera);
@@ -309,7 +301,7 @@ bool Fluid3DScene::Render() {
 }
 
 void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBatch, std::shared_ptr<DirectX::SpriteFont> spriteFont) {
-	Vector3 camPos;
+	/*Vector3 camPos;
 	mCamera->GetPosition(camPos);
 	wstring text = L"Pos X: " + std::to_wstring(camPos.x) + L" Y: " + std::to_wstring(camPos.y) + L" Z: " + std::to_wstring(camPos.z);
 	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,110));
@@ -318,7 +310,7 @@ void Fluid3DScene::RenderOverlay(std::shared_ptr<DirectX::SpriteBatch> spriteBat
 	mCamera->GetRotationQuaternion(rotQuat);
 	text = L"Rot X: " + std::to_wstring(rotQuat.x) + L" Y: " + std::to_wstring(rotQuat.y)
 		+ L" Z: " + std::to_wstring(rotQuat.z) + L" W: " + std::to_wstring(rotQuat.w);
-	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));
+	spriteFont->DrawString(spriteBatch.get(),text.c_str(),XMFLOAT2(10,135));*/
 }
 
 void Fluid3DScene::UpdateCamera(float delta) {

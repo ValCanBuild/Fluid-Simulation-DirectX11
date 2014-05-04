@@ -63,9 +63,6 @@ bool Fluid3DCalculator::Initialize(_In_ D3DGraphicsObject * d3dGraphicsObj, HWND
 
 	if (commonResourcesMap.count(mFluidSettings.dimensions) == 0) {
 		mCommonResources = CommonFluidResources::CreateResources(pDevice, mFluidSettings.dimensions, hwnd);
-		if (!result) {
-			return false;
-		}
 		commonResourcesMap[mFluidSettings.dimensions] = mCommonResources;
 	} else {
 		mCommonResources = commonResourcesMap[mFluidSettings.dimensions];

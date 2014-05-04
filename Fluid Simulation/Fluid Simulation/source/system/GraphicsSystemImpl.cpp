@@ -40,7 +40,10 @@ void TW_CALL SingleStepPhysics(void *clientData) {
 /// ~ANT TWEAK BAR CALLBACKS ///
 
 
-GraphicsSystemImpl::GraphicsSystemImpl() : mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false), mRenderOverlay(true) {
+GraphicsSystemImpl::GraphicsSystemImpl() : 
+	mSceneFixedUpdatePaused(false), mReverseFixedTimestep(false), mRenderOverlay(true),
+	mFps(0), mAverageFps(0), mMaximumFps(0), mMinimumFps(100000), mNumFrames(0), mTotalFps(0)
+{
 	mFps = mCpuUsage = 0;
 }
 
@@ -124,7 +127,7 @@ bool GraphicsSystemImpl::ResetScene() {
 	return true;
 }
 
-bool GraphicsSystemImpl::Frame(float delta) const {
+bool GraphicsSystemImpl::Frame(float delta) {
 	mCurrentScene->Update(delta);
 	return Render();
 }
@@ -162,16 +165,25 @@ bool GraphicsSystemImpl::RenderOverlay() const {
 	if (mRenderOverlay)	{
 		mSpriteBatch->Begin();
 		{
-			// Display FPS
-			wstring text = L"FPS: " + std::to_wstring(mFps);
+			// Display Current FPS
+			wstring text = L"Current FPS: " + std::to_wstring(mFps);
 			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,10));
 
+			text = L"Max FPS: " + std::to_wstring(mMaximumFps);
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,35));
+
+			text = L"Min FPS: " + std::to_wstring(mMinimumFps);
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
+
+			text = L"Average FPS: " + std::to_wstring(mAverageFps);
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,85));
+
 			// Display Card Name
-			mSpriteFont->DrawString(mSpriteBatch.get(),mCardName.c_str(),XMFLOAT2(10,35));
+			mSpriteFont->DrawString(mSpriteBatch.get(),mCardName.c_str(),XMFLOAT2(10,110));
 
 			// Display Card Memory
 			text = L"Video Memory: " + mVideoMemory + L"MB";
-			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,60));
+			mSpriteFont->DrawString(mSpriteBatch.get(),text.c_str(),XMFLOAT2(10,135));
 
 			// Allow the current scene to render any additional overlay items
 			mCurrentScene->RenderOverlay(mSpriteBatch, mSpriteFont);
@@ -212,4 +224,14 @@ shared_ptr<DirectX::SpriteFont> GraphicsSystemImpl::GetSpriteFont() const {
 void GraphicsSystemImpl::SetMonitorData(int fps, int cpuUsage) {
 	mFps = fps;
 	mCpuUsage = cpuUsage;
+	++mNumFrames;
+
+	// start tracking after 200 frames
+	if (mNumFrames > 200) {
+		mMaximumFps = max(mFps, mMaximumFps);
+		mMinimumFps = min(mFps, mMinimumFps);
+		mTotalFps += mFps;
+		mAverageFps = mTotalFps/(mNumFrames - 200);
+		
+	}
 }

@@ -25,7 +25,7 @@ private:
 	bool			mCanReadCpu;
 	HQUERY			mQueryHandle;
 	HCOUNTER		mCounterHandle;
-	unsigned long	mLastSampleTime;
+	ULONGLONG		mLastSampleTime;
 	long			mCpuUsage;
 };
 
